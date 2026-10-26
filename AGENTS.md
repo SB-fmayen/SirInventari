@@ -1,4 +1,4 @@
-# AGENTS.md — Sistema de Ventas (SirInventari)
+# AGENTS.md — SirInventari
 
 ## Reglas para los agentes
 
@@ -7,7 +7,7 @@
 
 ## Descripción del proyecto
 
-Sistema de ventas para restaurantes con varios **centros de venta**. Su objetivo es:
+SirInventari es un sistema de ventas para restaurantes con varios **centros de venta**. Su objetivo es:
 
 - Reemplazar las boletas de papel por **pedidos digitales con folio único por centro y día**.
 - Registrar el **tipo de venta** (mesa, para llevar, domicilio, app) y lo que se agrega a un pedido, con hora y usuario.
