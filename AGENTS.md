@@ -33,7 +33,7 @@ Especificación completa: `docs/especificacion.md` (resumen de la página de Not
 │   ├── web/               # App en React (PWA)
 │   └── api/               # API en NestJS
 ├── db/
-│   ├── 01_esquema_v0.2.sql      # Tablas, triggers y funciones (FUENTE DE VERDAD)
+│   ├── 01_esquema_v0.3.sql      # Tablas, triggers y funciones (FUENTE DE VERDAD)
 │   └── 02_datos_iniciales.sql   # Datos de ejemplo para empezar
 └── docs/
     └── especificacion.md  # Resumen de la especificación
@@ -43,7 +43,7 @@ Especificación completa: `docs/especificacion.md` (resumen de la página de Not
 
 1. **Responder siempre en español con lenguaje sencillo.**
 2. **Los nombres de tablas y campos van en español**, igual que en el script de la base de datos.
-3. **`db/01_esquema_v0.2.sql` es la fuente de verdad.** No cambiar tablas, triggers ni funciones sin preguntar primero y explicar por qué.
+3. **`db/01_esquema_v0.3.sql` es la fuente de verdad.** No cambiar tablas, triggers ni funciones sin preguntar primero y explicar por qué.
 4. **Trabajar solo en la tarea pedida, en pasos pequeños**, y al final decir qué archivos se cambiaron.
 5. **Nunca guardar contraseñas ni claves en el código**; usar archivos `.env` (que nunca se suben a Git).
 6. **Los mensajes de error para el usuario siempre en español claro.**

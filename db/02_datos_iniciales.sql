@@ -11,10 +11,10 @@ INSERT INTO tipo_venta (codigo, nombre) VALUES
   ('DOMICILIO', 'Entrega a domicilio'),
   ('APP',       'App de terceros');
 
-INSERT INTO metodo_pago (codigo, nombre, requiere_referencia) VALUES
-  ('EFECTIVO', 'Efectivo',              FALSE),
-  ('TARJETA',  'Tarjeta (POS externo)', TRUE),
-  ('TRANSFER', 'Transferencia',         TRUE);
+INSERT INTO metodo_pago (codigo, nombre, requiere_referencia, requiere_terminal) VALUES
+  ('EFECTIVO', 'Efectivo',              FALSE, FALSE),
+  ('TARJETA',  'Tarjeta (POS externo)', TRUE,  TRUE),
+  ('TRANSFER', 'Transferencia',         TRUE,  FALSE);
 
 INSERT INTO usuario (firebase_uid, nombre, email, rol) VALUES
   ('uid-mesero-01', 'Ana Mesera',  'ana@ejemplo.com',  'MESERO'),

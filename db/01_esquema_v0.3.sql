@@ -1,14 +1,32 @@
 -- =====================================================================
--- SISTEMA DE VENTAS  ·  Esquema PostgreSQL 16  ·  v0.2
+-- SISTEMA DE VENTAS  ·  Esquema PostgreSQL 16  ·  v0.3
 -- Nube + modo sin internet · por centros de venta · anti-duplicado
 -- v0.2: dispositivos, folio provisional sin internet, origen del registro,
 --       bandeja de conflictos y funciones de sincronización idempotentes
+-- v0.3: correcciones de REVISION.md:
+--       1) no se mezclan pedidos, pagos, turnos, dispositivos ni usuarios de centros distintos
+--       2) tarjeta exige voucher y terminal; el voucher se normaliza
+--       3) los pagos no se editan ni borran: se anulan con responsable y motivo,
+--          y el pedido vuelve a aceptar cobros
+--       4) el total se recalcula siempre (también con el descuento) y no puede
+--          quedar por debajo de lo cobrado
+--       5) no se cobra en turnos cerrados; un cobro atrasado va a la bandeja de conflictos
+--       6) la fecha de operación usa la hora de Guatemala aunque la conexión esté en UTC
+--       7) una línea no se puede mover a otro pedido
+--       8) reenviar una línea ya guardada responde YA_EXISTIA (no crea conflicto falso)
 -- =====================================================================
--- La "fecha de operación" debe calcularse con la hora de Guatemala, no UTC
+-- La "fecha de operación" se calcula con la hora de Guatemala con fecha_guatemala().
+-- Recomendado además (cambia el nombre de la base si es otro):
 -- ALTER DATABASE sistema_ventas SET timezone TO 'America/Guatemala';
 
 CREATE SCHEMA IF NOT EXISTS ventas;
 SET search_path TO ventas;
+
+-- Fecha de hoy en Guatemala, sin importar la zona horaria de la conexión
+CREATE OR REPLACE FUNCTION fecha_guatemala(p_momento TIMESTAMPTZ DEFAULT now())
+RETURNS DATE LANGUAGE sql STABLE AS $$
+  SELECT (p_momento AT TIME ZONE 'America/Guatemala')::date;
+$$;
 
 -- ---------- Tipos de dominio ----------
 CREATE TYPE rol_usuario         AS ENUM ('ADMIN','GERENTE','CAJERO','MESERO','COCINA');
@@ -95,13 +113,14 @@ CREATE TABLE metodo_pago (
   id                  SMALLSERIAL PRIMARY KEY,
   codigo              VARCHAR(15) NOT NULL UNIQUE,
   nombre              VARCHAR(50) NOT NULL,
-  requiere_referencia BOOLEAN     NOT NULL DEFAULT FALSE   -- TRUE para tarjeta/transferencia
+  requiere_referencia BOOLEAN     NOT NULL DEFAULT FALSE,  -- TRUE para tarjeta/transferencia
+  requiere_terminal   BOOLEAN     NOT NULL DEFAULT FALSE   -- TRUE para tarjeta: se cobra en una terminal del POS
 );
 
 CREATE TABLE turno_caja (
   id               SERIAL        PRIMARY KEY,
   centro_venta_id  SMALLINT      NOT NULL REFERENCES centro_venta(id),
-  fecha_operacion  DATE          NOT NULL DEFAULT CURRENT_DATE,
+  fecha_operacion  DATE          NOT NULL DEFAULT fecha_guatemala(),
   abierto_por      INT           NOT NULL REFERENCES usuario(id),
   abierto_en       TIMESTAMPTZ   NOT NULL DEFAULT now(),
   fondo_inicial    NUMERIC(10,2) NOT NULL DEFAULT 0,
@@ -124,7 +143,7 @@ CREATE TABLE folio_contador (                  -- folio correlativo por centro y
 CREATE TABLE pedido (
   id              UUID          PRIMARY KEY,     -- lo genera el dispositivo (evita duplicados al reenviar)
   centro_venta_id SMALLINT      NOT NULL REFERENCES centro_venta(id),
-  fecha_operacion DATE          NOT NULL DEFAULT CURRENT_DATE,
+  fecha_operacion DATE          NOT NULL DEFAULT fecha_guatemala(),
   folio           INT           NOT NULL,        -- lo asigna el servidor al recibir el pedido
   tipo_venta_id   SMALLINT      NOT NULL REFERENCES tipo_venta(id),
   turno_id        INT           REFERENCES turno_caja(id),
@@ -173,7 +192,7 @@ CREATE TABLE pago (
   pedido_id        UUID          NOT NULL REFERENCES pedido(id),
   metodo_pago_id   SMALLINT      NOT NULL REFERENCES metodo_pago(id),
   turno_id         INT           NOT NULL REFERENCES turno_caja(id),
-  fecha_operacion  DATE          NOT NULL DEFAULT CURRENT_DATE,
+  fecha_operacion  DATE          NOT NULL DEFAULT fecha_guatemala(),
   monto            NUMERIC(12,2) NOT NULL CHECK (monto > 0),
   terminal_pos     VARCHAR(30),                 -- terminal del POS externo
   referencia_pos   VARCHAR(40),                 -- nº de autorización del voucher
@@ -181,13 +200,17 @@ CREATE TABLE pago (
   registrado_por   INT           NOT NULL REFERENCES usuario(id),
   registrado_en    TIMESTAMPTZ   NOT NULL DEFAULT now(),   -- hora real del cobro (la del dispositivo)
   anulado_por      INT           REFERENCES usuario(id),
+  anulado_en       TIMESTAMPTZ,
   motivo_anulacion VARCHAR(200),
   dispositivo_id   INT             REFERENCES dispositivo(id),
   origen           origen_registro NOT NULL DEFAULT 'EN_LINEA',
-  sincronizado_en  TIMESTAMPTZ     NOT NULL DEFAULT now()
+  sincronizado_en  TIMESTAMPTZ     NOT NULL DEFAULT now(),
+  -- Un pago anulado siempre dice quién lo anuló y por qué
+  CHECK (estado = 'APLICADO' OR (anulado_por IS NOT NULL AND motivo_anulacion IS NOT NULL))
 );
--- Un mismo voucher del POS NO puede registrarse dos veces
-CREATE UNIQUE INDEX uq_pago_voucher ON pago(terminal_pos, fecha_operacion, referencia_pos)
+-- Un mismo voucher del POS NO puede registrarse dos veces.
+-- COALESCE: una terminal vacía (NULL) también cuenta como repetida.
+CREATE UNIQUE INDEX uq_pago_voucher ON pago(COALESCE(terminal_pos, ''), fecha_operacion, referencia_pos)
   WHERE referencia_pos IS NOT NULL AND estado = 'APLICADO';
 CREATE INDEX ix_pago_pedido ON pago(pedido_id);
 
@@ -256,7 +279,101 @@ BEGIN
   RETURN v_folio;
 END $$;
 
--- Recalcula el total y bloquea cambios en pedidos pagados o anulados
+-- ¿El usuario está activo y puede trabajar en ese centro? (ADMIN puede en todos)
+CREATE OR REPLACE FUNCTION usuario_en_centro(p_usuario INT, p_centro SMALLINT)
+RETURNS BOOLEAN LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM usuario u
+     WHERE u.id = p_usuario AND u.activo
+       AND (u.rol = 'ADMIN'
+            OR EXISTS (SELECT 1 FROM usuario_centro uc
+                        WHERE uc.usuario_id = u.id AND uc.centro_venta_id = p_centro)));
+$$;
+
+-- Encabezado del pedido:
+--  · no mezcla centros (usuario, dispositivo y turno deben ser del mismo centro)
+--  · el subtotal y el total siempre se calculan aquí (nadie los escribe a mano)
+--  · el total nunca queda por debajo de lo ya cobrado
+CREATE OR REPLACE FUNCTION calcular_pedido()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  v_pagado NUMERIC(12,2);
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NOT usuario_en_centro(NEW.creado_por, NEW.centro_venta_id) THEN
+      RAISE EXCEPTION 'El usuario % no está activo o no está asignado a este centro de venta', NEW.creado_por;
+    END IF;
+    IF NEW.dispositivo_id IS NOT NULL AND NOT EXISTS (
+         SELECT 1 FROM dispositivo WHERE id = NEW.dispositivo_id AND centro_venta_id = NEW.centro_venta_id) THEN
+      RAISE EXCEPTION 'El dispositivo no pertenece al centro de venta del pedido';
+    END IF;
+    IF NEW.turno_id IS NOT NULL AND NOT EXISTS (
+         SELECT 1 FROM turno_caja WHERE id = NEW.turno_id AND centro_venta_id = NEW.centro_venta_id) THEN
+      RAISE EXCEPTION 'El turno de caja no pertenece al centro de venta del pedido';
+    END IF;
+    NEW.subtotal := 0;                        -- las líneas llegan después
+  ELSE
+    IF NEW.centro_venta_id <> OLD.centro_venta_id THEN
+      RAISE EXCEPTION 'Un pedido no se puede pasar a otro centro de venta';
+    END IF;
+    IF NEW.turno_id IS DISTINCT FROM OLD.turno_id AND NEW.turno_id IS NOT NULL AND NOT EXISTS (
+         SELECT 1 FROM turno_caja WHERE id = NEW.turno_id AND centro_venta_id = NEW.centro_venta_id) THEN
+      RAISE EXCEPTION 'El turno de caja no pertenece al centro de venta del pedido';
+    END IF;
+    IF OLD.estado IN ('PAGADO','ANULADO') AND NEW.descuento <> OLD.descuento THEN
+      RAISE EXCEPTION 'No se puede cambiar el descuento de un pedido en estado %', OLD.estado;
+    END IF;
+    SELECT COALESCE(SUM(importe), 0) INTO NEW.subtotal
+      FROM pedido_detalle WHERE pedido_id = NEW.id AND estado = 'ACTIVA';
+  END IF;
+
+  NEW.total := GREATEST(NEW.subtotal - NEW.descuento, 0);
+
+  IF TG_OP = 'UPDATE' THEN
+    SELECT COALESCE(SUM(monto), 0) INTO v_pagado
+      FROM pago WHERE pedido_id = NEW.id AND estado = 'APLICADO';
+    IF NEW.total < v_pagado THEN
+      RAISE EXCEPTION 'El total del pedido (Q%) no puede quedar menor que lo ya cobrado (Q%). Primero anule el cobro.',
+                      NEW.total, v_pagado;
+    END IF;
+    -- Si el total bajó (descuento o línea anulada) y ya quedó cubierto, el pedido queda pagado
+    IF NEW.total <> OLD.total AND v_pagado > 0 AND NEW.total = v_pagado
+       AND NEW.estado NOT IN ('PAGADO','ANULADO') THEN
+      NEW.estado := 'PAGADO';
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
+
+CREATE TRIGGER trg_calcular_pedido
+BEFORE INSERT OR UPDATE ON pedido
+FOR EACH ROW EXECUTE FUNCTION calcular_pedido();
+
+-- Líneas: una línea no cambia de pedido, y quien la agrega debe ser del centro del pedido
+CREATE OR REPLACE FUNCTION validar_linea()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  v_centro SMALLINT;
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.pedido_id <> OLD.pedido_id THEN
+      RAISE EXCEPTION 'Un producto no se puede mover a otro pedido. Anúlelo y agréguelo en el otro pedido.';
+    END IF;
+  ELSE
+    SELECT centro_venta_id INTO v_centro FROM pedido WHERE id = NEW.pedido_id;
+    IF FOUND AND NOT usuario_en_centro(NEW.agregado_por, v_centro) THEN
+      RAISE EXCEPTION 'El usuario % no está activo o no está asignado al centro de venta del pedido', NEW.agregado_por;
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
+
+CREATE TRIGGER trg_validar_linea
+BEFORE INSERT OR UPDATE ON pedido_detalle
+FOR EACH ROW EXECUTE FUNCTION validar_linea();
+
+-- Bloquea cambios en pedidos pagados o anulados y hace que el pedido recalcule su total
+-- (el cálculo lo hace calcular_pedido al actualizar el encabezado)
 CREATE OR REPLACE FUNCTION recalcular_total_pedido()
 RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
@@ -270,15 +387,10 @@ BEGIN
     RAISE EXCEPTION 'No se puede modificar un pedido en estado %', v_estado;
   END IF;
 
-  UPDATE pedido p
-     SET subtotal       = s.sub,
-         total          = GREATEST(s.sub - p.descuento, 0),
-         actualizado_en = now(),
-         version        = p.version + 1
-    FROM (SELECT COALESCE(SUM(importe), 0) AS sub
-            FROM pedido_detalle
-           WHERE pedido_id = v_pedido AND estado = 'ACTIVA') s
-   WHERE p.id = v_pedido;
+  UPDATE pedido
+     SET actualizado_en = now(),
+         version        = version + 1
+   WHERE id = v_pedido;
   RETURN NULL;
 END $$;
 
@@ -290,16 +402,63 @@ FOR EACH ROW EXECUTE FUNCTION recalcular_total_pedido();
 CREATE OR REPLACE FUNCTION validar_pago()
 RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
-  v_total  NUMERIC(12,2);
-  v_estado estado_pedido;
-  v_pagado NUMERIC(12,2);
+  v_total         NUMERIC(12,2);
+  v_estado        estado_pedido;
+  v_centro        SMALLINT;
+  v_pagado        NUMERIC(12,2);
+  v_turno_centro  SMALLINT;
+  v_turno_estado  estado_turno;
+  v_turno_abierto TIMESTAMPTZ;
+  v_req_ref       BOOLEAN;
+  v_req_term      BOOLEAN;
 BEGIN
   -- FOR UPDATE bloquea el pedido: si dos cajeros cobran a la vez, el segundo espera
-  SELECT total, estado INTO v_total, v_estado
+  SELECT total, estado, centro_venta_id INTO v_total, v_estado, v_centro
     FROM pedido WHERE id = NEW.pedido_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'El pedido de este pago no está en la nube (no llegó o quedó en conflicto)';
+  END IF;
 
   IF v_estado IN ('PAGADO','ANULADO') THEN
     RAISE EXCEPTION 'El pedido ya está % y no admite más cobros', v_estado;
+  END IF;
+
+  -- Turno: debe existir, ser del mismo centro y estar abierto
+  SELECT centro_venta_id, estado, abierto_en INTO v_turno_centro, v_turno_estado, v_turno_abierto
+    FROM turno_caja WHERE id = NEW.turno_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'No hay turno de caja abierto para registrar el pago';
+  END IF;
+  IF v_turno_centro <> v_centro THEN
+    RAISE EXCEPTION 'El turno de caja no pertenece al centro de venta del pedido';
+  END IF;
+  IF v_turno_estado <> 'ABIERTO' THEN
+    RAISE EXCEPTION 'El turno de caja ya está cerrado; el cobro debe revisarlo el gerente';
+  END IF;
+  -- Cobro hecho sin internet antes de que abriera este turno = cobro atrasado
+  IF NEW.origen <> 'EN_LINEA' AND NEW.registrado_en < v_turno_abierto THEN
+    RAISE EXCEPTION 'Cobro atrasado: se hizo antes de que se abriera el turno de caja actual; el gerente debe revisarlo';
+  END IF;
+
+  -- Dispositivo y usuario del mismo centro
+  IF NEW.dispositivo_id IS NOT NULL AND NOT EXISTS (
+       SELECT 1 FROM dispositivo WHERE id = NEW.dispositivo_id AND centro_venta_id = v_centro) THEN
+    RAISE EXCEPTION 'El dispositivo no pertenece al centro de venta del pedido';
+  END IF;
+  IF NOT usuario_en_centro(NEW.registrado_por, v_centro) THEN
+    RAISE EXCEPTION 'El usuario % no está activo o no está asignado al centro de venta del pedido', NEW.registrado_por;
+  END IF;
+
+  -- Voucher: se guarda sin espacios y en mayúsculas para que no se pueda repetir con otro formato
+  NEW.referencia_pos := NULLIF(upper(regexp_replace(NEW.referencia_pos, '\s', '', 'g')), '');
+  NEW.terminal_pos   := NULLIF(upper(regexp_replace(NEW.terminal_pos,   '\s', '', 'g')), '');
+  SELECT requiere_referencia, requiere_terminal INTO v_req_ref, v_req_term
+    FROM metodo_pago WHERE id = NEW.metodo_pago_id;
+  IF v_req_ref AND NEW.referencia_pos IS NULL THEN
+    RAISE EXCEPTION 'Falta el número de autorización del voucher para este método de pago';
+  END IF;
+  IF v_req_term AND NEW.terminal_pos IS NULL THEN
+    RAISE EXCEPTION 'Falta la terminal del POS para este cobro con tarjeta';
   END IF;
 
   SELECT COALESCE(SUM(monto), 0) INTO v_pagado
@@ -321,6 +480,49 @@ END $$;
 CREATE TRIGGER trg_validar_pago
 BEFORE INSERT ON pago
 FOR EACH ROW EXECUTE FUNCTION validar_pago();
+
+-- Un pago no se edita ni se borra. Lo único permitido es anularlo, con responsable y motivo.
+CREATE OR REPLACE FUNCTION proteger_pago()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  c_libres CONSTANT TEXT[] := ARRAY['estado','anulado_por','anulado_en','motivo_anulacion'];
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'Los pagos no se borran. Si hay un error, anule el pago indicando el motivo.';
+  END IF;
+  IF OLD.estado = 'ANULADO' THEN
+    RAISE EXCEPTION 'Este pago ya está anulado y no se puede cambiar';
+  END IF;
+  IF (to_jsonb(NEW) - c_libres) IS DISTINCT FROM (to_jsonb(OLD) - c_libres) THEN
+    RAISE EXCEPTION 'Un pago registrado no se puede modificar. Anúlelo y registre uno nuevo.';
+  END IF;
+  IF NEW.estado = 'ANULADO' THEN
+    NEW.anulado_en := COALESCE(NEW.anulado_en, now());
+  END IF;
+  RETURN NEW;
+END $$;
+
+CREATE TRIGGER trg_proteger_pago
+BEFORE UPDATE OR DELETE ON pago
+FOR EACH ROW EXECUTE FUNCTION proteger_pago();
+
+-- Al anular un pago, el pedido pagado vuelve a ABIERTO para aceptar el cobro de reemplazo
+CREATE OR REPLACE FUNCTION pago_anulado()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF OLD.estado = 'APLICADO' AND NEW.estado = 'ANULADO' THEN
+    UPDATE pedido
+       SET estado         = CASE WHEN estado = 'PAGADO' THEN 'ABIERTO'::estado_pedido ELSE estado END,
+           actualizado_en = now(),
+           version        = version + 1
+     WHERE id = NEW.pedido_id;
+  END IF;
+  RETURN NULL;
+END $$;
+
+CREATE TRIGGER trg_pago_anulado
+AFTER UPDATE ON pago
+FOR EACH ROW EXECUTE FUNCTION pago_anulado();
 
 -- Auditoría genérica: guarda el antes y el después de cada cambio
 -- La API indica el usuario con:  SET LOCAL app.usuario_id = '5';
@@ -381,13 +583,17 @@ RETURNS JSONB LANGUAGE plpgsql AS $$
 DECLARE
   v_id     UUID := (p->>'id')::uuid;
   v_disp   INT  := (p->>'dispositivo_id')::int;
-  v_fecha  DATE := COALESCE((p->>'fecha_operacion')::date, CURRENT_DATE);  -- la fecha del dispositivo, no la de llegada
+  -- la fecha del dispositivo, no la de llegada; si no viene, la de Guatemala en que se tomó
+  v_fecha  DATE := COALESCE((p->>'fecha_operacion')::date,
+                            fecha_guatemala(COALESCE((p->>'creado_en')::timestamptz, now())));
   v_centro SMALLINT;
   v_activo BOOLEAN;
+  v_ped_centro SMALLINT;
   v_res    TEXT;
   v_lineas JSONB := '{}'::jsonb;
   l        JSONB;
   v_lid    UUID;
+  v_lped   UUID;
   v_lres   TEXT;
   e_estado TEXT;
   e_restr  TEXT;
@@ -398,11 +604,18 @@ BEGIN
     RAISE EXCEPTION 'Dispositivo % no registrado', v_disp;
   END IF;
 
+  SELECT centro_venta_id INTO v_ped_centro FROM pedido WHERE id = v_id;
+
   -- 1) Encabezado
-  IF EXISTS (SELECT 1 FROM pedido WHERE id = v_id) THEN
+  IF v_ped_centro = v_centro THEN
     v_res := 'YA_EXISTIA';
   ELSIF EXISTS (SELECT 1 FROM sync_conflicto WHERE operacion_id = v_id) THEN
     v_res := 'YA_EN_CONFLICTO';
+  ELSIF v_ped_centro IS NOT NULL THEN
+    -- El pedido existe pero es de otro centro: no se toca
+    PERFORM registrar_conflicto(v_centro, v_disp, 'PEDIDO', v_id, p,
+            'El pedido pertenece a otro centro de venta');
+    v_res := 'CONFLICTO';
   ELSIF NOT v_activo THEN
     PERFORM registrar_conflicto(v_centro, v_disp, 'PEDIDO', v_id, p, 'Dispositivo desactivado');
     v_res := 'CONFLICTO';
@@ -420,7 +633,7 @@ BEGIN
     EXCEPTION
       WHEN unique_violation THEN
         GET STACKED DIAGNOSTICS e_estado = RETURNED_SQLSTATE, e_restr = CONSTRAINT_NAME, e_msg = MESSAGE_TEXT;
-        IF EXISTS (SELECT 1 FROM pedido WHERE id = v_id) THEN
+        IF EXISTS (SELECT 1 FROM pedido WHERE id = v_id AND centro_venta_id = v_centro) THEN
           v_res := 'YA_EXISTIA';           -- llegó dos veces al mismo tiempo
         ELSE
           PERFORM registrar_conflicto(v_centro, v_disp, 'PEDIDO', v_id, p, motivo_conflicto(e_estado, e_restr, e_msg));
@@ -442,10 +655,15 @@ BEGIN
   -- 2) Líneas (cada una se aplica o va a conflicto por separado)
   FOR l IN SELECT * FROM jsonb_array_elements(COALESCE(p->'lineas', '[]'::jsonb)) LOOP
     v_lid := (l->>'id')::uuid;
-    IF EXISTS (SELECT 1 FROM pedido_detalle WHERE id = v_lid) THEN
+    SELECT pedido_id INTO v_lped FROM pedido_detalle WHERE id = v_lid;
+    IF v_lped = v_id THEN
       v_lres := 'YA_EXISTIA';
     ELSIF EXISTS (SELECT 1 FROM sync_conflicto WHERE operacion_id = v_lid) THEN
       v_lres := 'YA_EN_CONFLICTO';
+    ELSIF v_lped IS NOT NULL THEN
+      PERFORM registrar_conflicto(v_centro, v_disp, 'LINEA', v_lid,
+              l || jsonb_build_object('pedido_id', v_id), 'Esa línea ya existe en otro pedido');
+      v_lres := 'CONFLICTO';
     ELSIF NOT v_activo THEN
       PERFORM registrar_conflicto(v_centro, v_disp, 'LINEA', v_lid,
               l || jsonb_build_object('pedido_id', v_id), 'Dispositivo desactivado');
@@ -459,11 +677,21 @@ BEGIN
                 COALESCE((l->>'agregado_en')::timestamptz, now()),
                 COALESCE((p->>'origen')::origen_registro, 'EN_LINEA'));
         v_lres := 'APLICADO';
-      EXCEPTION WHEN OTHERS THEN
-        GET STACKED DIAGNOSTICS e_estado = RETURNED_SQLSTATE, e_restr = CONSTRAINT_NAME, e_msg = MESSAGE_TEXT;
-        PERFORM registrar_conflicto(v_centro, v_disp, 'LINEA', v_lid,
-                l || jsonb_build_object('pedido_id', v_id), motivo_conflicto(e_estado, e_restr, e_msg));
-        v_lres := 'CONFLICTO';
+      EXCEPTION
+        WHEN unique_violation THEN
+          GET STACKED DIAGNOSTICS e_estado = RETURNED_SQLSTATE, e_restr = CONSTRAINT_NAME, e_msg = MESSAGE_TEXT;
+          IF EXISTS (SELECT 1 FROM pedido_detalle WHERE id = v_lid AND pedido_id = v_id) THEN
+            v_lres := 'YA_EXISTIA';        -- la misma línea llegó dos veces al mismo tiempo
+          ELSE
+            PERFORM registrar_conflicto(v_centro, v_disp, 'LINEA', v_lid,
+                    l || jsonb_build_object('pedido_id', v_id), motivo_conflicto(e_estado, e_restr, e_msg));
+            v_lres := 'CONFLICTO';
+          END IF;
+        WHEN OTHERS THEN
+          GET STACKED DIAGNOSTICS e_estado = RETURNED_SQLSTATE, e_restr = CONSTRAINT_NAME, e_msg = MESSAGE_TEXT;
+          PERFORM registrar_conflicto(v_centro, v_disp, 'LINEA', v_lid,
+                  l || jsonb_build_object('pedido_id', v_id), motivo_conflicto(e_estado, e_restr, e_msg));
+          v_lres := 'CONFLICTO';
       END;
     END IF;
     v_lineas := v_lineas || jsonb_build_object(v_lid::text, v_lres);
@@ -505,10 +733,13 @@ BEGIN
       INSERT INTO pago (id, pedido_id, metodo_pago_id, turno_id, fecha_operacion, monto,
                         terminal_pos, referencia_pos, registrado_por, registrado_en,
                         dispositivo_id, origen)
+      -- Si no trae turno se usa el abierto del centro; validar_pago rechaza (va a la bandeja)
+      -- un turno cerrado, de otro centro, o un cobro atrasado hecho antes de que abriera el turno.
       VALUES (v_id, (p->>'pedido_id')::uuid, (p->>'metodo_pago_id')::smallint,
               COALESCE((p->>'turno_id')::int,
                        (SELECT id FROM turno_caja WHERE centro_venta_id = v_centro AND estado = 'ABIERTO')),
-              COALESCE((p->>'fecha_operacion')::date, CURRENT_DATE),
+              COALESCE((p->>'fecha_operacion')::date,
+                       fecha_guatemala(COALESCE((p->>'registrado_en')::timestamptz, now()))),
               (p->>'monto')::numeric, p->>'terminal_pos', p->>'referencia_pos',
               (p->>'registrado_por')::int, COALESCE((p->>'registrado_en')::timestamptz, now()),
               v_disp, COALESCE((p->>'origen')::origen_registro, 'EN_LINEA'));

@@ -91,15 +91,17 @@ Se eligió **Google Cloud** porque el login es Firebase (también de Google): un
 4. **Al volver el internet:** la sincronización ignora lo que ya llegó y manda a la bandeja de conflictos lo que choca con una regla.
 5. **Al cierre del día:** se importa el reporte del POS y se cruza contra los pagos. Un cobro del POS sin pedido es señal de posible doble cobro.
 
-## 6. Base de datos (v0.2)
+## 6. Base de datos (v0.3)
 
-El script completo está en `db/01_esquema_v0.2.sql` y los datos iniciales en `db/02_datos_iniciales.sql`.
+El script completo está en `db/01_esquema_v0.3.sql` y los datos iniciales en `db/02_datos_iniciales.sql`.
 
 - **Organización:** `centro_venta`, `usuario`, `usuario_centro`, `dispositivo`
 - **Catálogo:** `categoria`, `producto`, `producto_centro`, `tipo_venta`, `metodo_pago`
 - **Ventas:** `turno_caja`, `folio_contador`, `pedido`, `pedido_detalle`, `pago`
 - **Control:** `pos_transaccion`, `sync_conflicto`, `auditoria`
-- **Funciones:** `siguiente_folio`, `recalcular_total_pedido`, `validar_pago`, `fn_auditoria`, `registrar_conflicto`, `motivo_conflicto`, `sync_pedido`, `sync_pago`
+- **Funciones:** `fecha_guatemala`, `usuario_en_centro`, `siguiente_folio`, `calcular_pedido`, `validar_linea`, `recalcular_total_pedido`, `validar_pago`, `proteger_pago`, `pago_anulado`, `fn_auditoria`, `registrar_conflicto`, `motivo_conflicto`, `sync_pedido`, `sync_pago`
+
+La v0.3 corrige los 8 puntos de la revisión: no mezcla centros, la tarjeta exige voucher y terminal, los pagos solo se anulan (no se editan ni borran), el total siempre se recalcula y no baja de lo cobrado, no se cobra en turnos cerrados (un cobro atrasado va a la bandeja), la fecha usa la hora de Guatemala, una línea no cambia de pedido y reenviar una línea no crea conflictos falsos.
 
 ## 7. Hoja de ruta por fases
 
