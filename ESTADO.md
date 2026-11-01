@@ -4,7 +4,7 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 20:20 (hora de Guatemala) · Claude Code
+2026-10-31 21:05 (hora de Guatemala) · Claude Code
 
 ## Tarea actual
 
@@ -22,7 +22,7 @@ Tarea 5 · Permisos por rol y centro. **Terminada.**
 | 1 | Base de datos local (Docker Compose + 7 casos) | `58178dd` |
 | 2 | API (NestJS 12 + Prisma 7 + /salud + errores en español) | `314b43f` |
 | 3 | App (React 19 + Vite 8 + Tailwind 4 + shadcn/ui, PWA, indicador de /salud) | `a887efe` |
-| 4 | Login con Firebase (API verifica token + GET /sesion; app con login y sesión guardada) | `3c2a748` y ver `git log --grep "Tarea 4"` (falta prueba del usuario) |
+| 4 | Login con Firebase (API verifica token + GET /sesion; app con login y sesión guardada) | `3c2a748` y ver `git log --grep "Tarea 4"` (login real probado por el usuario el 2026-10-31) |
 | 5 | Permisos por rol y centro (menú por rol, bloqueo en app y API, elegir centro, pantalla de usuarios) | `cd8af40` y ver `git log --grep "Tarea 5"` |
 
 Notas:
@@ -62,11 +62,7 @@ Después de R1 sigue la Tarea 6 · Catálogo.
 
 ## Necesito del usuario
 
-1. **Probar el login (Tarea 4):**
-   - En la consola de Firebase → Authentication → Sign-in method: confirmar que "Correo electrónico/contraseña" esté activado.
-   - Authentication → Users → "Add user": crear tu usuario con tu correo y una contraseña. Copiar su **User UID**.
-   - En `apps/api`: `npm run crear-admin -- --uid <User UID> --email <tu correo> --nombre "Tu nombre"`
-   - Encender la API (`npm run start:dev` en `apps/api`) y la app (`npm run dev` en `apps/web`), entrar en http://localhost:5173 y recargar la página: debe seguir dentro.
+1. ~~Probar el login (Tarea 4)~~ **Hecho el 2026-10-31:** el usuario entró con su cuenta real como ADMIN (usuario id 18 en la base local).
 2. **Para crear usuarios con contraseña desde la pantalla Usuarios (Tarea 5):** una clave de cuenta de servicio de Firebase.
    Consola de Firebase → Configuración del proyecto → Cuentas de servicio → "Generar nueva clave privada".
    Guardar el JSON **fuera de la carpeta del proyecto** (por ejemplo `C:/claves/sirinventari-admin.json`) y poner en el `.env` de la raíz:
