@@ -26,6 +26,7 @@ service-account*.json
 firebase-adminsdk*.json
 credentials*.json
 gcloud-key*.json
+gha-creds-*.json
 
 # ---------- Firebase ----------
 .firebase/

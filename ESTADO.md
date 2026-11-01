@@ -4,11 +4,11 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 22:56 (hora de Guatemala) · Codex
+2026-10-31 23:11 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-R2 · Revisión de Tareas 6 a 12. **Realizada con pendientes; Fase 1 aún no aprobada por Cocina.**
+Tarea 13 · Publicación. **Preparación local lista; no se creó ni publicó nada en la nube.** Cocina y cierre de Fase 1 siguen pendientes.
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
@@ -16,6 +16,9 @@ R2 · Revisión de Tareas 6 a 12. **Realizada con pendientes; Fase 1 aún no apr
 - Falta pantalla Cocina y estados de preparación independientes del cobro. Ver punto 4 de "Necesito del usuario"; no se modificó el esquema.
 - Archivos: `apps/api/src/tiempo-real/`, `src/pedidos/pedidos.module.ts` y `pedidos.service.ts`, `test/tiempo-real.e2e-spec.ts`; dependencias/package-lock de API y app; hook `apps/web/src/hooks/useTiempoReal.ts`, integración en `paginas/Pedidos.tsx` y pruebas `pruebas/tiempo-real.test.tsx` y `app.test.tsx`.
 - Pruebas al guardar esta parte: API 13 unitarias y 43 de integración; app 32. Conexiones reales de Socket.IO prueban aviso sin recargar, aislamiento por centro y desactivación. La app prueba token/centro, reconexión y limpieza al cambiar centro. Build y lint correctos (los mismos 5 avisos anteriores en app).
+- Tarea 13: Dockerfile de API, contexto restringido, Firebase Hosting, CI y publicación con identidad federada preparada pero desactivada, soporte ADC en Cloud Run y guía `docs/publicacion.md` con propuesta de costos. No se pudo construir el contenedor local porque `docker` no está disponible; tampoco se ejecutó GitHub Actions ni se hizo push. Falta aprobación de plan/costo, configurar proyecto/IAM/secretos/CI, resolver seguridad de R2 y terminar Cocina antes de publicar.
+- Últimas pruebas: API 14 unitarias y 64 de integración; app 41 (también pasan con la configuración ficticia de Firebase prevista en CI). Build/lint correctos. Arranque real del JS compilado en puerto temporal 3099 y `/salud` correctos; se detuvo ese proceso al terminar. Los catálogos de producción se prueban en una base temporal vacía y no crean usuarios, centros ni turnos ficticios.
+- Archivos de preparación: `.dockerignore`, `.github/workflows/verificar-y-publicar.yml`, `firebase.json`, `apps/api/Dockerfile`, `apps/api/package.json`, autenticación Firebase y su prueba, `main.ts`, `.env.example`, `.gitignore`, pruebas de catálogos de producción, `db/03_catalogos_produccion.sql`, `docs/publicacion.md` y `docs/ejemplos/README.md`. El SQL 01 de tablas/triggers/funciones no se modificó.
 
 ## Tareas terminadas
 
@@ -64,7 +67,7 @@ Notas:
 
 ## Siguiente tarea
 
-Preparar la guía/archivos de Tarea 13 sin crear servicios de pago, mientras se espera la decisión de Cocina. Antes de publicar: terminar Tarea 9, sus pruebas y los pendientes de seguridad de R2.
+Retomar primero Tarea 9 cuando el usuario responda sobre el esquema. Para cerrar Fase 1: terminar Cocina y sus pruebas. La Tarea 13 tiene preparación local guardada y espera aprobación/configuración del usuario y resolver los pendientes de R2. La Tarea 14 necesita el archivo real del POS; requisitos en `docs/ejemplos/README.md`. No crear servicios ni habilitar `PUBLICAR_APROBADO` sin aprobación.
 
 ### Resultado de R2
 
@@ -152,6 +155,8 @@ Preparar la guía/archivos de Tarea 13 sin crear servicios de pago, mientras se 
    Mientras no esté, se puede crear el usuario en la consola de Firebase y registrarlo en la pantalla Usuarios con la opción "Ya existe en Firebase (tengo su UID)".
 3. ~~Abrir Codex para la revisión R1~~ **Hecho:** revisión ejecutada y resultados anotados arriba.
 4. **Tarea 9 · Autorizar separar el estado de cocina del estado de cobro.** `pedido.estado` mezcla `PAGADO` con `EN_PREPARACION/LISTO/ENTREGADO`. Cobrar antes de cocinar pierde el estado de preparación; cambiar PAGADO por LISTO volvería a abrir el pedido para cobros/productos. Propuesta pendiente de respuesta: añadir `pedido.estado_cocina` con valores PENDIENTE, EN_PREPARACION, LISTO y ENTREGADO, independiente de `pedido.estado`. Se preguntó al usuario; no se aplicó ninguna modificación a tablas, triggers o funciones.
+5. **Tarea 13 · Revisar y aprobar plan/costo en `docs/publicacion.md`.** Propuesta para un centro: `us-central1`, Cloud SQL 1 vCPU/3.75 GiB, Cloud Run 1 vCPU/1 GiB y una instancia máxima, reserva estimada USD 130/mes antes de impuestos (no es un tope automático). Confirmar proyecto/facturación, centros reales y acceso a configuración de Google Cloud/GitHub. El flujo exige `PUBLICAR_APROBADO=true` y el entorno protegido `produccion`; hoy no está habilitado. Configurar `CI_DB_PASSWORD` para las pruebas de GitHub. Docker/gcloud no están disponibles en esta sesión; el contenedor y la publicación necesitan validación posterior.
+6. **Tarea 14 · Archivo real de ejemplo del cierre del POS**, anonimizado y con su formato/encabezados originales, en `docs/ejemplos`. No se inventó un archivo ni un parser.
 
 ## Cómo probar lo último
 

@@ -8,9 +8,9 @@ export interface TokenVerificado {
   email?: string;
 }
 
-/** ¿Hay cuenta de servicio configurada? Sin ella solo se pueden verificar tokens. */
+/** Cuenta de servicio local o identidad de Cloud Run mediante credenciales predeterminadas. */
 export function hayCuentaDeServicio(): boolean {
-  return Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  return Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS) || process.env.FIREBASE_USAR_ADC === 'true';
 }
 
 let appFirebase: App | undefined;

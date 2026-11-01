@@ -4,7 +4,7 @@ import pg from 'pg';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 
 /** Base local desechable: permite probar pagos sin borrar ni alterar ventas del desarrollo. */
-export async function crearBaseAislada() {
+export async function crearBaseAislada({ datosIniciales = true }: { datosIniciales?: boolean } = {}) {
   const original = process.env.DATABASE_URL;
   if (!original) throw new Error('Falta DATABASE_URL para preparar las pruebas.');
   const nombre = `sirinventari_pruebas_${randomUUID().replaceAll('-', '')}`;
@@ -29,24 +29,27 @@ export async function crearBaseAislada() {
     await cliente.connect();
     try {
       await cliente.query(await readFile('../../db/01_esquema_v0.3.sql', 'utf8'));
-      await cliente.query(await readFile('../../db/02_datos_iniciales.sql', 'utf8'));
+      if (datosIniciales) await cliente.query(await readFile('../../db/02_datos_iniciales.sql', 'utf8'));
     } finally { await cliente.end(); }
     // La URL de la base aislada se usa solo para construir esta conexión.
     try { process.env.DATABASE_URL = url.toString(); prisma = new PrismaService(); }
     finally { process.env.DATABASE_URL = original; }
-    async function ejecutarCasos() {
+    async function ejecutarSql(sql: string) {
       const conexion = new pg.Client({ connectionString: url.toString() });
       const avisos: string[] = [];
       conexion.on('notice', (aviso) => avisos.push(aviso.message ?? ''));
       await conexion.connect();
       try {
-        // Se omiten solo comandos de psql; el SQL y su ROLLBACK se ejecutan completos.
-        const sql = (await readFile('../../db/pruebas/casos.sql', 'utf8')).replace(/^\\.*$/gm, '');
         await conexion.query(sql);
         return avisos;
       } catch (error) { await conexion.query('ROLLBACK'); throw error; }
       finally { await conexion.end(); }
     }
-    return { prisma, cerrar, ejecutarCasos };
+    async function ejecutarCasos() {
+      // Se omiten solo comandos de psql; el SQL y su ROLLBACK se ejecutan completos.
+      const sql = (await readFile('../../db/pruebas/casos.sql', 'utf8')).replace(/^\\.*$/gm, '');
+      return ejecutarSql(sql);
+    }
+    return { prisma, cerrar, ejecutarCasos, ejecutarSql };
   } catch (error) { await cerrar(); throw error; }
 }

@@ -1,0 +1,171 @@
+name: Verificar y publicar SirInventari
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ventas_pruebas
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+          POSTGRES_DB: sirinventari_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ventas_pruebas -d sirinventari_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgresql://ventas_pruebas:${{ secrets.CI_DB_PASSWORD }}@localhost:5432/sirinventari_ci
+      FIREBASE_PROJECT_ID: sirinventari-pruebas
+      FIREBASE_USAR_ADC: 'false'
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npx prisma generate
+      - run: npm test
+      - run: npm run test:e2e
+      - run: npm run build
+      - run: npm run lint
+      - name: Comprobar contenedor sin publicarlo
+        working-directory: .
+        run: docker build -f apps/api/Dockerfile -t sirinventari-api:prueba .
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Configuración ficticia: las pruebas no se conectan con un proyecto real.
+      VITE_FIREBASE_API_KEY: clave-de-prueba-no-real
+      VITE_FIREBASE_PROJECT_ID: sirinventari-pruebas
+      VITE_FIREBASE_AUTH_DOMAIN: pruebas.invalid
+      VITE_FIREBASE_APP_ID: app-de-prueba
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run build
+      - run: npm run lint
+
+  publicar:
+    needs: [api, web]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.PUBLICAR_APROBADO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: produccion
+    concurrency:
+      group: sirinventari-produccion
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      ARTIFACT_REPOSITORY: ${{ vars.ARTIFACT_REPOSITORY }}
+      CLOUD_SQL_CONNECTION: ${{ vars.CLOUD_SQL_CONNECTION }}
+      RUNTIME_SERVICE_ACCOUNT: ${{ vars.RUNTIME_SERVICE_ACCOUNT }}
+      WIF_PROVIDER: ${{ vars.WIF_PROVIDER }}
+      DEPLOY_SERVICE_ACCOUNT: ${{ vars.DEPLOY_SERVICE_ACCOUNT }}
+      DATABASE_SECRET: ${{ vars.DATABASE_SECRET }}
+      DATABASE_SECRET_VERSION: ${{ vars.DATABASE_SECRET_VERSION }}
+      FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+      CORS_ORIGENES: ${{ vars.CORS_ORIGENES }}
+      VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+      VITE_FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+      VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.FIREBASE_AUTH_DOMAIN }}
+      VITE_FIREBASE_APP_ID: ${{ vars.FIREBASE_APP_ID }}
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
+      VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.FIREBASE_STORAGE_BUCKET }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Revisar configuración antes de acceder a Google Cloud
+        shell: bash
+        run: |
+          set -euo pipefail
+          for variable in GCP_PROJECT_ID GCP_REGION ARTIFACT_REPOSITORY CLOUD_SQL_CONNECTION RUNTIME_SERVICE_ACCOUNT WIF_PROVIDER DEPLOY_SERVICE_ACCOUNT DATABASE_SECRET DATABASE_SECRET_VERSION FIREBASE_PROJECT_ID CORS_ORIGENES VITE_FIREBASE_API_KEY VITE_FIREBASE_AUTH_DOMAIN VITE_FIREBASE_APP_ID; do
+            if [ -z "${!variable}" ]; then
+              printf 'Falta configurar %s.\n' "$variable" >&2
+              exit 1
+            fi
+          done
+          [[ "$DATABASE_SECRET_VERSION" =~ ^[0-9]+$ ]]
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Construir y subir la imagen del commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          imagen="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REPOSITORY/sirinventari-api:$GITHUB_SHA"
+          gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev" --quiet
+          docker build -f apps/api/Dockerfile -t "$imagen" .
+          docker push "$imagen"
+          printf 'API_IMAGE=%s\n' "$imagen" >> "$GITHUB_ENV"
+      - name: Preparar variables públicas del servidor
+        shell: python
+        run: |
+          import json, os
+          variables = {
+            'FIREBASE_PROJECT_ID': os.environ['FIREBASE_PROJECT_ID'],
+            'FIREBASE_USAR_ADC': 'true',
+            'CORS_ORIGENES': os.environ['CORS_ORIGENES'],
+          }
+          with open(os.path.join(os.environ['RUNNER_TEMP'], 'sirinventari-env.json'), 'w') as archivo:
+            json.dump(variables, archivo)
+      - name: Publicar API piloto en una sola instancia
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run deploy sirinventari-api \
+            --project "$GCP_PROJECT_ID" --region "$GCP_REGION" \
+            --image "$API_IMAGE" --service-account "$RUNTIME_SERVICE_ACCOUNT" \
+            --add-cloudsql-instances "$CLOUD_SQL_CONNECTION" \
+            --set-secrets "DATABASE_URL=$DATABASE_SECRET:$DATABASE_SECRET_VERSION" \
+            --env-vars-file "$RUNNER_TEMP/sirinventari-env.json" \
+            --cpu 1 --memory 1Gi --min-instances 0 --max-instances 1 \
+            --no-cpu-throttling --concurrency 80 --timeout 3600 \
+            --session-affinity --allow-unauthenticated --quiet
+          api_url="$(gcloud run services describe sirinventari-api --project "$GCP_PROJECT_ID" --region "$GCP_REGION" --format='value(status.url)')"
+          curl --fail --retry 5 --retry-delay 5 "$api_url/salud"
+          printf 'VITE_API_URL=%s\n' "$api_url" >> "$GITHUB_ENV"
+      - name: Compilar app con configuración de producción
+        working-directory: apps/web
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+      - name: Publicar app en Firebase Hosting
+        run: npx --yes firebase-tools@15.34.2 deploy --only hosting --project "$FIREBASE_PROJECT_ID" --non-interactive

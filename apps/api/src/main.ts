@@ -12,7 +12,7 @@ async function iniciar(): Promise<void> {
   app.enableCors({ origin: origenes });
   app.enableShutdownHooks();
   const puerto = Number(process.env.PORT ?? process.env.API_PORT ?? 3000);
-  await app.listen(puerto);
+  await app.listen(puerto, '0.0.0.0');
   Logger.log(`API lista en http://localhost:${puerto}  (prueba: /salud)`, 'Inicio');
 }
 await iniciar();
