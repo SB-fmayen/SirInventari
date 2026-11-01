@@ -4,7 +4,15 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-01 00:10 (hora de Guatemala) · Codex
+2026-11-01 00:25 (hora de Guatemala) · Codex
+
+## Ajuste solicitado: cantidades y catálogo real
+
+- La nueva captura del usuario confirma que ya carga la interfaz actual: selector de centro, Usuarios y formulario Nuevo pedido. Resuelta la incidencia visual de la versión anterior.
+- Corregida la cantidad del borrador: `min=1`, `step=1` y máximo 999999 unidades. Antes las flechas aumentaban 0.01 y producían 1.01 platos. El guardado también valida unidades enteras con mensaje en español. Se mantienen los centavos de los precios; no se cambió el esquema ni la precisión admitida por la API.
+- Verificado con pruebas: 1 → 2 al incrementar; dos platos de Q45 suman Q90; otra línea suma Q135; no se envía 1.01 al guardar. Web: 44 pruebas, build correcto y lint sin errores (avisos previos). El módulo servido en 5173 contiene el incremento entero.
+- El usuario pidió cargar sus productos y precios, pero solo llegó la captura con los dos ejemplos existentes. Se solicitó la lista, categorías, precios, centro y detalle de los posibles combos/módulos. No se inventaron datos ni se modificó el catálogo mientras falta esa información.
+- Archivos: `apps/web/src/paginas/Pedidos.tsx`, `apps/web/src/pruebas/app.test.tsx`, `docs/pruebas-manuales.md` y esta libreta.
 
 ## Incidencia local: el navegador muestra pantallas antiguas
 
@@ -167,6 +175,7 @@ Retomar primero Tarea 9 cuando el usuario responda sobre el esquema. Para cerrar
 4. **Tarea 9 · Autorizar separar el estado de cocina del estado de cobro.** `pedido.estado` mezcla `PAGADO` con `EN_PREPARACION/LISTO/ENTREGADO`. Cobrar antes de cocinar pierde el estado de preparación; cambiar PAGADO por LISTO volvería a abrir el pedido para cobros/productos. Propuesta pendiente de respuesta: añadir `pedido.estado_cocina` con valores PENDIENTE, EN_PREPARACION, LISTO y ENTREGADO, independiente de `pedido.estado`. Se preguntó al usuario; no se aplicó ninguna modificación a tablas, triggers o funciones.
 5. **Tarea 13 · Revisar y aprobar plan/costo en `docs/publicacion.md`.** Propuesta para un centro: `us-central1`, Cloud SQL 1 vCPU/3.75 GiB, Cloud Run 1 vCPU/1 GiB y una instancia máxima, reserva estimada USD 130/mes antes de impuestos (no es un tope automático). Confirmar proyecto/facturación, centros reales y acceso a configuración de Google Cloud/GitHub. El flujo exige `PUBLICAR_APROBADO=true` y el entorno protegido `produccion`; hoy no está habilitado. Configurar `CI_DB_PASSWORD` para las pruebas de GitHub. Docker/gcloud no están disponibles en esta sesión; el contenedor y la publicación necesitan validación posterior.
 6. **Tarea 14 · Archivo real de ejemplo del cierre del POS**, anonimizado y con su formato/encabezados originales, en `docs/ejemplos`. No se inventó un archivo ni un parser.
+7. **Catálogo real para las pruebas:** falta la lista de productos/categorías/precios y el detalle de combos o módulos mencionados. La captura recibida solo muestra los ejemplos actuales (Plato del día Q45 y Refresco Q12). Cantidades corregidas; carga de datos pendiente de esa lista.
 
 ## Cómo probar lo último
 

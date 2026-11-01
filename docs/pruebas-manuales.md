@@ -51,6 +51,7 @@ Si aparecen todas las secciones en construcción y no se ve centro ni Usuarios c
 
 1. Tomar dos pedidos al mismo tiempo en dos ventanas. En un centro nuevo del día reciben folios 1 y 2; en otro caso, dos folios diferentes y consecutivos.
 2. Elegir mesa o tipo para llevar/domicilio/app con cliente. Agregar productos, cantidad y notas.
+   Las flechas de cantidad aumentan unidades enteras (1, 2, 3), sin generar 1.01. Dos platos de Q45 deben sumar Q90; los precios con centavos conservan sus decimales.
 3. Guardar, abrir el detalle y agregar otro producto con otra cuenta: se ve su nombre y hora en la línea nueva.
 4. Anular una línea: requiere motivo, la línea permanece marcada Anulada y el total se recalcula.
 5. Con un pedido pagado, no aparecen botones para agregar/anular productos y la API también lo rechaza.

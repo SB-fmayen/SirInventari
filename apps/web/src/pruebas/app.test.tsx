@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -323,6 +323,38 @@ describe('Pedidos (Tarea 8)', () => {
   const menu = [{ id: 1, nombre: 'Limonada', sku: 'BEB-1', precio: '18.75', categoria: { id: 1, nombre: 'Bebidas' } }]
   const tipos = [{ id: 1, codigo: 'MESA', nombre: 'Consumo en mesa' }]
   const otras = (pedidos: object[]) => ({ '/pedidos': { status: 200, cuerpo: pedidos }, '/pedidos/catalogo': { status: 200, cuerpo: menu }, '/pedidos/tipos': { status: 200, cuerpo: tipos } })
+
+  it('las flechas suman unidades completas y el total conserva los precios en centavos', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('MESERO'), otras: {
+      ...otras([]), '/pedidos/catalogo': { status: 200, cuerpo: [{ ...menu[0], nombre: 'Plato del día', precio: '45.00' }] },
+    } })
+    abrir('/pedidos')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo pedido' })).toBeEnabled())
+    await userEvent.click(screen.getByRole('button', { name: 'Nuevo pedido' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar Plato del día por Q 45.00' }))
+    const cantidad = screen.getByLabelText('Cantidad 1') as HTMLInputElement
+    expect(cantidad).toHaveAttribute('min', '1')
+    expect(cantidad).toHaveAttribute('step', '1')
+    cantidad.stepUp()
+    fireEvent.change(cantidad, { target: { value: cantidad.value } })
+    expect(cantidad).toHaveValue(2)
+    expect(screen.getByText('Total de los productos nuevos: Q 90.00')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar Plato del día por Q 45.00' }))
+    expect(screen.getByLabelText('Cantidad 2')).toHaveValue(1)
+    expect(screen.getByText('Total de los productos nuevos: Q 135.00')).toBeInTheDocument()
+  })
+
+  it('no envía cantidades fraccionarias al guardar desde la pantalla de unidades', async () => {
+    const fetchFalso = simularApi({ salud: 'sin-red', sesion: conRol('MESERO'), otras: otras([]) })
+    abrir('/pedidos')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo pedido' })).toBeEnabled())
+    await userEvent.click(screen.getByRole('button', { name: 'Nuevo pedido' }))
+    await userEvent.click(screen.getByRole('button', { name: /Agregar Limonada/ }))
+    fireEvent.change(screen.getByLabelText('Cantidad 1'), { target: { value: '1.01' } })
+    fireEvent.submit(screen.getByRole('form', { name: 'Nuevo pedido' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('La cantidad de cada producto debe ser un número entero')
+    expect(fetchFalso.mock.calls.filter(([, opciones]) => opciones?.method === 'POST')).toHaveLength(0)
+  })
 
   it('genera UUID para pedido y líneas, conserva esos IDs al reintentar y envía notas sin precio', async () => {
     const fetchFalso = simularApi({ salud: 'sin-red', sesion: conRol('MESERO'), otras: otras([]) })
