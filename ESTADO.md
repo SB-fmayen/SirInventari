@@ -4,7 +4,16 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 23:11 (hora de Guatemala) · Codex
+2026-10-31 23:34 (hora de Guatemala) · Codex
+
+## Incidencia local: el navegador muestra pantallas antiguas
+
+- El usuario aportó capturas con todas las secciones en construcción y sin selector de centro ni Usuarios. Es la interfaz anterior, aunque las fuentes que entrega `localhost:5173` ya contienen las pantallas nuevas. La inspección automática de su navegador no estuvo disponible; su URL exacta y la confirmación visual siguen pendientes.
+- Detectado un fallo de recuperación: en desarrollo `/sw.js` devolvía HTML. Eso impide actualizar un Service Worker previo registrado por una compilación de la PWA. Se sirve ahora un worker de retiro solo en desarrollo, en la misma ruta, con JavaScript y `Cache-Control: no-store`. Retira su registro y recarga sus pestañas; no borra cachés, sesión ni IndexedDB. En desarrollo no se registra una PWA nueva; producción conserva Workbox y la PWA instalable.
+- Vite queda fijado al puerto 5173 con `strictPort`, para no arrancar silenciosamente en otro puerto.
+- Verificado: endpoint de retiro HTTP 200/JavaScript/no-store, cinco módulos nuevos HTTP 200, worker de producción con `precacheAndRoute`; 42 pruebas de app, build correcto y lint sin errores (5 avisos anteriores). Falta que el usuario recargue la dirección exacta y confirme la pantalla; no se afirma haberla validado en su navegador.
+- Archivos: `apps/web/pwa-desarrollo.ts`, `vite.config.ts`, `src/main.tsx`, `src/pruebas/pwa-desarrollo.test.ts`, esta libreta y `docs/pruebas-manuales.md`.
+- Incidencia previa del login: la API iniciada dentro del entorno restringido no podía descargar los certificados públicos de Firebase. Se reinició con permiso de red y el usuario confirmó que pudo entrar; no se cambió su contraseña ni su cuenta.
 
 ## Tarea actual
 

@@ -3,13 +3,16 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { retirarPwaEnDesarrollo } from './pwa-desarrollo.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
   // Las variables VITE_* se leen del .env de la raíz del proyecto.
   // Solo las que empiezan con VITE_ llegan a la app; las demás (contraseñas) no.
   envDir: '../..',
+  server: { port: 5173, strictPort: true },
   plugins: [
+    retirarPwaEnDesarrollo(),
     react(),
     tailwindcss(),
     VitePWA({

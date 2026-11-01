@@ -10,6 +10,8 @@ Estas pruebas son para desarrollo o un centro de prueba. Usar el POS en modo de 
 4. Abrir `http://localhost:5173`. Debe aparecer Iniciar sesión; al entrar, API conectada.
 5. Usar cuentas de prueba ADMIN, GERENTE, CAJERO, MESERO y COCINA creadas en Firebase y registradas en Usuarios. No compartir contraseñas entre personas.
 
+Si aparecen todas las secciones en construcción y no se ve centro ni Usuarios como ADMIN, se está mostrando la interfaz anterior. Confirmar `http://localhost:5173` y recargar: el servidor de desarrollo entrega en `/sw.js` un script para retirar el worker de una compilación previa, sin borrar la sesión ni los datos locales. La versión actual pide elegir centro si hay varios; en Pedidos muestra “Pedidos del día” y “Nuevo pedido”. Solo Cocina sigue pendiente. Vite no cambia de puerto automáticamente si 5173 está ocupado.
+
 ## Pruebas automáticas antes de empezar
 
 - En `apps/api`: `npm.cmd test`, `npm.cmd run test:e2e`, `npm.cmd run build` y `npm.cmd run lint`.
