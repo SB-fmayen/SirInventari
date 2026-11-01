@@ -4,15 +4,18 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 19:50 (hora de Guatemala) · Claude Code
+2026-10-31 20:05 (hora de Guatemala) · Claude Code
 
 ## Tarea actual
 
-Tarea 4 · Login con Firebase. **Terminada en código; falta la prueba final del usuario** (crear su usuario en Firebase y entrar; ver "Necesito del usuario").
+Tarea 5 · Permisos por rol y centro. **A medias.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
-- Código completo y con pruebas automáticas (API: 12 e2e; app: 13). Solo falta que el usuario confirme el "Listo cuando" con su cuenta real.
+- Hecho y probado (API): decorador `@Roles(...)`, centro elegido con el encabezado `X-Centro-Id` (y `@CentroActual()`), rutas `/usuarios` (solo ADMIN: listar, crear, cambiar rol y centros, activar/desactivar) y `/centros` (ADMIN y GERENTE).
+- Corregido en la Tarea 4: la API ya no pide revisar sesiones revocadas si no hay cuenta de servicio (sin la clave, el login real habría fallado).
+- Falta (app): menú por rol, bloqueo de pantallas por rol aunque se escriba la dirección, elegir centro al entrar, pantalla de usuarios del ADMIN, pruebas.
+- Archivos tocados: `apps/api/src/autenticacion/*`, `apps/api/src/usuarios/*`, `apps/api/test/permisos.e2e-spec.ts`.
 
 ## Tareas terminadas
 

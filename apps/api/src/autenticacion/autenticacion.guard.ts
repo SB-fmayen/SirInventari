@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ES_PUBLICA } from './publica.decorator.js';
+import { ROLES_PERMITIDOS } from './roles.decorator.js';
 import type { RequestConUsuario, Rol, UsuarioSesion } from './usuario-sesion.js';
 import { VerificadorFirebase } from './verificador-firebase.js';
 
@@ -47,7 +48,27 @@ export class AutenticacionGuard implements CanActivate {
       throw new UnauthorizedException('Tu sesión terminó o no es válida. Vuelve a iniciar sesión.');
     }
 
-    req.usuario = await this.buscarUsuario(uid);
+    const usuario = await this.buscarUsuario(uid);
+    req.usuario = usuario;
+
+    // Permisos por rol (@Roles en la ruta o el controlador)
+    const roles = this.reflector.getAllAndOverride<Rol[] | undefined>(ROLES_PERMITIDOS, [
+      contexto.getHandler(),
+      contexto.getClass(),
+    ]);
+    if (roles && !roles.includes(usuario.rol)) {
+      throw new ForbiddenException('No tienes permiso para hacer esto.');
+    }
+
+    // Centro de venta elegido en la app: debe ser uno de los centros del usuario
+    const encabezado = req.headers['x-centro-id'];
+    if (encabezado !== undefined && encabezado !== '') {
+      const centroId = Number(Array.isArray(encabezado) ? encabezado[0] : encabezado);
+      if (!Number.isInteger(centroId) || !usuario.centros.some((c) => c.id === centroId)) {
+        throw new ForbiddenException('No tienes acceso a ese centro de venta.');
+      }
+      req.centroId = centroId;
+    }
     return true;
   }
 
