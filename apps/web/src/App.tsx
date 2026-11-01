@@ -1,15 +1,40 @@
-import { House } from 'lucide-react'
+import { House, LoaderCircle, LogOut } from 'lucide-react'
 import { Link, NavLink, Route, Routes } from 'react-router'
 import { IndicadorApi } from '@/componentes/IndicadorApi'
 import { useSaludApi } from '@/hooks/useSaludApi'
 import { cn } from '@/lib/utils'
 import { EnConstruccion } from '@/paginas/EnConstruccion'
 import { Inicio } from '@/paginas/Inicio'
+import { Login } from '@/paginas/Login'
 import { NoEncontrada } from '@/paginas/NoEncontrada'
+import { SinAcceso } from '@/paginas/SinAcceso'
 import { SECCIONES } from '@/secciones'
+import { useSesion } from '@/sesion/SesionProvider'
+import { NOMBRE_ROL, type UsuarioSistema } from '@/sesion/tipos'
+
+/** Decide qué mostrar según la sesión: cargando, login, sin acceso o la app. */
+export default function App() {
+  const { estado } = useSesion()
+  switch (estado.tipo) {
+    case 'cargando':
+      return (
+        <div className="flex min-h-svh items-center justify-center gap-3 bg-slate-50 text-xl text-slate-600">
+          <LoaderCircle className="size-8 animate-spin" aria-hidden />
+          Cargando…
+        </div>
+      )
+    case 'sin-sesion':
+      return <Login />
+    case 'sin-acceso':
+      return <SinAcceso mensaje={estado.mensaje} />
+    case 'activa':
+      return <Principal usuario={estado.usuario} />
+  }
+}
 
 /** Estructura general: barra superior, menú de secciones y contenido. */
-export default function App() {
+function Principal({ usuario }: { usuario: UsuarioSistema }) {
+  const { salir } = useSesion()
   const { estado, fechaOperacion, revisarAhora } = useSaludApi()
 
   return (
@@ -25,7 +50,21 @@ export default function App() {
               </span>
             </span>
           </Link>
-          <IndicadorApi estado={estado} onRevisar={revisarAhora} />
+          <div className="flex flex-wrap items-center gap-3">
+            <IndicadorApi estado={estado} onRevisar={revisarAhora} />
+            <span className="text-right leading-tight">
+              <span className="block text-base font-semibold text-slate-900">{usuario.nombre}</span>
+              <span className="block text-sm text-slate-500">{NOMBRE_ROL[usuario.rol]}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => void salir()}
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-slate-100 px-4 text-base font-semibold text-slate-700 hover:bg-slate-200"
+            >
+              <LogOut className="size-5" aria-hidden />
+              Cerrar sesión
+            </button>
+          </div>
         </div>
         <nav aria-label="Menú principal" className="flex gap-2 overflow-x-auto px-4 pb-3">
           <EnlaceMenu ruta="/" nombre="Inicio" icono={House} fin />

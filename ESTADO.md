@@ -4,17 +4,15 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 19:40 (hora de Guatemala) · Claude Code
+2026-10-31 19:50 (hora de Guatemala) · Claude Code
 
 ## Tarea actual
 
-Tarea 4 · Login con Firebase. **A medias.**
+Tarea 4 · Login con Firebase. **Terminada en código; falta la prueba final del usuario** (crear su usuario en Firebase y entrar; ver "Necesito del usuario").
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
-- Hecho y probado: la API verifica el token de Firebase (solo con FIREBASE_PROJECT_ID), busca al usuario por firebase_uid con rol y centros, ruta GET /sesion, mensaje "Tu usuario no tiene acceso. Habla con el administrador." y script `npm run crear-admin`.
-- Falta: pantalla de login en la app (Firebase Web SDK), sesión que sigue al recargar, botón de cerrar sesión, pruebas de la app.
-- Archivos tocados: `apps/api/src/autenticacion/*`, `apps/api/scripts/crear-admin.ts`, `apps/api/test/sesion.e2e-spec.ts`, `apps/api/src/salud/salud.controller.ts`, `apps/api/src/app.module.ts`.
+- Código completo y con pruebas automáticas (API: 12 e2e; app: 13). Solo falta que el usuario confirme el "Listo cuando" con su cuenta real.
 
 ## Tareas terminadas
 
@@ -24,6 +22,7 @@ Tarea 4 · Login con Firebase. **A medias.**
 | 1 | Base de datos local (Docker Compose + 7 casos) | `58178dd` |
 | 2 | API (NestJS 12 + Prisma 7 + /salud + errores en español) | `314b43f` |
 | 3 | App (React 19 + Vite 8 + Tailwind 4 + shadcn/ui, PWA, indicador de /salud) | `a887efe` |
+| 4 | Login con Firebase (API verifica token + GET /sesion; app con login y sesión guardada) | `3c2a748` y ver `git log --grep "Tarea 4"` (falta prueba del usuario) |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -39,10 +38,15 @@ Notas:
 - Tarea 3: `npm run lint` da 3 avisos (no errores): dos en componentes de shadcn y uno en `useSaludApi` (falso positivo: el setState ocurre después de un await).
 - Aviso para la Tarea 7: Prisma interpretó el índice parcial `uq_turno_abierto` como si cada centro tuviera un solo turno (`centro_venta.turno_caja turno_caja?`). Para consultar turnos de un centro usar `prisma.turno_caja.findMany({ where: { centro_venta_id } })`, no la relación desde centro_venta.
 - Tarea 3: verificado en Chrome: la app abre, dice "API conectada" y no hay errores en la consola.
+- Tarea 4: la API verifica los tokens solo con `FIREBASE_PROJECT_ID` (no necesita clave secreta). Todas las rutas piden sesión salvo las marcadas con `@Publica()` (por ahora solo `/salud`). El usuario de la sesión se obtiene con `@UsuarioActual()`.
+- Tarea 4: el ADMIN recibe todos los centros activos; los demás roles, solo los de `usuario_centro`.
+- Tarea 4: la configuración web de Firebase se pasó del `.txt` local al `.env` (variables `VITE_FIREBASE_*`). En el código no hay claves.
+- Tarea 4: en las pruebas, Firebase se simula (API: `VerificadorFalso`, token `token-<uid>`; app: `vi.mock('@/lib/firebase')`). Ninguna prueba usa el proyecto real.
+- Tarea 4: verificado en Chrome que la pantalla de login abre sin errores. No se probó entrar con una cuenta real (los agentes no escriben contraseñas en servicios reales).
 
 ## Siguiente tarea
 
-Tarea 4 · Login con Firebase Authentication.
+Tarea 5 · Permisos por rol y centro. Se puede avanzar casi todo (menú por rol, bloqueo en la API, elegir centro). Crear usuarios en Firebase desde la pantalla del ADMIN necesita la cuenta de servicio (ver "Necesito del usuario").
 
 ## Pendientes para el otro agente
 
@@ -50,8 +54,15 @@ Tarea 4 · Login con Firebase Authentication.
 
 ## Necesito del usuario
 
-- (nada por ahora)
-- Más adelante (Tarea 4): las claves de Firebase Admin (cuenta de servicio). La configuración web de Firebase ya está en el archivo local `PROYECTO PARA QUE TE CONECTES A FIREBASE ... .txt`, que Git ignora; se pasará a `.env`.
+1. **Probar el login (Tarea 4):**
+   - En la consola de Firebase → Authentication → Sign-in method: confirmar que "Correo electrónico/contraseña" esté activado.
+   - Authentication → Users → "Add user": crear tu usuario con tu correo y una contraseña. Copiar su **User UID**.
+   - En `apps/api`: `npm run crear-admin -- --uid <User UID> --email <tu correo> --nombre "Tu nombre"`
+   - Encender la API (`npm run start:dev` en `apps/api`) y la app (`npm run dev` en `apps/web`), entrar en http://localhost:5173 y recargar la página: debe seguir dentro.
+2. **Para la Tarea 5 (crear usuarios desde la app):** una clave de cuenta de servicio de Firebase.
+   Consola de Firebase → Configuración del proyecto → Cuentas de servicio → "Generar nueva clave privada".
+   Guardar el JSON **fuera de la carpeta del proyecto** (por ejemplo `C:/claves/sirinventari-admin.json`) y poner en el `.env` de la raíz:
+   `GOOGLE_APPLICATION_CREDENTIALS=C:/claves/sirinventari-admin.json`. Nunca subirlo a Git.
 
 ## Cómo probar lo último
 
@@ -66,14 +77,15 @@ API (Tarea 2):
 1. `cd apps/api` y `npm install` (la primera vez).
 2. `npm run start:dev` y abrir http://localhost:3000/salud en el navegador.
    Debe decir `"baseDatos":"ok"` y la fecha de hoy en Guatemala.
-3. Pruebas automáticas: `npm test` (11 pruebas) y `npm run test:e2e` (5 pruebas, con la base encendida).
+3. Pruebas automáticas: `npm test` (11 pruebas) y `npm run test:e2e` (12 pruebas, con la base encendida).
 
-App (Tarea 3):
+App (Tareas 3 y 4):
 1. Con la API encendida: `cd apps/web`, `npm install` (la primera vez) y `npm run dev`.
-2. Abrir http://localhost:5173 : arriba a la derecha debe decir **API conectada** (verde).
-   Si apagas la API, a los 30 segundos (o al tocar el indicador) dice **Sin conexión con la API** (rojo).
-3. El menú tiene Pedidos, Cocina, Caja, Turnos, Catálogo y Reportes (por ahora "en construcción").
-4. Para probar la instalación como app: `npm run build` y `npm run preview`; en Chrome aparece el botón de instalar.
-5. Pruebas automáticas: `npm test` (6 pruebas).
+2. Abrir http://localhost:5173 : aparece la pantalla **Iniciar sesión**.
+3. Entrar con el usuario creado en Firebase (ver "Necesito del usuario" punto 1). Arriba se ve tu nombre, "Administrador" y **API conectada** (verde).
+4. Recargar la página: debe seguir dentro. "Cerrar sesión" vuelve al login.
+5. Un usuario de Firebase que no está en la base ve: "Tu usuario no tiene acceso. Habla con el administrador."
+6. Para probar la instalación como app: `npm run build` y `npm run preview`; en Chrome aparece el botón de instalar.
+7. Pruebas automáticas: `npm test` (13 pruebas).
 
 Las credenciales están en `.env` en la raíz (local, no se sube). La plantilla es `.env.example`.
