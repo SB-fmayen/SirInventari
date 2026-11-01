@@ -8,6 +8,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { SaludModule } from './salud/salud.module.js';
 import { UsuariosModule } from './usuarios/usuarios.module.js';
 import { CatalogoModule } from './catalogo/catalogo.module.js';
+import { TurnosModule } from './turnos/turnos.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CatalogoModule } from './catalogo/catalogo.module.js';
     SaludModule,
     UsuariosModule,
     CatalogoModule,
+    TurnosModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: FiltroErrores }],
 })

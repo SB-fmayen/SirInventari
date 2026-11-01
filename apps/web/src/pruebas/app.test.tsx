@@ -283,6 +283,37 @@ describe('Catálogo (Tarea 6)', () => {
   })
 })
 
+describe('Turnos de caja (Tarea 7)', () => {
+  const turno = { id: 7, fecha_operacion: '2026-10-31', nombre_apertura: 'Luis Cajero', abierto_en: '2026-11-01T03:00:00Z', nombre_cierre: null, cerrado_en: null, estado: 'ABIERTO', fondo_inicial: '100.10', efectivo_ventas: '20.20', efectivo_esperado: '120.30', efectivo_contado: null, diferencia: null }
+
+  it('muestra quién abrió y cierra enviando el efectivo contado al centro elegido', async () => {
+    const fetchFalso = simularApi({ salud: 'sin-red', sesion: conRol('CAJERO'), otras: {
+      '/turnos': { status: 200, cuerpo: [turno] },
+      '/turnos/7/cierre': { status: 201, cuerpo: { ...turno, estado: 'CERRADO', efectivo_contado: '120.20', diferencia: '-0.10' } },
+    } })
+    abrir('/turnos')
+    expect(await screen.findByText(/Abierto por Luis Cajero/)).toBeInTheDocument()
+    expect(screen.getByText('Día de operación')).toBeInTheDocument()
+    expect(screen.getByText('31/10/2026')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Efectivo contado'), '120.20')
+    expect(screen.getByText('Diferencia prevista: Q -0.10')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar turno' }))
+    expect(await screen.findByText('Turno cerrado. Efectivo esperado: Q 120.30. Diferencia: Q -0.10.')).toHaveAttribute('role', 'status')
+    const opciones = fetchFalso.mock.calls.find(([url]) => url.endsWith('/turnos/7/cierre'))?.[1]
+    expect(opciones).toMatchObject({ method: 'POST', headers: { 'X-Centro-Id': '1' } })
+    expect(Number(JSON.parse(String(opciones?.body)).efectivo_contado)).toBe(120.20)
+  })
+
+  it('si otra caja abrió mientras llenaba el fondo, muestra el mensaje de la API', async () => {
+    const fetchFalso = simularApi({ salud: 'sin-red', otras: { '/turnos': { status: 200, cuerpo: [] } } })
+    abrir('/turnos')
+    await userEvent.type(await screen.findByLabelText('Fondo inicial'), '100')
+    fetchFalso.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ mensaje: 'Ya hay un turno abierto por Luis Cajero desde las 15:00.' }), { status: 409 })))
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir turno' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ya hay un turno abierto por Luis Cajero')
+  })
+})
+
 describe('Permisos por rol y centro (Tarea 5)', () => {
   it('al cambiar de usuario el formulario muestra los datos del usuario elegido', async () => {
     simularApi({

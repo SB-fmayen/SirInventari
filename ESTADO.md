@@ -4,11 +4,11 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 21:29 (hora de Guatemala) · Codex
+2026-10-31 21:33 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-Tarea 6 · Catálogo. **Terminada.**
+Tarea 7 · Turnos de caja. **Terminada.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
@@ -26,6 +26,7 @@ Tarea 6 · Catálogo. **Terminada.**
 | 5 | Permisos por rol y centro (menú por rol, bloqueo en app y API, elegir centro, pantalla de usuarios) | `cd8af40` y ver `git log --grep "Tarea 5"` |
 | R1 | Revisión de tareas 0 a 5 y correcciones mínimas | Ver `git log --grep "Tarea R1"` |
 | 6 | Categorías, productos y precio y disponibilidad por centro | Ver `git log --grep "Tarea 6"` |
+| 7 | Apertura, cierre e historial de turnos por centro | Ver `git log --grep "Tarea 7"` |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -55,7 +56,15 @@ Notas:
 
 ## Siguiente tarea
 
-Tarea 7 · Turnos de caja.
+Tarea 8 · Pedidos.
+
+### Resultado de Tarea 7
+
+- `/turnos` para ADMIN/GERENTE/CAJERO: apertura con fondo, un turno abierto por centro, aviso con nombre y hora del turno existente; cierre una sola vez con efectivo contado; historial filtrado por centro.
+- La fecha de operación viene de `fecha_guatemala()` en la base. La pantalla muestra las horas de Guatemala. Efectivo esperado = fondo + pagos en efectivo APLICADOS; diferencia = contado - esperado. Los cálculos de la API usan Decimal.
+- Cierre bajo bloqueo de fila del turno. **Para Tarea 10 y Tarea 18:** los cobros de la API deben tomar ese mismo bloqueo antes de registrar pagos para coordinar cobros y cierre. El trigger actual lee el turno sin bloquearlo; no se cambió el SQL.
+- Pruebas: API 13 unitarias y 35 de integración; app 27. Incluye apertura simultánea, cierre repetido, historial, permisos, efectivo/tarjeta/anulados y centavos exactos. Compilaciones y lint correctos; quedan los mismos 5 avisos anteriores de la app.
+- Archivos: módulo nuevo `apps/api/src/turnos/`, registro en `app.module.ts`, `test/turnos.e2e-spec.ts`, página `apps/web/src/paginas/Turnos.tsx`, ruta y pruebas de la app.
 
 ### Resultado de Tarea 6
 
