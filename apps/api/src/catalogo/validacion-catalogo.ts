@@ -1,0 +1,68 @@
+import { BadRequestException } from '@nestjs/common';
+
+export function objeto(cuerpo: unknown): Record<string, unknown> {
+  if (!cuerpo || typeof cuerpo !== 'object' || Array.isArray(cuerpo)) {
+    throw new BadRequestException('Faltan los datos del catálogo.');
+  }
+  return cuerpo as Record<string, unknown>;
+}
+
+export function texto(valor: unknown, campo: string, limite: number): string {
+  if (typeof valor !== 'string' || !valor.trim() || valor.trim().length > limite) {
+    throw new BadRequestException(`Escribe ${campo} de entre 1 y ${limite} caracteres.`);
+  }
+  return valor.trim();
+}
+
+export function entero(valor: unknown, campo: string, minimo: number, maximo = 2147483647): number {
+  if (typeof valor !== 'number' || !Number.isInteger(valor) || valor < minimo || valor > maximo) {
+    throw new BadRequestException(`El valor de ${campo} no es válido.`);
+  }
+  return valor;
+}
+
+export function booleano(valor: unknown): boolean {
+  if (typeof valor !== 'boolean') throw new BadRequestException('Indica si queda activo o disponible.');
+  return valor;
+}
+
+export function precio(valor: unknown): string {
+  if ((typeof valor !== 'string' && typeof valor !== 'number') || !/^\d{1,8}(\.\d{1,2})?$/.test(String(valor))) {
+    throw new BadRequestException('El precio debe ser un número de 0 a 99999999.99, con hasta dos decimales.');
+  }
+  return String(valor);
+}
+
+export function categoria(cuerpo: unknown, nuevo: boolean) {
+  const c = objeto(cuerpo);
+  const datos = {
+    ...(nuevo || c.nombre !== undefined ? { nombre: texto(c.nombre, 'el nombre', 60) } : {}),
+    ...(c.orden !== undefined ? { orden: entero(c.orden, 'orden', -32768, 32767) } : {}),
+    ...(c.activo !== undefined ? { activo: booleano(c.activo) } : {}),
+  };
+  if (!Object.keys(datos).length) throw new BadRequestException('No hay cambios para guardar.');
+  return datos;
+}
+
+export function producto(cuerpo: unknown, nuevo: boolean) {
+  const c = objeto(cuerpo);
+  const datos = {
+    ...(nuevo || c.sku !== undefined ? { sku: texto(c.sku, 'el SKU', 30) } : {}),
+    ...(nuevo || c.nombre !== undefined ? { nombre: texto(c.nombre, 'el nombre', 120) } : {}),
+    ...(nuevo || c.categoria_id !== undefined ? { categoria_id: entero(c.categoria_id, 'categoría', 1) } : {}),
+    ...(nuevo || c.precio_base !== undefined ? { precio_base: precio(c.precio_base) } : {}),
+    ...(c.activo !== undefined ? { activo: booleano(c.activo) } : {}),
+  };
+  if (!Object.keys(datos).length) throw new BadRequestException('No hay cambios para guardar.');
+  return datos;
+}
+
+export function productoCentro(cuerpo: unknown) {
+  const c = objeto(cuerpo);
+  const datos = {
+    ...(c.precio !== undefined ? { precio: c.precio === null ? null : precio(c.precio) } : {}),
+    ...(c.disponible !== undefined ? { disponible: booleano(c.disponible) } : {}),
+  };
+  if (!Object.keys(datos).length) throw new BadRequestException('No hay cambios para guardar.');
+  return datos;
+}

@@ -4,11 +4,11 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 21:25 (hora de Guatemala) · Codex
+2026-10-31 21:29 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-R1 · Revisión de las tareas 0 a 5. **Terminada con pendientes anotados.**
+Tarea 6 · Catálogo. **Terminada.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
@@ -25,6 +25,7 @@ R1 · Revisión de las tareas 0 a 5. **Terminada con pendientes anotados.**
 | 4 | Login con Firebase (API verifica token + GET /sesion; app con login y sesión guardada) | `3c2a748` y ver `git log --grep "Tarea 4"` (login real probado por el usuario el 2026-10-31) |
 | 5 | Permisos por rol y centro (menú por rol, bloqueo en app y API, elegir centro, pantalla de usuarios) | `cd8af40` y ver `git log --grep "Tarea 5"` |
 | R1 | Revisión de tareas 0 a 5 y correcciones mínimas | Ver `git log --grep "Tarea R1"` |
+| 6 | Categorías, productos y precio y disponibilidad por centro | Ver `git log --grep "Tarea 6"` |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -54,7 +55,14 @@ Notas:
 
 ## Siguiente tarea
 
-Tarea 6 · Catálogo.
+Tarea 7 · Turnos de caja.
+
+### Resultado de Tarea 6
+
+- API `/catalogo`: crear/editar/ordenar/desactivar categorías; crear/editar/desactivar productos; buscar por nombre/SKU y categoría; precio y disponibilidad solo del centro elegido. Sin DELETE ni cambios al esquema.
+- Pantalla Catálogo para ADMIN/GERENTE, filtros y formularios separados para datos globales y configuración del centro. Un precio propio vacío guarda NULL y usa el precio base; un precio cero se conserva. Una categoría o producto inactivo no queda disponible para venta.
+- Pruebas: API 31 de integración (incluye precio distinto por centro, cero, NULL, permisos, validaciones y desactivación); app 25 (incluye cambio de centro, precio mostrado, búsqueda y guardado). Compilación y lint de ambas correctos, con los mismos 5 avisos previos de la app.
+- Archivos: módulo nuevo `apps/api/src/catalogo/`, registro en `app.module.ts`, prueba `test/catalogo.e2e-spec.ts`, página `apps/web/src/paginas/Catalogo.tsx`, ruta en `App.tsx` y pruebas en `src/pruebas/app.test.tsx`.
 
 ### Resultado de R1
 

@@ -7,6 +7,7 @@ import { FiltroErrores } from './comun/filtro-errores.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { SaludModule } from './salud/salud.module.js';
 import { UsuariosModule } from './usuarios/usuarios.module.js';
+import { CatalogoModule } from './catalogo/catalogo.module.js';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UsuariosModule } from './usuarios/usuarios.module.js';
     AutenticacionModule,
     SaludModule,
     UsuariosModule,
+    CatalogoModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: FiltroErrores }],
 })

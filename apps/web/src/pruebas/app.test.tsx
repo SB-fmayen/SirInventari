@@ -239,6 +239,50 @@ const conRol = (rol: string, centros = [CV1]) => ({ status: 200, cuerpo: { ...AD
 const textoMenu = async () =>
   (await screen.findByRole('navigation', { name: 'Menú principal' })).textContent ?? ''
 
+describe('Catálogo (Tarea 6)', () => {
+  const categoria = { id: 1, nombre: 'Bebidas', orden: 1, activo: true }
+  const producto = { id: 1, sku: 'BEB-1', nombre: 'Limonada', categoria_id: 1, precio_base: '12.5', activo: true, precio_centro: null, precio: '12.5', disponible: true, disponible_venta: true }
+
+  it('muestra el precio del centro elegido y guarda la vuelta al precio base con null', async () => {
+    const fetchFalso = simularApi({ salud: 'sin-red', sesion: conRol('ADMIN', [CV1, CV2]) })
+    const anterior = fetchFalso.getMockImplementation()!
+    fetchFalso.mockImplementation((url, opciones) => {
+      if (url.includes('/catalogo/')) {
+        const segundo = (opciones?.headers as Record<string, string> | undefined)?.['X-Centro-Id'] === '2'
+        const cuerpo = url.endsWith('/categorias') ? [categoria] : [{ ...producto, precio: segundo ? '18.75' : '12.5', precio_centro: segundo ? '18.75' : null }]
+        return Promise.resolve(new Response(JSON.stringify(cuerpo), { status: 200 }))
+      }
+      return anterior(url, opciones)
+    })
+    abrir('/catalogo')
+    await userEvent.click(await screen.findByRole('button', { name: /Centro de venta 1/ }))
+    expect(await screen.findByText('Usa precio base')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar' }))
+    await userEvent.click(screen.getByRole('button', { name: /Centro de venta 2/ }))
+    expect(await screen.findByText('Q 18.75')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Editar producto Limonada' }))
+    await userEvent.clear(screen.getByLabelText('Precio propio (vacío usa el base)'))
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar para este centro' }))
+    const llamada = fetchFalso.mock.calls.find(([url]) => url.endsWith('/productos/1/centro'))
+    expect(llamada?.[1]).toMatchObject({ method: 'PATCH', headers: { 'X-Centro-Id': '2' }, body: JSON.stringify({ precio: null, disponible: true }) })
+    expect(await screen.findByText('Los cambios quedaron guardados.')).toBeInTheDocument()
+  })
+
+  it('busca por SKU y filtra por categoría', async () => {
+    simularApi({ salud: 'sin-red', otras: {
+      '/catalogo/categorias': { status: 200, cuerpo: [categoria, { id: 2, nombre: 'Platos', orden: 2, activo: true }] },
+      '/catalogo/productos': { status: 200, cuerpo: [producto, { ...producto, id: 2, sku: 'COM-1', nombre: 'Almuerzo', categoria_id: 2 }] },
+    } })
+    abrir('/catalogo')
+    expect(await screen.findByText('Almuerzo')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Buscar por nombre o SKU'), 'beb-1')
+    expect(screen.getByText('Limonada')).toBeInTheDocument()
+    expect(screen.queryByText('Almuerzo')).not.toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText('Filtrar por categoría'), '2')
+    expect(screen.getByText('No hay productos con esos filtros.')).toBeInTheDocument()
+  })
+})
+
 describe('Permisos por rol y centro (Tarea 5)', () => {
   it('al cambiar de usuario el formulario muestra los datos del usuario elegido', async () => {
     simularApi({
