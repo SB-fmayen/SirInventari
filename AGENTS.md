@@ -48,3 +48,15 @@ Especificación completa: `docs/especificacion.md` (resumen de la página de Not
 5. **Nunca guardar contraseñas ni claves en el código**; usar archivos `.env` (que nunca se suben a Git).
 6. **Los mensajes de error para el usuario siempre en español claro.**
 7. **La fecha de operación se calcula con la hora de Guatemala** (`America/Guatemala`), no con UTC.
+
+## Modo relevo
+
+Claude Code y Codex se turnan para construir el sistema. Estas reglas valen para los dos. El plan está en `docs/plan.md` y el estado compartido en `ESTADO.md`.
+
+- **Al empezar un turno:** leer `ESTADO.md` y `docs/plan.md`, revisar los últimos commits del otro agente y corregir solo cosas mínimas.
+- **Cosas mínimas son:** un error que rompe algo, una prueba que falla, una validación que falta, un texto en inglés o con faltas, un import o un tipo mal puesto. **NO es mínimo:** reescribir o reorganizar código, cambiar la arquitectura o las librerías, renombrar o mover archivos, ni tocar la base de datos. Eso se anota en "Pendientes para el otro agente" y no se toca.
+- **Trabajar las tareas de `docs/plan.md` en orden**, una a la vez, hasta cumplir su "Listo cuando".
+- **Al terminar cada tarea, y también a mitad de una tarea grande** cada vez que una parte funcione: correr las pruebas, actualizar `ESTADO.md` y guardar en Git con el mensaje `[Claude] Tarea N: ...` o `[Codex] Tarea N: ...`. Nunca dejar trabajo sin guardar.
+- **Detenerse y anotarlo en "Necesito del usuario"** cuando una tarea pida algo que solo el usuario puede hacer (instalar un programa, crear proyectos o claves en Firebase o Google Cloud, un archivo del POS, una impresora) o cuando algo cueste dinero. Nunca inventar claves ni crear servicios de pago sin aprobación del usuario. Mientras espera, seguir con la siguiente tarea que no dependa de eso.
+- **Las tareas R1, R2, R3 y R4 son revisiones a fondo y SOLO las hace Codex.** Si Claude Code llega a una, anota en `ESTADO.md` "Siguiente: revisión de Codex" y se detiene.
+- **Responder siempre en español sencillo.**
