@@ -107,6 +107,18 @@ describe('Permisos por rol y centro (e2e)', () => {
     it('el ADMIN puede elegir cualquier centro activo', async () => {
       await http().get('/sesion').set(como(ADMIN)).set('X-Centro-Id', '2').expect(200);
     });
+
+    it('un GERENTE solo recibe sus centros en el listado', async () => {
+      await prisma.usuario.create({
+        data: {
+          firebase_uid: 'uid-e2e-gerente', nombre: 'Gerente E2E',
+          email: `${PREFIJO}gerente@prueba.test`, rol: 'GERENTE',
+          usuario_centro: { create: { centro_venta_id: 1 } },
+        },
+      });
+      const res = await http().get('/centros').set(como('uid-e2e-gerente')).expect(200);
+      expect(res.body.map((c: { id: number }) => c.id)).toEqual([1]);
+    });
   });
 
   describe('administración de usuarios', () => {

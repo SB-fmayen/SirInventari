@@ -36,12 +36,14 @@ export function SesionProvider({ children }: { children: ReactNode }) {
   const [centro, setCentro] = useState<CentroVenta | null>(null)
   const [intento, setIntento] = useState(0)
 
-  const cargarUsuario = useCallback(async () => {
+  const cargarUsuario = useCallback(async (vigente: () => boolean) => {
     try {
       const usuario = await pedirApi<UsuarioSistema>('/sesion', await obtenerToken())
+      if (!vigente()) return
       setCentro(centroInicial(usuario))
       setEstado({ tipo: 'activa', usuario })
     } catch (error) {
+      if (!vigente()) return
       if (error instanceof ErrorApi && error.status === 401) {
         // Token vencido o inválido: hay que entrar de nuevo
         await cerrarSesion()
@@ -54,15 +56,22 @@ export function SesionProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    return escucharSesion((usuarioFirebase) => {
+    let activo = true
+    let revision = 0
+    const dejarDeEscuchar = escucharSesion((usuarioFirebase) => {
+      const actual = ++revision
       if (!usuarioFirebase) {
         setCentro(null)
         setEstado({ tipo: 'sin-sesion' })
         return
       }
       setEstado({ tipo: 'cargando' })
-      void cargarUsuario()
+      void cargarUsuario(() => activo && actual === revision)
     })
+    return () => {
+      activo = false
+      dejarDeEscuchar()
+    }
   }, [cargarUsuario, intento])
 
   const elegirCentro = useCallback(

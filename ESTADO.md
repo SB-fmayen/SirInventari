@@ -4,11 +4,11 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 21:05 (hora de Guatemala) · Claude Code
+2026-10-31 21:25 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-Tarea 5 · Permisos por rol y centro. **Terminada.**
+R1 · Revisión de las tareas 0 a 5. **Terminada con pendientes anotados.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
@@ -24,6 +24,7 @@ Tarea 5 · Permisos por rol y centro. **Terminada.**
 | 3 | App (React 19 + Vite 8 + Tailwind 4 + shadcn/ui, PWA, indicador de /salud) | `a887efe` |
 | 4 | Login con Firebase (API verifica token + GET /sesion; app con login y sesión guardada) | `3c2a748` y ver `git log --grep "Tarea 4"` (login real probado por el usuario el 2026-10-31) |
 | 5 | Permisos por rol y centro (menú por rol, bloqueo en app y API, elegir centro, pantalla de usuarios) | `cd8af40` y ver `git log --grep "Tarea 5"` |
+| R1 | Revisión de tareas 0 a 5 y correcciones mínimas | Ver `git log --grep "Tarea R1"` |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -53,12 +54,21 @@ Notas:
 
 ## Siguiente tarea
 
-**Siguiente: revisión de Codex (R1).** Revisión a fondo de las tareas 0 a 5 contra AGENTS.md y docs/especificacion.md. Solo la hace Codex; Claude Code se detiene aquí.
-Después de R1 sigue la Tarea 6 · Catálogo.
+Tarea 6 · Catálogo.
+
+### Resultado de R1
+
+- Revisados los commits de Claude de tareas 1 a 5, estructura, esquema y Prisma, configuración de PWA, secretos excluidos de Git, fecha de Guatemala, errores, login y permisos contra AGENTS.md y docs/especificacion.md.
+- Correcciones mínimas: `/centros` devuelve solo los centros autorizados del usuario; al cambiar el usuario editado se reinicia su formulario; una respuesta atrasada de `/sesion` no restaura una sesión cerrada ni reemplaza una sesión posterior.
+- Verificación: API 13 pruebas unitarias y 27 de integración; app 23 pruebas. Compilaciones de API y app correctas; lint sin errores (5 avisos existentes en la app).
+- Los 7 casos SQL pasan. Como Docker no está en el PATH de esta sesión, se ejecutó el mismo archivo con `pg` y DATABASE_URL, quitando únicamente las dos instrucciones propias de psql; la transacción termina en ROLLBACK. Se eliminó el ejecutor temporal.
+- No se modificó el esquema ni se crearon servicios. No se repitió el login real: ya lo validó el usuario. Los archivos locales sin seguimiento `REVISION.md` y `Modo relevo Claude Code y Codex.pdf` se conservaron fuera de los commits.
 
 ## Pendientes para el otro agente
 
-- (ninguno)
+- R1 · Aislar las pruebas de integración en una base exclusiva: actualmente usan DATABASE_URL y limpian usuarios por prefijos fijos (`uid-e2e-`/`e2e-`), y dependen de los datos iniciales y de un turno abierto. Requiere cambiar la preparación de pruebas, por eso no se reorganizó durante la revisión. Antes de usar datos reales, implementar aislamiento y ejecutar las pruebas solo contra esa base.
+- R1 · La relación Prisma `centro_venta.turno_caja` representa como uno-a-uno el índice parcial de turno abierto, aunque puede haber varios turnos cerrados. Ya advertido arriba; revisar la representación en una tarea separada, sin cambiar el SQL.
+- R1 · La reactivación en Firebase puede fallar y solo deja un aviso en el servidor (`GestorUsuariosFirebase.cambiarActivo`), aunque la pantalla confirma que quedó activo en la base. Definir cómo comunicar y reintentar ese fallo sin perder la protección al desactivar; requiere coordinar el flujo app/API.
 
 ## Necesito del usuario
 
@@ -68,7 +78,7 @@ Después de R1 sigue la Tarea 6 · Catálogo.
    Guardar el JSON **fuera de la carpeta del proyecto** (por ejemplo `C:/claves/sirinventari-admin.json`) y poner en el `.env` de la raíz:
    `GOOGLE_APPLICATION_CREDENTIALS=C:/claves/sirinventari-admin.json`. Nunca subirlo a Git.
    Mientras no esté, se puede crear el usuario en la consola de Firebase y registrarlo en la pantalla Usuarios con la opción "Ya existe en Firebase (tengo su UID)".
-3. **Abrir Codex para la revisión R1** (ver el documento "Modo relevo", mensaje para Codex).
+3. ~~Abrir Codex para la revisión R1~~ **Hecho:** revisión ejecutada y resultados anotados arriba.
 
 ## Cómo probar lo último
 

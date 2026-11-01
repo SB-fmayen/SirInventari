@@ -49,7 +49,7 @@ export class CentrosController {
   constructor(private readonly usuarios: UsuariosService) {}
 
   @Get()
-  listar() {
-    return this.usuarios.listarCentros();
+  listar(@UsuarioActual() usuario: UsuarioSesion) {
+    return usuario.centros;
   }
 }

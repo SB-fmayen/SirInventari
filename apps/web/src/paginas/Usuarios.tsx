@@ -88,6 +88,7 @@ export function Usuarios({ usuario: yo }: { usuario: UsuarioSistema }) {
 
       {editando && (
         <FormularioUsuario
+          key={editando === 'nuevo' ? 'nuevo' : editando.id}
           usuario={editando === 'nuevo' ? null : editando}
           centros={centros}
           alCancelar={() => setEditando(null)}

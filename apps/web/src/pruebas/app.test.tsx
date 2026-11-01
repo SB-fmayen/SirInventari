@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -100,6 +100,25 @@ beforeEach(() => {
 })
 
 describe('Login (Tarea 4)', () => {
+  it('una respuesta atrasada no restaura una sesión que ya se cerró', async () => {
+    let responder!: (respuesta: Response) => void
+    const pendiente = new Promise<Response>((resolve) => { responder = resolve })
+    const fetchFalso = vi.fn(() => pendiente)
+    vi.stubGlobal('fetch', fetchFalso)
+    abrir()
+    await waitFor(() => expect(fetchFalso).toHaveBeenCalled())
+    act(() => {
+      firebase.usuarioActual = null
+      firebase.oyente?.(null)
+    })
+    await act(async () => {
+      responder(new Response(JSON.stringify(ADMIN), { status: 200 }))
+      await pendiente
+    })
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
+  })
+
   it('sin sesión muestra la pantalla para entrar', () => {
     firebase.usuarioActual = null
     simularApi({ salud: { status: 200, cuerpo: SALUD_OK } })
@@ -221,6 +240,27 @@ const textoMenu = async () =>
   (await screen.findByRole('navigation', { name: 'Menú principal' })).textContent ?? ''
 
 describe('Permisos por rol y centro (Tarea 5)', () => {
+  it('al cambiar de usuario el formulario muestra los datos del usuario elegido', async () => {
+    simularApi({
+      salud: 'sin-red',
+      otras: {
+        '/usuarios': { status: 200, cuerpo: [
+          { id: 9, nombre: 'Ana Mesera', email: 'ana@ejemplo.com', rol: 'MESERO', activo: true, firebaseUid: 'a', centros: [CV1] },
+          { id: 10, nombre: 'Carla Cajera', email: 'carla@ejemplo.com', rol: 'CAJERO', activo: true, firebaseUid: 'b', centros: [CV1] },
+        ] },
+        '/centros': { status: 200, cuerpo: [CV1] },
+      },
+    })
+    abrir('/usuarios')
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar a Ana Mesera' }))
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Ana Mesera')
+    await userEvent.click(screen.getByRole('button', { name: 'Editar a Carla Cajera' }))
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Carla Cajera')
+    expect(screen.getByLabelText('Correo')).toHaveValue('carla@ejemplo.com')
+    await userEvent.click(screen.getByRole('button', { name: 'Nuevo usuario' }))
+    expect(screen.getByLabelText('Nombre')).toHaveValue('')
+  })
+
   it('un MESERO solo ve Pedidos', async () => {
     simularApi({ salud: 'sin-red', sesion: conRol('MESERO') })
     abrir()
