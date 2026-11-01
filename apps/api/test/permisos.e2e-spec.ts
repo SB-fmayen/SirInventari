@@ -5,6 +5,7 @@ import { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
 import { GestorUsuariosFirebase, VerificadorFirebase } from '../src/autenticacion/verificador-firebase.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { crearBaseAislada } from './base-aislada.js';
 
 /**
  * Permisos por rol y centro + administración de usuarios (Tarea 5), contra la base de Docker.
@@ -40,6 +41,7 @@ const PREFIJO = 'e2e-';
 describe('Permisos por rol y centro (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let base: Awaited<ReturnType<typeof crearBaseAislada>>;
   const gestor = new GestorFalso();
 
   async function limpiar() {
@@ -53,7 +55,9 @@ describe('Permisos por rol y centro (e2e)', () => {
   }
 
   beforeAll(async () => {
+    base = await crearBaseAislada();
     const modulo = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(PrismaService).useValue(base.prisma)
       .overrideProvider(VerificadorFirebase)
       .useClass(VerificadorFalso)
       .overrideProvider(GestorUsuariosFirebase)
@@ -69,8 +73,7 @@ describe('Permisos por rol y centro (e2e)', () => {
   });
 
   afterAll(async () => {
-    await limpiar();
-    await app.close();
+    try { await app?.close(); } finally { await base?.cerrar(); }
   });
 
   const como = (uid: string) => ({ Authorization: `Bearer token-${uid}` });

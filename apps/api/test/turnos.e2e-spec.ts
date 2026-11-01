@@ -7,10 +7,12 @@ import { VerificadorFirebase } from '../src/autenticacion/verificador-firebase.j
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { TurnosService } from '../src/turnos/turnos.service.js';
 import type { Prisma } from '../src/generated/prisma/client.js';
+import { crearBaseAislada } from './base-aislada.js';
 
 describe('Turnos de caja (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let base: Awaited<ReturnType<typeof crearBaseAislada>>;
   let usuarioId: number;
   let centroId: number;
   let turnoId: number;
@@ -19,7 +21,9 @@ describe('Turnos de caja (e2e)', () => {
   const headers = () => ({ Authorization: `Bearer ${uid}`, 'X-Centro-Id': String(centroId) });
 
   beforeAll(async () => {
+    base = await crearBaseAislada();
     const modulo = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(PrismaService).useValue(base.prisma)
       .overrideProvider(VerificadorFirebase).useValue({ verificar: async (token: string) => ({ uid: token }) }).compile();
     app = modulo.createNestApplication(); await app.init(); prisma = app.get(PrismaService);
     centroId = (await prisma.centro_venta.create({ data: { codigo: `T${randomUUID().slice(0, 8)}`, nombre: 'Centro prueba turnos' } })).id;
@@ -27,10 +31,7 @@ describe('Turnos de caja (e2e)', () => {
   });
 
   afterAll(async () => {
-    if (centroId) await prisma.turno_caja.deleteMany({ where: { centro_venta_id: centroId } });
-    if (usuarioId) { await prisma.usuario_centro.deleteMany({ where: { usuario_id: usuarioId } }); await prisma.usuario.delete({ where: { id: usuarioId } }); }
-    if (centroId) await prisma.centro_venta.delete({ where: { id: centroId } });
-    await app.close();
+    try { await app?.close(); } finally { await base?.cerrar(); }
   });
 
   it('dos aperturas simultáneas dejan un solo turno e informan quién lo abrió', async () => {

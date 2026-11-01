@@ -34,6 +34,19 @@ export async function crearBaseAislada() {
     // La URL de la base aislada se usa solo para construir esta conexión.
     try { process.env.DATABASE_URL = url.toString(); prisma = new PrismaService(); }
     finally { process.env.DATABASE_URL = original; }
-    return { prisma, cerrar };
+    async function ejecutarCasos() {
+      const conexion = new pg.Client({ connectionString: url.toString() });
+      const avisos: string[] = [];
+      conexion.on('notice', (aviso) => avisos.push(aviso.message ?? ''));
+      await conexion.connect();
+      try {
+        // Se omiten solo comandos de psql; el SQL y su ROLLBACK se ejecutan completos.
+        const sql = (await readFile('../../db/pruebas/casos.sql', 'utf8')).replace(/^\\.*$/gm, '');
+        await conexion.query(sql);
+        return avisos;
+      } catch (error) { await conexion.query('ROLLBACK'); throw error; }
+      finally { await conexion.end(); }
+    }
+    return { prisma, cerrar, ejecutarCasos };
   } catch (error) { await cerrar(); throw error; }
 }

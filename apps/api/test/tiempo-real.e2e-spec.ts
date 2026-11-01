@@ -6,10 +6,12 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { VerificadorFirebase } from '../src/autenticacion/verificador-firebase.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { crearBaseAislada } from './base-aislada.js';
 
 describe('Avisos Socket.IO por centro (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let base: Awaited<ReturnType<typeof crearBaseAislada>>;
   let url: string;
   const centros: number[] = [];
   const usuarios: number[] = [];
@@ -21,7 +23,8 @@ describe('Avisos Socket.IO por centro (e2e)', () => {
   const idsLineas: string[] = [];
 
   beforeAll(async () => {
-    const modulo = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(VerificadorFirebase)
+    base = await crearBaseAislada();
+    const modulo = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(PrismaService).useValue(base.prisma).overrideProvider(VerificadorFirebase)
       .useValue({ verificar: async (token: string) => { if (!token.startsWith('socket-')) throw new Error(); return { uid: token } } }).compile();
     app = modulo.createNestApplication(); await app.listen(0, '127.0.0.1'); url = await app.getUrl(); prisma = app.get(PrismaService);
     for (let n = 0; n < 2; n++) centros.push((await prisma.centro_venta.create({ data: { codigo: `S${randomUUID().slice(0, 8)}`, nombre: `Centro socket ${n}` } })).id);
@@ -34,17 +37,7 @@ describe('Avisos Socket.IO por centro (e2e)', () => {
 
   afterAll(async () => {
     sockets.forEach((s) => s.disconnect());
-    await prisma.pedido_detalle.deleteMany({ where: { pedido: { centro_venta_id: { in: centros } } } });
-    const pedidos = await prisma.pedido.findMany({ where: { centro_venta_id: { in: centros } }, select: { id: true } });
-    await prisma.pedido.deleteMany({ where: { centro_venta_id: { in: centros } } });
-    await prisma.auditoria.deleteMany({ where: { registro_id: { in: [...idsLineas, ...pedidos.map((p) => p.id)] } } });
-    await prisma.folio_contador.deleteMany({ where: { centro_venta_id: { in: centros } } });
-    if (productoId) await prisma.producto.delete({ where: { id: productoId } });
-    if (categoriaId) await prisma.categoria.delete({ where: { id: categoriaId } });
-    await prisma.usuario_centro.deleteMany({ where: { usuario_id: { in: usuarios } } });
-    await prisma.usuario.deleteMany({ where: { id: { in: usuarios } } });
-    await prisma.centro_venta.deleteMany({ where: { id: { in: centros } } });
-    await app.close();
+    try { await app?.close(); } finally { await base?.cerrar(); }
   });
 
   function conectar(token: string | null, centroId: number) {

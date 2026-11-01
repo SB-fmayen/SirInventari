@@ -4,11 +4,11 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 22:01 (hora de Guatemala) · Codex
+2026-10-31 22:06 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-Tarea 11 · Reportes. **Terminada.** Tarea 9 sigue esperando aprobación del esquema.
+Tarea 12 · Pruebas de Fase 1. **Automatización y guía listas; validación de Cocina pendiente de Tarea 9.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
@@ -33,6 +33,7 @@ Tarea 11 · Reportes. **Terminada.** Tarea 9 sigue esperando aprobación del esq
 | 8 | Pedidos con folio, líneas con usuario/hora y anulación con motivo | `ced9d1e` y ver `git log --grep "Tarea 8"` |
 | 10 | Caja, cobros divididos, vuelto, comprobante y bloqueos contra duplicados | Ver `git log --grep "Tarea 10"` |
 | 11 | Reportes por centro y rango, historial y descarga CSV | Ver `git log --grep "Tarea 11"` |
+| 12 (parte disponible) | Pruebas automáticas aisladas y guía manual; falta validar Cocina al terminar Tarea 9 | Ver `git log --grep "Tarea 12"` |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -62,7 +63,15 @@ Notas:
 
 ## Siguiente tarea
 
-Tarea 9 espera respuesta sobre el esquema. Mientras tanto seguir con Tarea 12 · Pruebas de Fase 1.
+Revisión R2 de las partes implementadas de Tareas 6 a 12. No aprobar la Fase 1 completa hasta terminar Cocina y sus pruebas.
+
+### Resultado de Tarea 12 (parte disponible)
+
+- Todas las pruebas de integración usan bases temporales aleatorias creadas desde los SQL originales. Se elimina la base temporal incluso al fallar una prueba; no se ejecutan limpiezas sobre datos de desarrollo. Resuelto el pendiente R1 de aislamiento.
+- `test:e2e` ejecuta también los siete casos originales completos y comprueba su ROLLBACK, además de la matriz de los cinco roles en las secciones implementadas, permisos por centro, folios/cobros/vouchers simultáneos, saldo, pagos divididos, turno único y bloqueos de pedidos pagados.
+- Resultado: API 13 unitarias y 62 de integración; app 39. Build y lint correctos; quedan los avisos ya registrados. No se han ejecutado las pruebas manuales con cuentas reales del usuario.
+- Guía `docs/pruebas-manuales.md` con preparación, cuentas, catálogo, turnos, pedidos, caja, reportes, reintentos y pruebas de Cocina pendientes. La Fase 1 no se declara terminada mientras falte Tarea 9.
+- Archivos: `apps/api/test/base-aislada.ts`, todas las suites e2e para inyectar la base aislada, nuevas suites `casos-sql.e2e-spec.ts` y `fase1-permisos.e2e-spec.ts`, y guía manual.
 
 ### Resultado de Tarea 11
 
@@ -115,7 +124,7 @@ Tarea 9 espera respuesta sobre el esquema. Mientras tanto seguir con Tarea 12 ·
 
 ## Pendientes para el otro agente
 
-- R1 · Aislar las pruebas de integración en una base exclusiva: actualmente usan DATABASE_URL y limpian usuarios por prefijos fijos (`uid-e2e-`/`e2e-`), y dependen de los datos iniciales y de un turno abierto. Requiere cambiar la preparación de pruebas, por eso no se reorganizó durante la revisión. Antes de usar datos reales, implementar aislamiento y ejecutar las pruebas solo contra esa base.
+- R1 · **Resuelto en Tarea 12:** todas las pruebas de integración usan bases temporales, sin limpiar usuarios ni ventas de la base de desarrollo.
 - R1 · La relación Prisma `centro_venta.turno_caja` representa como uno-a-uno el índice parcial de turno abierto, aunque puede haber varios turnos cerrados. Ya advertido arriba; revisar la representación en una tarea separada, sin cambiar el SQL.
 - R1 · La reactivación en Firebase puede fallar y solo deja un aviso en el servidor (`GestorUsuariosFirebase.cambiarActivo`), aunque la pantalla confirma que quedó activo en la base. Definir cómo comunicar y reintentar ese fallo sin perder la protección al desactivar; requiere coordinar el flujo app/API.
 

@@ -5,6 +5,7 @@ import { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
 import { VerificadorFirebase } from '../src/autenticacion/verificador-firebase.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { crearBaseAislada } from './base-aislada.js';
 
 /**
  * Login (Tarea 4) contra la base de Docker.
@@ -23,9 +24,12 @@ const UID_ADMIN = 'uid-prueba-admin';
 describe('Sesión con Firebase (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let base: Awaited<ReturnType<typeof crearBaseAislada>>;
 
   beforeAll(async () => {
+    base = await crearBaseAislada();
     const modulo = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(PrismaService).useValue(base.prisma)
       .overrideProvider(VerificadorFirebase)
       .useClass(VerificadorFalso)
       .compile();
@@ -42,8 +46,7 @@ describe('Sesión con Firebase (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.usuario.deleteMany({ where: { firebase_uid: { in: [UID_INACTIVO, UID_ADMIN] } } });
-    await app.close();
+    try { await app?.close(); } finally { await base?.cerrar(); }
   });
 
   const servidor = () => app.getHttpServer();

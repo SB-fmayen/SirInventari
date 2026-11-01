@@ -3,18 +3,22 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
+import { PrismaService } from '../src/prisma/prisma.service.js';
+import { crearBaseAislada } from './base-aislada.js';
 
 describe('API (e2e, con la base de Docker)', () => {
   let app: INestApplication<App>;
+  let base: Awaited<ReturnType<typeof crearBaseAislada>>;
 
   beforeAll(async () => {
-    const modulo = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    base = await crearBaseAislada();
+    const modulo = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(PrismaService).useValue(base.prisma).compile();
     app = modulo.createNestApplication();
     await app.init();
   });
 
   afterAll(async () => {
-    await app.close();
+    try { await app?.close(); } finally { await base?.cerrar(); }
   });
 
   it('GET /salud dice que la API y la base funcionan', async () => {

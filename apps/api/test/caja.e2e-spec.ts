@@ -19,7 +19,7 @@ describe('Caja y cobros simultáneos (base aislada)', () => {
     app = modulo.createNestApplication(); await app.init();
     await base.prisma.usuario.create({ data: { firebase_uid: 'caja-admin', nombre: 'Admin pruebas', email: 'admin@prueba.test', rol: 'ADMIN' } });
   }, 20000);
-  afterAll(async () => { if (app) await app.close(); if (base) await base.cerrar(); });
+  afterAll(async () => { try { await app?.close(); } finally { await base?.cerrar(); } });
 
   async function crearPedido(centro = 1) {
     return (await http().post('/pedidos').set(headers(centro, centro === 1 ? 'uid-cajero-01' : 'caja-admin'))

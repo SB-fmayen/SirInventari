@@ -5,10 +5,12 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { VerificadorFirebase } from '../src/autenticacion/verificador-firebase.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { crearBaseAislada } from './base-aislada.js';
 
 describe('Catálogo por centro (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let base: Awaited<ReturnType<typeof crearBaseAislada>>;
   let usuarioId: number;
   let categoriaId: number;
   let productoId: number;
@@ -19,7 +21,9 @@ describe('Catálogo por centro (e2e)', () => {
   const headers = (centro = 1) => ({ Authorization: `Bearer ${uid}`, 'X-Centro-Id': String(centro) });
 
   beforeAll(async () => {
+    base = await crearBaseAislada();
     const modulo = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(PrismaService).useValue(base.prisma)
       .overrideProvider(VerificadorFirebase).useValue({ verificar: async (token: string) => ({ uid: token }) }).compile();
     app = modulo.createNestApplication();
     await app.init();
@@ -28,14 +32,7 @@ describe('Catálogo por centro (e2e)', () => {
   });
 
   afterAll(async () => {
-    if (usuarioId) await prisma.usuario_centro.deleteMany({ where: { usuario_id: usuarioId } });
-    if (productoId) {
-      await prisma.producto_centro.deleteMany({ where: { producto_id: productoId } });
-      await prisma.producto.delete({ where: { id: productoId } });
-    }
-    if (categoriaId) await prisma.categoria.delete({ where: { id: categoriaId } });
-    if (usuarioId) await prisma.usuario.delete({ where: { id: usuarioId } });
-    await app.close();
+    try { await app?.close(); } finally { await base?.cerrar(); }
   });
 
   it('crea y ordena categorías y productos, rechaza duplicados y precios incorrectos', async () => {

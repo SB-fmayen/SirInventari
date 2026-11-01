@@ -36,7 +36,7 @@ describe('Reportes de ventas e historial (base aislada)', () => {
     const p3 = await http().post('/pedidos').set(headers()).send({ id: randomUUID(), tipo_venta_id: 1, mesa_referencia: 'Mesa pendiente', lineas: [{ id: randomUUID(), producto_id: 1, cantidad: 1 }] }).expect(201);
     await http().post('/caja/pagos').set(headers()).send({ id: randomUUID(), pedido_id: p3.body.id, metodo_pago_id: 1, monto: 5 }).expect(201);
   }, 20000);
-  afterAll(async () => { if (app) await app.close(); if (base) await base.cerrar(); });
+  afterAll(async () => { try { await app?.close(); } finally { await base?.cerrar(); } });
 
   it('los totales por tipo, hora, producto y forma de pago cuadran con los pedidos pagados', async () => {
     const r = await http().get(`/reportes/ventas?desde=${hoy}&hasta=${hoy}`).set(headers()).expect(200);

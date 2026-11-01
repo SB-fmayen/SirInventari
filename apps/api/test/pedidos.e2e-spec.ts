@@ -5,10 +5,12 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { VerificadorFirebase } from '../src/autenticacion/verificador-firebase.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { crearBaseAislada } from './base-aislada.js';
 
 describe('Pedidos con folio y líneas (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let base: Awaited<ReturnType<typeof crearBaseAislada>>;
   let centroId: number;
   let categoriaId: number;
   let productoId: number;
@@ -24,7 +26,8 @@ describe('Pedidos con folio y líneas (e2e)', () => {
   const datos = (id: string, linea = randomUUID()) => ({ id, tipo_venta_id: 1, mesa_referencia: 'Mesa 4', lineas: [{ id: linea, producto_id: productoId, cantidad: 2, notas: 'Sin hielo', precio_unitario: '0.01' }] });
 
   beforeAll(async () => {
-    const modulo = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(VerificadorFirebase)
+    base = await crearBaseAislada();
+    const modulo = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(PrismaService).useValue(base.prisma).overrideProvider(VerificadorFirebase)
       .useValue({ verificar: async (token: string) => ({ uid: token }) }).compile();
     app = modulo.createNestApplication(); await app.init(); prisma = app.get(PrismaService);
     centroId = (await prisma.centro_venta.create({ data: { codigo: `P${randomUUID().slice(0, 8)}`, nombre: 'Centro prueba pedidos' } })).id;
@@ -37,19 +40,7 @@ describe('Pedidos con folio y líneas (e2e)', () => {
   });
 
   afterAll(async () => {
-    if (centroId) {
-      await prisma.pedido.updateMany({ where: { centro_venta_id: centroId }, data: { estado: 'ABIERTO' } });
-      await prisma.pedido_detalle.deleteMany({ where: { pedido: { centro_venta_id: centroId } } });
-      await prisma.pedido.deleteMany({ where: { centro_venta_id: centroId } });
-      await prisma.folio_contador.deleteMany({ where: { centro_venta_id: centroId } });
-    }
-    if (productoId) { await prisma.producto_centro.deleteMany({ where: { producto_id: productoId } }); await prisma.producto.delete({ where: { id: productoId } }); }
-    if (categoriaId) await prisma.categoria.delete({ where: { id: categoriaId } });
-    const usuarios = [usuarioId, otroId].filter(Boolean);
-    await prisma.usuario_centro.deleteMany({ where: { usuario_id: { in: usuarios } } });
-    await prisma.usuario.deleteMany({ where: { id: { in: usuarios } } });
-    if (centroId) await prisma.centro_venta.delete({ where: { id: centroId } });
-    await app.close();
+    try { await app?.close(); } finally { await base?.cerrar(); }
   });
 
   it('dos pedidos simultáneos reciben folios 1 y 2, precio del servidor y fecha de Guatemala', async () => {

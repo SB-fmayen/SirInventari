@@ -1,5 +1,6 @@
 import { construirRespuestaError } from '../src/comun/filtro-errores.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { crearBaseAislada } from './base-aislada.js';
 
 /**
  * Provoca errores reales en la base (sin dejar datos) y revisa que el usuario
@@ -7,13 +8,15 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
  */
 describe('Errores reales de la base traducidos (e2e)', () => {
   let prisma: PrismaService;
+  let base: Awaited<ReturnType<typeof crearBaseAislada>>;
 
-  beforeAll(() => {
-    prisma = new PrismaService();
+  beforeAll(async () => {
+    base = await crearBaseAislada();
+    prisma = base.prisma;
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await base?.cerrar();
   });
 
   async function errorDe(operacion: () => Promise<unknown>) {
