@@ -52,7 +52,15 @@ const SALUD_OK = {
 
 type Respuesta = { status: number; cuerpo: object } | 'sin-red'
 
-function simularApi({ salud, sesion }: { salud: Respuesta; sesion?: Respuesta }) {
+function simularApi({
+  salud,
+  sesion,
+  otras = {},
+}: {
+  salud: Respuesta
+  sesion?: Respuesta
+  otras?: Record<string, Respuesta>
+}) {
   const responder = (r: Respuesta) =>
     r === 'sin-red'
       ? Promise.reject(new TypeError('Failed to fetch'))
@@ -63,7 +71,13 @@ function simularApi({ salud, sesion }: { salud: Respuesta; sesion?: Respuesta })
           }),
         )
   const fetchFalso = vi.fn((url: string, _opciones?: RequestInit) =>
-    responder(url.endsWith('/salud') ? salud : (sesion ?? { status: 200, cuerpo: ADMIN })),
+    responder(
+      url.endsWith('/salud')
+        ? salud
+        : url.endsWith('/sesion')
+          ? (sesion ?? { status: 200, cuerpo: ADMIN })
+          : (Object.entries(otras).find(([ruta]) => url.endsWith(ruta))?.[1] ?? { status: 404, cuerpo: { mensaje: 'No se encontró lo que buscas.' } }),
+    ),
   )
   vi.stubGlobal('fetch', fetchFalso)
   return fetchFalso
@@ -80,6 +94,7 @@ function abrir(ruta = '/') {
 }
 
 beforeEach(() => {
+  localStorage.clear()
   firebase.usuarioActual = { uid: 'uid-admin' }
   firebase.errorAlEntrar = null
 })
@@ -195,5 +210,105 @@ describe('App con sesión (Tarea 3)', () => {
     simularApi({ salud: 'sin-red' })
     abrir('/no-existe')
     expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeInTheDocument()
+  })
+})
+
+// ---------- Tarea 5: permisos por rol y centro ----------
+const CV1 = { id: 1, codigo: 'CV01', nombre: 'Centro de venta 1' }
+const CV2 = { id: 2, codigo: 'CV02', nombre: 'Centro de venta 2' }
+const conRol = (rol: string, centros = [CV1]) => ({ status: 200, cuerpo: { ...ADMIN, nombre: 'Persona', rol, centros } })
+const textoMenu = async () =>
+  (await screen.findByRole('navigation', { name: 'Menú principal' })).textContent ?? ''
+
+describe('Permisos por rol y centro (Tarea 5)', () => {
+  it('un MESERO solo ve Pedidos', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('MESERO') })
+    abrir()
+    const menu = await textoMenu()
+    expect(menu).toContain('Pedidos')
+    for (const otra of ['Cocina', 'Caja', 'Turnos', 'Catálogo', 'Reportes', 'Usuarios']) {
+      expect(menu).not.toContain(otra)
+    }
+  })
+
+  it('un MESERO no entra a Caja ni escribiendo la dirección', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('MESERO') })
+    abrir('/caja')
+    expect(await screen.findByRole('heading', { name: 'No tienes permiso' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Caja' })).not.toBeInTheDocument()
+  })
+
+  it('COCINA solo ve Cocina y CAJERO ve Pedidos, Caja y Turnos', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('COCINA') })
+    const { unmount } = abrir()
+    expect((await textoMenu()).replace('Inicio', '')).toBe('Cocina')
+    unmount()
+
+    simularApi({ salud: 'sin-red', sesion: conRol('CAJERO') })
+    abrir()
+    expect((await textoMenu()).replace('Inicio', '')).toBe('PedidosCajaTurnos')
+  })
+
+  it('el GERENTE ve todo menos Usuarios', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('GERENTE') })
+    abrir('/usuarios')
+    const menu = await textoMenu()
+    for (const s of ['Pedidos', 'Cocina', 'Caja', 'Turnos', 'Catálogo', 'Reportes']) expect(menu).toContain(s)
+    expect(menu).not.toContain('Usuarios')
+    expect(screen.getByRole('heading', { name: 'No tienes permiso' })).toBeInTheDocument()
+  })
+
+  it('con varios centros pide elegir uno y luego lo envía a la API', async () => {
+    const fetchFalso = simularApi({
+      salud: 'sin-red',
+      sesion: conRol('ADMIN', [CV1, CV2]),
+      otras: {
+        '/usuarios': { status: 200, cuerpo: [{ id: 9, nombre: 'Ana Mesera', email: 'ana@ejemplo.com', rol: 'MESERO', activo: true, firebaseUid: 'x', centros: [CV1] }] },
+        '/centros': { status: 200, cuerpo: [CV1, CV2] },
+      },
+    })
+    abrir('/usuarios')
+    await userEvent.click(await screen.findByRole('button', { name: /Centro de venta 2/ }))
+    expect(await screen.findByText('Ana Mesera')).toBeInTheDocument()
+    const llamada = fetchFalso.mock.calls.find(([url]) => String(url).endsWith('/usuarios'))
+    expect(llamada?.[1]).toMatchObject({ headers: { 'X-Centro-Id': '2', Authorization: 'Bearer token-falso' } })
+  })
+
+  it('recuerda el centro elegido al recargar', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('GERENTE', [CV1, CV2]) })
+    const { unmount } = abrir()
+    await userEvent.click(await screen.findByRole('button', { name: /Centro de venta 2/ }))
+    expect(await screen.findByText('Centro de venta 2')).toBeInTheDocument()
+    unmount()
+    abrir()
+    expect(await screen.findByRole('navigation', { name: 'Menú principal' })).toBeInTheDocument()
+    expect(screen.getByText('Centro de venta 2')).toBeInTheDocument()
+  })
+
+  it('sin centros asignados avisa que hable con el administrador', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('CAJERO', []) })
+    abrir()
+    expect(await screen.findByRole('alert')).toHaveTextContent('No tienes centros de venta asignados.')
+  })
+
+  it('el ADMIN crea un usuario y ve los errores de la API en español', async () => {
+    const fetchFalso = simularApi({
+      salud: 'sin-red',
+      otras: {
+        '/usuarios': { status: 200, cuerpo: [] },
+        '/centros': { status: 200, cuerpo: [CV1] },
+      },
+    })
+    abrir('/usuarios')
+    await userEvent.click(await screen.findByRole('button', { name: 'Nuevo usuario' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Crear usuario' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Asigna al menos un centro de venta.')
+
+    fetchFalso.mockImplementationOnce(() =>
+      Promise.resolve(new Response(JSON.stringify({ statusCode: 409, mensaje: 'Ya existe un usuario con ese correo.' }), { status: 409 })),
+    )
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Centro de venta 1' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Crear usuario' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ya existe un usuario con ese correo.')
   })
 })

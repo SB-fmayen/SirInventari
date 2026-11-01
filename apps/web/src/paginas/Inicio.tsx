@@ -1,13 +1,13 @@
 import { Link } from 'react-router'
-import { SECCIONES } from '@/secciones'
+import type { Seccion } from '@/secciones'
 
-/** Pantalla de inicio: botones grandes para cada sección. */
-export function Inicio() {
+/** Pantalla de inicio: botones grandes para las secciones que el rol puede usar. */
+export function Inicio({ secciones }: { secciones: Seccion[] }) {
   return (
     <div className="mx-auto max-w-5xl">
       <h1 className="mb-6 text-3xl font-bold text-slate-900">¿Qué quieres hacer?</h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {SECCIONES.map(({ ruta, nombre, descripcion, icono: Icono, color }) => (
+        {secciones.map(({ ruta, nombre, descripcion, icono: Icono, color }) => (
           <Link
             key={ruta}
             to={ruta}
