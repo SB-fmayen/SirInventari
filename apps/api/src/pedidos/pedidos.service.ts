@@ -43,6 +43,11 @@ export class PedidosService {
 
   detalle(centroId: number, id: string) { return this.detalleEn(this.prisma, centroId, id); }
 
+  async pendientes(centroId: number) {
+    const filas = await this.prisma.pedido.findMany({ where: { centro_venta_id: centroId, estado: { notIn: ['PAGADO', 'ANULADO'] }, total: { gt: 0 } }, include: incluir, orderBy: [{ creado_en: 'asc' }, { folio: 'asc' }] });
+    return filas.map((p) => this.respuesta(p)).filter((p) => Number(p.saldo) > 0);
+  }
+
   async listar(centroId: number, buscar: string) {
     const [dia] = await this.prisma.$queryRaw<{ fecha: Date }[]>`SELECT ventas.fecha_guatemala() AS fecha`;
     const filas = await this.prisma.pedido.findMany({

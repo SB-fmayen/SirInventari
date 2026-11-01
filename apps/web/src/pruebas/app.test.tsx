@@ -224,7 +224,7 @@ describe('App con sesión (Tarea 3)', () => {
     simularApi({ salud: 'sin-red' })
     abrir('/caja')
     expect(await screen.findByRole('heading', { name: 'Caja' })).toBeInTheDocument()
-    expect(screen.getByText(/en construcción/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Caja' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('una dirección que no existe muestra "Página no encontrada"', async () => {
@@ -380,6 +380,68 @@ describe('Pedidos (Tarea 8)', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Ver pedido 1' }))
     expect(screen.queryByRole('button', { name: 'Agregar productos' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Anular Limonada' })).not.toBeInTheDocument()
+  })
+})
+
+describe('Caja (Tarea 10)', () => {
+  const id = '10000000-0000-4000-8000-000000000010'
+  const pedido = { id, folio: 10, fecha_operacion: '2026-10-31', estado: 'ABIERTO', total: '45.00', pagado: '0.00', saldo: '45.00', mesa_referencia: 'Mesa 10', cliente_nombre: null, pedido_detalle: [{ id: 'linea', cantidad: '1', importe: '45.00', estado: 'ACTIVA', producto: { nombre: 'Plato del día' } }] }
+  const comprobante = { centro: { nombre: 'Centro de venta 1' }, pedido, pagos: [] }
+  const metodos = [{ id: 1, codigo: 'EFECTIVO', nombre: 'Efectivo', requiere_terminal: false, requiere_referencia: false }, { id: 2, codigo: 'TARJETA', nombre: 'Tarjeta', requiere_terminal: true, requiere_referencia: true }]
+  const otras = (abierto = true) => ({ '/caja/pendientes': { status: 200, cuerpo: [pedido] }, '/caja/metodos': { status: 200, cuerpo: metodos }, '/turnos': { status: 200, cuerpo: abierto ? [{ estado: 'ABIERTO' }] : [] }, [`/caja/pedidos/${id}/comprobante`]: { status: 200, cuerpo: comprobante } })
+
+  it('cobra efectivo con vuelto y luego el saldo con tarjeta, mostrando el comprobante', async () => {
+    const fetchFalso = simularApi({ salud: 'sin-red', sesion: conRol('CAJERO'), otras: otras() })
+    const anterior = fetchFalso.getMockImplementation()!
+    fetchFalso.mockImplementation((url, opciones) => {
+      if (!url.endsWith('/caja/pagos')) return anterior(url, opciones)
+      const pago = JSON.parse(String(opciones?.body))
+      const final = pago.metodo_pago_id === 2
+      return Promise.resolve(new Response(JSON.stringify({ vuelto: final ? '0.00' : '30.00', comprobante: { ...comprobante, pedido: { ...pedido, pagado: final ? '45.00' : '20.00', saldo: final ? '0.00' : '25.00', estado: final ? 'PAGADO' : 'ABIERTO' }, pagos: [{ id: pago.id, monto: pago.monto, estado: 'APLICADO', metodo_pago: { nombre: final ? 'Tarjeta' : 'Efectivo' }, referencia_pos: final ? '123456' : null, terminal_pos: final ? 'TERM-1' : null }] } }), { status: 201 }))
+    })
+    abrir('/caja')
+    await userEvent.click(await screen.findByRole('button', { name: 'Cobrar pedido 10' }))
+    await userEvent.clear(await screen.findByLabelText('Monto a cobrar')); await userEvent.type(screen.getByLabelText('Monto a cobrar'), '20')
+    await userEvent.clear(screen.getByLabelText('Efectivo recibido')); await userEvent.type(screen.getByLabelText('Efectivo recibido'), '50')
+    expect(screen.getByText('Vuelto previsto: Q 30.00')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar pago' }))
+    expect(await screen.findByText(/Pago parcial guardado/)).toHaveTextContent('Vuelto: Q 30.00')
+    await userEvent.selectOptions(screen.getByLabelText('Forma de pago'), '2')
+    expect(screen.getByLabelText('Terminal del POS')).toBeRequired()
+    expect(screen.getByLabelText('Número de autorización o referencia')).toBeRequired()
+    await userEvent.type(screen.getByLabelText('Terminal del POS'), 'TERM-1')
+    await userEvent.type(screen.getByLabelText('Número de autorización o referencia'), '123456')
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar pago' }))
+    expect(await screen.findByText(/Pago guardado. Pedido pagado/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Comprobante')).toHaveTextContent('Tarjeta: Q 25.00 · Autorización 123456 · Terminal TERM-1')
+    expect(screen.queryByRole('button', { name: 'Registrar pago' })).not.toBeInTheDocument()
+  })
+
+  it('con resultado incierto conserva el mismo UUID y bloquea cambios hasta reintentar', async () => {
+    const fetchFalso = simularApi({ salud: 'sin-red', sesion: conRol('CAJERO'), otras: otras() })
+    const anterior = fetchFalso.getMockImplementation()!
+    let numero = 0
+    fetchFalso.mockImplementation((url, opciones) => {
+      if (!url.endsWith('/caja/pagos')) return anterior(url, opciones)
+      if (++numero === 1) return Promise.reject(new TypeError('Failed to fetch'))
+      return Promise.resolve(new Response(JSON.stringify({ vuelto: '0.00', comprobante: { ...comprobante, pedido: { ...pedido, estado: 'PAGADO', saldo: '0.00', pagado: '45.00' } } }), { status: 201 }))
+    })
+    abrir('/caja'); await userEvent.click(await screen.findByRole('button', { name: 'Cobrar pedido 10' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Registrar pago' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con la API')
+    expect(screen.getByLabelText('Monto a cobrar')).toBeDisabled()
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar el mismo pago' }))
+    expect(await screen.findByText(/Pago guardado. Pedido pagado/)).toBeInTheDocument()
+    const envios = fetchFalso.mock.calls.filter(([url]) => url.endsWith('/caja/pagos'))
+    expect(envios).toHaveLength(2); expect(envios[0][1]?.body).toBe(envios[1][1]?.body)
+    expect(JSON.parse(String(envios[0][1]?.body)).id).toMatch(/^[0-9a-f-]{36}$/)
+  })
+
+  it('sin turno abierto no permite registrar un pago', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('CAJERO'), otras: otras(false) })
+    abrir('/caja'); await userEvent.click(await screen.findByRole('button', { name: 'Cobrar pedido 10' }))
+    expect(await screen.findByRole('button', { name: 'Registrar pago' })).toBeDisabled()
+    expect(screen.getByText('Abre un turno de caja en este centro antes de cobrar.')).toBeInTheDocument()
   })
 })
 

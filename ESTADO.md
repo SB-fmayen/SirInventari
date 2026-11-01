@@ -4,11 +4,11 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 21:50 (hora de Guatemala) · Codex
+2026-10-31 21:55 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-Tarea 9 · Cocina en tiempo real. **Avisos terminados; estados de cocina pendientes de aprobación del esquema.**
+Tarea 10 · Caja. **Terminada.** Tarea 9 sigue esperando aprobación del esquema.
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
@@ -31,6 +31,7 @@ Tarea 9 · Cocina en tiempo real. **Avisos terminados; estados de cocina pendien
 | 6 | Categorías, productos y precio y disponibilidad por centro | Ver `git log --grep "Tarea 6"` |
 | 7 | Apertura, cierre e historial de turnos por centro | Ver `git log --grep "Tarea 7"` |
 | 8 | Pedidos con folio, líneas con usuario/hora y anulación con motivo | `ced9d1e` y ver `git log --grep "Tarea 8"` |
+| 10 | Caja, cobros divididos, vuelto, comprobante y bloqueos contra duplicados | Ver `git log --grep "Tarea 10"` |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -60,7 +61,16 @@ Notas:
 
 ## Siguiente tarea
 
-Tarea 9 espera respuesta sobre el esquema. Mientras tanto seguir con Tarea 10 · Caja, que puede completarse sin ese cambio.
+Tarea 9 espera respuesta sobre el esquema. Mientras tanto seguir con Tarea 11 · Reportes.
+
+### Resultado de Tarea 10
+
+- Caja para ADMIN/GERENTE/CAJERO: pendientes de cualquier día del centro, búsqueda por folio/fecha/mesa/cliente, detalle, total/pagado/saldo, efectivo y vuelto, tarjeta con terminal/autorización obligatorias, transferencia con referencia y pagos parciales/divididos.
+- Cobros con bloqueo de turno y pedido; el cierre usa el mismo bloqueo. Se verifica saldo, estado, turno, método y voucher antes de insertar; el SQL repite sus controles. UUID de pago idempotente, incluso si el turno cerró después. Un resultado incierto bloquea los campos en la app y reintenta exactamente el mismo pago.
+- Comprobante en pantalla con folio, productos, total, pagos y autorización; actualizado por avisos en tiempo real. La impresión térmica corresponde a Tarea 19. El efectivo recibido y vuelto se muestran al cobrar; el esquema no almacena esos dos datos.
+- Pruebas: API 13 unitarias y 51 de integración; app 35. Incluye dos cobros simultáneos, voucher simultáneo entre centros, reenvío después del cierre, pago dividido, saldo excedido, permisos, cierre/cobro simultáneos y reintento con el mismo UUID. Build y lint correctos; 5 avisos previos en la app.
+- Nueva utilidad `test/base-aislada.ts`: las pruebas de Caja crean una base local aleatoria desde los scripts originales y la eliminan al terminar, con verificación del nombre. No dejan pagos en la base de desarrollo. La cuenta local necesita permiso CREATEDB para estas pruebas.
+- Archivos: `apps/api/src/caja/`, `app.module.ts`, `pedidos.service.ts`, `test/base-aislada.ts` y `caja.e2e-spec.ts`; `apps/web/src/paginas/Caja.tsx`, `App.tsx` y pruebas de la app.
 
 ### Resultado de Tarea 8
 
