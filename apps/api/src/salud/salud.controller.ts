@@ -1,5 +1,6 @@
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import type { Response } from 'express';
+import { Publica } from '../autenticacion/publica.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 export interface EstadoSalud {
@@ -11,6 +12,7 @@ export interface EstadoSalud {
 }
 
 /** Ruta pública para saber si la API y la base de datos funcionan. */
+@Publica()
 @Controller('salud')
 export class SaludController {
   constructor(private readonly prisma: PrismaService) {}

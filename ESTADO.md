@@ -4,15 +4,17 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 19:32 (hora de Guatemala) · Claude Code
+2026-10-31 19:40 (hora de Guatemala) · Claude Code
 
 ## Tarea actual
 
-Tarea 3 · App. **Terminada.**
+Tarea 4 · Login con Firebase. **A medias.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
-- (nada a medias)
+- Hecho y probado: la API verifica el token de Firebase (solo con FIREBASE_PROJECT_ID), busca al usuario por firebase_uid con rol y centros, ruta GET /sesion, mensaje "Tu usuario no tiene acceso. Habla con el administrador." y script `npm run crear-admin`.
+- Falta: pantalla de login en la app (Firebase Web SDK), sesión que sigue al recargar, botón de cerrar sesión, pruebas de la app.
+- Archivos tocados: `apps/api/src/autenticacion/*`, `apps/api/scripts/crear-admin.ts`, `apps/api/test/sesion.e2e-spec.ts`, `apps/api/src/salud/salud.controller.ts`, `apps/api/src/app.module.ts`.
 
 ## Tareas terminadas
 
@@ -21,7 +23,7 @@ Tarea 3 · App. **Terminada.**
 | 0 | Preparación (carpetas, esquema, especificación, AGENTS.md, CLAUDE.md) | `6338a5a` y `6515173` |
 | 1 | Base de datos local (Docker Compose + 7 casos) | `58178dd` |
 | 2 | API (NestJS 12 + Prisma 7 + /salud + errores en español) | `314b43f` |
-| 3 | App (React 19 + Vite 8 + Tailwind 4 + shadcn/ui, PWA, indicador de /salud) | ver `git log --grep "Tarea 3"` |
+| 3 | App (React 19 + Vite 8 + Tailwind 4 + shadcn/ui, PWA, indicador de /salud) | `a887efe` |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -35,6 +37,7 @@ Notas:
 - Tarea 3: shadcn/ui (estilo base-nova) usa el paquete `cn` (oficial de shadcn, sin dependencias) en vez de clsx + tailwind-merge, y `@base-ui/react` para los componentes.
 - Tarea 3: el Service Worker solo guarda los archivos de la app para que sea instalable; no guarda datos de la API (eso es la Tarea 17).
 - Tarea 3: `npm run lint` da 3 avisos (no errores): dos en componentes de shadcn y uno en `useSaludApi` (falso positivo: el setState ocurre después de un await).
+- Aviso para la Tarea 7: Prisma interpretó el índice parcial `uq_turno_abierto` como si cada centro tuviera un solo turno (`centro_venta.turno_caja turno_caja?`). Para consultar turnos de un centro usar `prisma.turno_caja.findMany({ where: { centro_venta_id } })`, no la relación desde centro_venta.
 - Tarea 3: verificado en Chrome: la app abre, dice "API conectada" y no hay errores en la consola.
 
 ## Siguiente tarea

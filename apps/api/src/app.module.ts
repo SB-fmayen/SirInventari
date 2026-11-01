@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
+import { AutenticacionModule } from './autenticacion/autenticacion.module.js';
 import { FiltroErrores } from './comun/filtro-errores.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { SaludModule } from './salud/salud.module.js';
@@ -14,6 +15,7 @@ import { SaludModule } from './salud/salud.module.js';
       envFilePath: [resolve(process.cwd(), '../../.env'), resolve(process.cwd(), '.env')],
     }),
     PrismaModule,
+    AutenticacionModule,
     SaludModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: FiltroErrores }],
