@@ -4,18 +4,15 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 21:37 (hora de Guatemala) · Codex
+2026-10-31 21:44 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-Tarea 8 · Pedidos. **API terminada; falta la pantalla.**
+Tarea 8 · Pedidos. **Terminada.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
-- Tarea 8: API terminada y probada. Falta pantalla de lista del día, toma de pedidos, líneas agregadas y anulación con motivo, con UUID generados por la app, y pruebas de la pantalla.
-- Archivos: `apps/api/src/pedidos/`, `test/pedidos.e2e-spec.ts`, registro en `app.module.ts` y exportación de CatalogoService en `catalogo.module.ts`.
-- Pruebas al guardar esta parte: API 13 unitarias y 40 de integración, build y lint correctos. Las pruebas nuevas usan un centro y usuarios propios; no tocan pedidos reales. Aviso de deprecación de `pg` al ejecutar consultas concurrentes de Prisma en las pruebas, sin fallos.
-- API: UUID idempotentes, folio con `siguiente_folio` y fecha de Guatemala dentro de transacción, precio calculado en el servidor por centro, bloqueo del pedido para agregar/anular, usuario/hora por línea, motivo obligatorio y lista del día con búsqueda. `/pedidos/catalogo` permite al personal de pedidos leer solo productos disponibles; el catálogo de administración mantiene sus permisos.
+- (nada a medias)
 
 ## Tareas terminadas
 
@@ -30,6 +27,7 @@ Tarea 8 · Pedidos. **API terminada; falta la pantalla.**
 | R1 | Revisión de tareas 0 a 5 y correcciones mínimas | Ver `git log --grep "Tarea R1"` |
 | 6 | Categorías, productos y precio y disponibilidad por centro | Ver `git log --grep "Tarea 6"` |
 | 7 | Apertura, cierre e historial de turnos por centro | Ver `git log --grep "Tarea 7"` |
+| 8 | Pedidos con folio, líneas con usuario/hora y anulación con motivo | `ced9d1e` y ver `git log --grep "Tarea 8"` |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -59,7 +57,15 @@ Notas:
 
 ## Siguiente tarea
 
-Terminar Tarea 8 · Pedidos (pantalla y pruebas).
+Tarea 9 · Cocina en tiempo real.
+
+### Resultado de Tarea 8
+
+- API con UUID idempotentes, folio de `siguiente_folio`, fecha de Guatemala y precios del centro calculados por el servidor. Bloquea el pedido al agregar/anular líneas; motivo obligatorio. Los pedidos pagados/anulados no admiten productos nuevos.
+- Pantalla de pedidos del día con folio/estado/total/hora y buscador; venta por mesa/para llevar/domicilio/app; productos por categoría, cantidades y notas; agregar después y ver quién/cuándo; anular línea con motivo.
+- La app genera UUID de pedido y líneas al iniciar el borrador/agregar productos. Un reintento conserva los IDs y no duplica el pedido. Todavía no se guarda el borrador al cerrar la app: el modo sin internet corresponde a la Fase 3.
+- Pruebas: API 13 unitarias y 40 de integración; app 30. Incluye dos folios simultáneos 1 y 2, reenvío, precio del servidor, usuario/hora de agregados, anulación, estados terminales y recorrido de la app. Build y lint correctos, mismos 5 avisos anteriores de la app. `pg` emitió un aviso de deprecación de consultas concurrentes de Prisma, sin fallos.
+- Archivos: módulo `apps/api/src/pedidos/`, registro en `app.module.ts`, exportación en `catalogo.module.ts`, `test/pedidos.e2e-spec.ts`, página `apps/web/src/paginas/Pedidos.tsx`, ruta y pruebas de la app.
 
 ### Resultado de Tarea 7
 

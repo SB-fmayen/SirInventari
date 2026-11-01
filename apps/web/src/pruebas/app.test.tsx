@@ -314,6 +314,73 @@ describe('Turnos de caja (Tarea 7)', () => {
   })
 })
 
+describe('Pedidos (Tarea 8)', () => {
+  const id = '10000000-0000-4000-8000-000000000001'
+  const linea = { id: '20000000-0000-4000-8000-000000000001', producto_id: 1, cantidad: '1', precio_unitario: '18.75', importe: '18.75', notas: 'Sin hielo', estado: 'ACTIVA', agregado_en: '2026-11-01T03:00:00Z', motivo_anulacion: null, producto: { nombre: 'Limonada' }, usuario_pedido_detalle_agregado_porTousuario: { nombre: 'Ana Mesera' } }
+  const pedido = { id, folio: 1, tipo_venta_id: 1, mesa_referencia: 'Mesa 4', cliente_nombre: null, estado: 'ABIERTO', total: '18.75', pagado: '0.00', saldo: '18.75', creado_en: '2026-11-01T03:00:00Z', tipo_venta: { nombre: 'Consumo en mesa' }, usuario: { nombre: 'Ana Mesera' }, pedido_detalle: [linea] }
+  const menu = [{ id: 1, nombre: 'Limonada', sku: 'BEB-1', precio: '18.75', categoria: { id: 1, nombre: 'Bebidas' } }]
+  const tipos = [{ id: 1, codigo: 'MESA', nombre: 'Consumo en mesa' }]
+  const otras = (pedidos: object[]) => ({ '/pedidos': { status: 200, cuerpo: pedidos }, '/pedidos/catalogo': { status: 200, cuerpo: menu }, '/pedidos/tipos': { status: 200, cuerpo: tipos } })
+
+  it('genera UUID para pedido y líneas, conserva esos IDs al reintentar y envía notas sin precio', async () => {
+    const fetchFalso = simularApi({ salud: 'sin-red', sesion: conRol('MESERO'), otras: otras([]) })
+    const anterior = fetchFalso.getMockImplementation()!
+    let intentos = 0
+    fetchFalso.mockImplementation((url, opciones) => {
+      if (url.endsWith('/pedidos') && opciones?.method === 'POST') {
+        intentos++
+        if (intentos === 1) return Promise.reject(new TypeError('Failed to fetch'))
+        return Promise.resolve(new Response(JSON.stringify(pedido), { status: 201 }))
+      }
+      return anterior(url, opciones)
+    })
+    abrir('/pedidos')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo pedido' })).toBeEnabled())
+    await userEvent.click(screen.getByRole('button', { name: 'Nuevo pedido' }))
+    await userEvent.type(screen.getByLabelText('Mesa'), 'Mesa 4')
+    await userEvent.click(screen.getByRole('button', { name: /Agregar Limonada por Q 18.75/ }))
+    await userEvent.type(screen.getByLabelText('Notas 1'), 'Sin hielo')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con la API.')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }))
+    expect(await screen.findByText('Pedido 1 guardado.')).toBeInTheDocument()
+    const envios = fetchFalso.mock.calls.filter(([url, opciones]) => url.endsWith('/pedidos') && opciones?.method === 'POST')
+    expect(envios).toHaveLength(2)
+    expect(envios[0][1]?.body).toBe(envios[1][1]?.body)
+    const cuerpo = JSON.parse(String(envios[0][1]?.body))
+    expect(cuerpo.id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(cuerpo.lineas[0]).toMatchObject({ producto_id: 1, cantidad: '1', notas: 'Sin hielo' })
+    expect(cuerpo.lineas[0].id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(cuerpo.lineas[0].precio_unitario).toBeUndefined()
+  })
+
+  it('agrega una línea al pedido existente y muestra quién y a qué hora la agregó', async () => {
+    const fetchFalso = simularApi({ salud: 'sin-red', sesion: conRol('MESERO'), otras: otras([pedido]) })
+    const anterior = fetchFalso.getMockImplementation()!
+    fetchFalso.mockImplementation((url, opciones) => url.endsWith(`/pedidos/${id}/lineas`)
+      ? Promise.resolve(new Response(JSON.stringify({ ...pedido, total: '37.50', saldo: '37.50', pedido_detalle: [linea, { ...linea, id: 'nueva', agregado_en: '2026-11-01T03:05:00Z', usuario_pedido_detalle_agregado_porTousuario: { nombre: 'Luis Cajero' } }] }), { status: 201 }))
+      : anterior(url, opciones))
+    abrir('/pedidos')
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver pedido 1' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar productos' }))
+    await userEvent.click(screen.getByRole('button', { name: /Agregar Limonada por Q 18.75/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }))
+    expect(await screen.findByText(/Agregado por Luis Cajero a las/)).toBeInTheDocument()
+    expect(screen.getByText(/Agregado por Ana Mesera a las/)).toBeInTheDocument()
+    const envio = fetchFalso.mock.calls.find(([url]) => url.endsWith(`/pedidos/${id}/lineas`))
+    expect(envio?.[1]).toMatchObject({ method: 'POST', headers: { 'X-Centro-Id': '1' } })
+    expect(JSON.parse(String(envio?.[1]?.body)).lineas).toHaveLength(1)
+  })
+
+  it('un pedido pagado muestra el detalle sin permitir agregar ni anular productos', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('MESERO'), otras: otras([{ ...pedido, estado: 'PAGADO' }]) })
+    abrir('/pedidos')
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver pedido 1' }))
+    expect(screen.queryByRole('button', { name: 'Agregar productos' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Anular Limonada' })).not.toBeInTheDocument()
+  })
+})
+
 describe('Permisos por rol y centro (Tarea 5)', () => {
   it('al cambiar de usuario el formulario muestra los datos del usuario elegido', async () => {
     simularApi({

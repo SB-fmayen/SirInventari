@@ -13,6 +13,7 @@ import { SinPermiso } from '@/paginas/SinPermiso'
 import { Usuarios } from '@/paginas/Usuarios'
 import { Catalogo } from '@/paginas/Catalogo'
 import { Turnos } from '@/paginas/Turnos'
+import { Pedidos } from '@/paginas/Pedidos'
 import { SECCIONES, puedeEntrar, seccionesDe } from '@/secciones'
 import { useSesion } from '@/sesion/SesionProvider'
 import { NOMBRE_ROL, type UsuarioSistema } from '@/sesion/tipos'
@@ -100,7 +101,7 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
             <Route
               key={s.ruta}
               path={s.ruta}
-              element={!puedeEntrar(usuario.rol, s) ? <SinPermiso /> : s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : <EnConstruccion seccion={s} />}
+              element={!puedeEntrar(usuario.rol, s) ? <SinPermiso /> : s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : s.ruta === '/pedidos' ? <Pedidos /> : <EnConstruccion seccion={s} />}
             />
           ))}
           <Route path="*" element={<NoEncontrada />} />
