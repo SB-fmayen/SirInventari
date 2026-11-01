@@ -4,7 +4,16 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-01 00:25 (hora de Guatemala) · Codex
+2026-11-01 00:38 (hora de Guatemala) · Codex
+
+## Categorías del menú La Iguana cargadas
+
+- A petición del usuario se consultó el menú público [shukoslaiguana.com](https://shukoslaiguana.com/) el 2026-11-01 y se cargaron sus 12 categorías, en el orden publicado: LASAÑA, ENTRADAS, HAMBURGUESAS, PIZZAS PERSONALES, PIZZAS GRANDES, DON CALZONE, ENRROLLADOS, CONO PIZZA, TORTILLAS DE HARINA, SHUKOS, EXTRAS y BEBIDAS. Se preservó el nombre comercial publicado ENRROLLADOS.
+- La base local tenía Platos y Bebidas. Se crearon 11 categorías; Bebidas se reutilizó sin cambiar su ID/nombre y se ordenó en el lugar 12. Se conserva Platos y todos los productos existentes. Total actual: 13 categorías, todas activas. Las categorías son globales según el esquema actual.
+- Script de datos repetible `db/04_categorias_iguana.sql`: transacción y comparación de nombres sin distinguir mayúsculas ni espacios laterales, para no duplicar Bebidas/BEBIDAS. No modifica tablas, triggers ni funciones.
+- Verificado primero con ROLLBACK, luego carga real y segunda ejecución sin duplicados. Se comprobó que existe exactamente una fila por cada categoría del menú. Pasan 14 pruebas unitarias de API y 4 de integración de Catálogo.
+- Esta solicitud carga categorías, no productos/precios. Se ven al recargar Catálogo; en Pedidos solo aparecen categorías con productos disponibles. La URL ya sirve como fuente para una posterior carga de productos/precios, sin volver a pedir al usuario una lista que ya proporcionó mediante el sitio.
+- Archivos: `db/04_categorias_iguana.sql` y `ESTADO.md`.
 
 ## Ajuste solicitado: cantidades y catálogo real
 
@@ -175,7 +184,7 @@ Retomar primero Tarea 9 cuando el usuario responda sobre el esquema. Para cerrar
 4. **Tarea 9 · Autorizar separar el estado de cocina del estado de cobro.** `pedido.estado` mezcla `PAGADO` con `EN_PREPARACION/LISTO/ENTREGADO`. Cobrar antes de cocinar pierde el estado de preparación; cambiar PAGADO por LISTO volvería a abrir el pedido para cobros/productos. Propuesta pendiente de respuesta: añadir `pedido.estado_cocina` con valores PENDIENTE, EN_PREPARACION, LISTO y ENTREGADO, independiente de `pedido.estado`. Se preguntó al usuario; no se aplicó ninguna modificación a tablas, triggers o funciones.
 5. **Tarea 13 · Revisar y aprobar plan/costo en `docs/publicacion.md`.** Propuesta para un centro: `us-central1`, Cloud SQL 1 vCPU/3.75 GiB, Cloud Run 1 vCPU/1 GiB y una instancia máxima, reserva estimada USD 130/mes antes de impuestos (no es un tope automático). Confirmar proyecto/facturación, centros reales y acceso a configuración de Google Cloud/GitHub. El flujo exige `PUBLICAR_APROBADO=true` y el entorno protegido `produccion`; hoy no está habilitado. Configurar `CI_DB_PASSWORD` para las pruebas de GitHub. Docker/gcloud no están disponibles en esta sesión; el contenedor y la publicación necesitan validación posterior.
 6. **Tarea 14 · Archivo real de ejemplo del cierre del POS**, anonimizado y con su formato/encabezados originales, en `docs/ejemplos`. No se inventó un archivo ni un parser.
-7. **Catálogo real para las pruebas:** falta la lista de productos/categorías/precios y el detalle de combos o módulos mencionados. La captura recibida solo muestra los ejemplos actuales (Plato del día Q45 y Refresco Q12). Cantidades corregidas; carga de datos pendiente de esa lista.
+7. **Fuente del catálogo real recibida:** el usuario proporcionó `https://shukoslaiguana.com/`. Sus 12 categorías ya se cargaron en la base local; productos, precios y detalle de combos/módulos todavía no se han importado. Cantidades de la pantalla corregidas. Usar el sitio como fuente en la próxima solicitud de carga de productos.
 
 ## Cómo probar lo último
 
