@@ -23,7 +23,7 @@ const incluirCocina = {
   }, orderBy: [{ agregado_en: 'asc' as const }, { id: 'asc' as const }] },
 } satisfies Prisma.pedidoInclude;
 const seleccionarCocina = {
-  id: true, folio: true, fecha_operacion: true, creado_en: true, estado_cocina: true,
+  id: true, folio: true, fecha_operacion: true, creado_en: true, estado_cocina: true, version: true,
   mesa_referencia: true, cliente_nombre: true, ...incluirCocina,
 } satisfies Prisma.pedidoSelect;
 
@@ -67,7 +67,7 @@ export class PedidosService {
     return filas.map(p => this.respuestaCocina(p));
   }
 
-  cambiarCocina(centroId: number, usuarioId: number, id: string, actual: string, destino: string) {
+  cambiarCocina(centroId: number, usuarioId: number, id: string, actual: string, destino: string, version: number) {
     return this.avisar(centroId, this.prisma.$transaction(async tx => {
       const estado = await this.bloquear(tx, centroId, id);
       if (estado === 'ANULADO') throw new ConflictException('Un pedido anulado no se puede preparar.');
@@ -76,6 +76,7 @@ export class PedidosService {
       const siguiente: Record<string, string> = { PENDIENTE: 'EN_PREPARACION', EN_PREPARACION: 'LISTO', LISTO: 'ENTREGADO' };
       if (siguiente[actual] !== destino) throw new BadRequestException('Sigue el orden: En preparación, Listo y Entregado.');
       if (p.estado_cocina === destino) return this.respuestaCocina(p); // Reintento, sin avanzar dos veces.
+      if (p.version !== version) throw new ConflictException('El pedido tiene cambios nuevos. Revísalos antes de continuar.');
       if (p.estado_cocina !== actual) throw new ConflictException('El estado de cocina cambió. Actualiza el pedido antes de continuar.');
       await tx.$queryRaw`SELECT set_config('app.usuario_id', ${String(usuarioId)}, true)`;
       const actualizado = await tx.pedido.update({ where: { id }, data: {

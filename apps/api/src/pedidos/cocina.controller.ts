@@ -16,6 +16,9 @@ export class CocinaController {
     if (typeof c.estado_actual !== 'string' || !estados.includes(c.estado_actual) || typeof c.estado_cocina !== 'string' || !estados.includes(c.estado_cocina)) {
       throw new BadRequestException('Elige un estado de cocina válido.');
     }
-    return this.pedidos.cambiarCocina(centroId, usuario.id, uuid(id), c.estado_actual, c.estado_cocina);
+    if (typeof c.version_actual !== 'number' || !Number.isSafeInteger(c.version_actual) || c.version_actual < 1) {
+      throw new BadRequestException('Actualiza el pedido antes de cambiar su preparación.');
+    }
+    return this.pedidos.cambiarCocina(centroId, usuario.id, uuid(id), c.estado_actual, c.estado_cocina, c.version_actual);
   }
 }

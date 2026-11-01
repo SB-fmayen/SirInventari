@@ -16,6 +16,7 @@ import { Turnos } from '@/paginas/Turnos'
 import { Pedidos } from '@/paginas/Pedidos'
 import { Caja } from '@/paginas/Caja'
 import { Reportes } from '@/paginas/Reportes'
+import { Cocina } from '@/paginas/Cocina'
 import { SECCIONES, puedeEntrar, seccionesDe } from '@/secciones'
 import { useSesion } from '@/sesion/SesionProvider'
 import { NOMBRE_ROL, type UsuarioSistema } from '@/sesion/tipos'
@@ -103,7 +104,7 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
             <Route
               key={s.ruta}
               path={s.ruta}
-              element={!puedeEntrar(usuario.rol, s) ? <SinPermiso /> : s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : s.ruta === '/pedidos' ? <Pedidos /> : s.ruta === '/caja' ? <Caja /> : s.ruta === '/reportes' ? <Reportes /> : <EnConstruccion seccion={s} />}
+              element={!puedeEntrar(usuario.rol, s) ? <SinPermiso /> : s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : s.ruta === '/pedidos' ? <Pedidos /> : s.ruta === '/caja' ? <Caja /> : s.ruta === '/reportes' ? <Reportes /> : s.ruta === '/cocina' ? <Cocina key={centro?.id} /> : <EnConstruccion seccion={s} />}
             />
           ))}
           <Route path="*" element={<NoEncontrada />} />

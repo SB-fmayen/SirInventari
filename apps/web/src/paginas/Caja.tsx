@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { ErrorApi } from '@/lib/api'
 import { useSesion } from '@/sesion/SesionProvider'
 import { useTiempoReal } from '@/hooks/useTiempoReal'
+import { nombresCocina, type EstadoCocina } from '@/lib/cocina'
 
 interface Pedido {
-  id: string; folio: number; fecha_operacion: string; estado: string; total: string; pagado: string; saldo: string
+  id: string; folio: number; fecha_operacion: string; estado: string; estado_cocina: EstadoCocina; total: string; pagado: string; saldo: string
   mesa_referencia: string | null; cliente_nombre: string | null
   pedido_detalle: { id: string; cantidad: string; importe: string; estado: string; producto: { nombre: string } }[]
 }
@@ -51,7 +52,14 @@ export function Caja() {
     return () => { vigente = false }
   }, [consultar])
   async function actualizar() {
-    try { const { ps, ms, abierto } = await consultar(); setPendientes(ps); setMetodos(ms); setTurnoAbierto(abierto) }
+    try {
+      const { ps, ms, abierto } = await consultar(); setPendientes(ps); setMetodos(ms); setTurnoAbierto(abierto)
+      if (comprobante) {
+        const nuevo = await api<Comprobante>(`/caja/pedidos/${comprobante.pedido.id}/comprobante`)
+        // Refresca preparación sin alterar el monto escrito ni un pago en curso.
+        setComprobante(actual => actual?.pedido.id === nuevo.pedido.id ? { ...actual, pedido: { ...actual.pedido, estado_cocina: nuevo.pedido.estado_cocina } } : actual)
+      }
+    }
     catch (e) { setError(mensaje(e)) }
   }
   const conectado = useTiempoReal(actualizar)
@@ -96,6 +104,7 @@ export function Caja() {
     {comprobante && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
       <h2 className="text-2xl font-bold">Pedido {comprobante.pedido.folio} · {comprobante.pedido.fecha_operacion.split('-').reverse().join('/')}</h2>
       <p>{comprobante.pedido.mesa_referencia || comprobante.pedido.cliente_nombre}</p>
+      {comprobante.pedido.estado_cocina && <p className="font-semibold text-teal-800">Cocina: {nombresCocina[comprobante.pedido.estado_cocina]}</p>}
       <ul>{comprobante.pedido.pedido_detalle.filter((l) => l.estado === 'ACTIVA').map((l) => <li className="flex justify-between gap-3 py-2" key={l.id}><span>{l.cantidad} × {l.producto.nombre}</span><span>{dinero(l.importe)}</span></li>)}</ul>
       <p className="text-xl font-bold">Total: {dinero(comprobante.pedido.total)} · Pagado: {dinero(comprobante.pedido.pagado)} · Saldo: {dinero(comprobante.pedido.saldo)}</p>
       {puedeCobrar && <form aria-label="Cobrar pedido" className="grid gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); void cobrar() }}>
@@ -109,7 +118,7 @@ export function Caja() {
       <section aria-label="Comprobante" className="rounded-xl border border-slate-200 p-4"><h3 className="text-xl font-bold">Comprobante · Pedido {comprobante.pedido.folio}</h3><p>{comprobante.centro.nombre} · {comprobante.pedido.fecha_operacion.split('-').reverse().join('/')}</p><p>Total: {dinero(comprobante.pedido.total)}</p><ul>{comprobante.pagos.map((p) => <li className="py-2" key={p.id}>{p.metodo_pago.nombre}: {dinero(p.monto)}{p.estado === 'ANULADO' && ' (anulado)'}{p.referencia_pos && ` · Autorización ${p.referencia_pos}`}{p.terminal_pos && ` · Terminal ${p.terminal_pos}`}</li>)}</ul><p>Saldo: {dinero(comprobante.pedido.saldo)}</p></section>
     </section>}
     <label className="block">Buscar pendientes por folio, fecha, mesa o cliente<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
-    {cargando ? <p>Cargando Caja…</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibles.map((p) => <button className="min-h-28 rounded-2xl border border-slate-200 bg-white p-4 text-left disabled:opacity-50" disabled={bloqueado} key={p.id} aria-label={`Cobrar pedido ${p.folio}`} onClick={() => void elegir(p)}><span className="block text-xl font-bold">Pedido {p.folio} · Saldo {dinero(p.saldo)}</span><span className="block">{p.fecha_operacion.split('-').reverse().join('/')} · {p.mesa_referencia || p.cliente_nombre}</span></button>)}</div>}
+    {cargando ? <p>Cargando Caja…</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibles.map((p) => <button className="min-h-28 rounded-2xl border border-slate-200 bg-white p-4 text-left disabled:opacity-50" disabled={bloqueado} key={p.id} aria-label={`Cobrar pedido ${p.folio}`} onClick={() => void elegir(p)}><span className="block text-xl font-bold">Pedido {p.folio} · Saldo {dinero(p.saldo)}</span><span className="block">{p.fecha_operacion.split('-').reverse().join('/')} · {p.mesa_referencia || p.cliente_nombre}</span>{p.estado_cocina && <span className="mt-2 inline-block rounded-lg bg-teal-50 px-2 py-1 font-semibold text-teal-800">Cocina: {nombresCocina[p.estado_cocina]}</span>}</button>)}</div>}
     {!cargando && !visibles.length && <p>No hay pedidos pendientes con esos filtros.</p>}
   </div>
 }

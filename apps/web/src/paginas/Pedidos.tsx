@@ -3,6 +3,7 @@ import { ErrorApi } from '@/lib/api'
 import { useSesion } from '@/sesion/SesionProvider'
 import { useTiempoReal } from '@/hooks/useTiempoReal'
 import { totalLineas } from '@/lib/importes'
+import { nombresCocina, type EstadoCocina } from '@/lib/cocina'
 
 interface Producto { id: number; nombre: string; sku: string; precio: string; categoria: { id: number; nombre: string } }
 interface TipoVenta { id: number; codigo: string; nombre: string }
@@ -13,7 +14,7 @@ interface Linea {
 }
 interface Pedido {
   id: string; folio: number; tipo_venta_id: number; mesa_referencia: string | null; cliente_nombre: string | null
-  estado: string; total: string; pagado: string; saldo: string; creado_en: string
+  estado: string; estado_cocina: EstadoCocina; total: string; pagado: string; saldo: string; creado_en: string
   tipo_venta: { nombre: string }; usuario: { nombre: string }; pedido_detalle: Linea[]
 }
 interface BorradorLinea { id: string; producto_id: number; cantidad: string; notas: string }
@@ -127,10 +128,11 @@ export function Pedidos() {
         {l.notas && <p>Notas: {l.notas}</p>}<p className="text-sm text-slate-600">Agregado por {l.usuario_pedido_detalle_agregado_porTousuario.nombre} a las {hora(l.agregado_en)}</p>{l.estado === 'ANULADA' && <p className="text-red-700">Anulado: {l.motivo_anulacion}</p>}
       </li>)}</ul>
       {anulando && <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); void anular() }}><label>Motivo de la anulación<input className={campo} required maxLength={200} disabled={guardando} value={motivo} onChange={(e) => setMotivo(e.target.value)} /></label><button className={boton} disabled={guardando}>Confirmar anulación</button><button type="button" className={secundario} disabled={guardando} onClick={() => setAnulando(null)}>Cancelar anulación</button></form>}
+      {seleccionado.estado_cocina && <p className="font-semibold text-teal-800">Cocina: {nombresCocina[seleccionado.estado_cocina]}</p>}
       <p className="text-xl font-bold">Total: {dinero(seleccionado.total)} · Pagado: {dinero(seleccionado.pagado)} · Saldo: {dinero(seleccionado.saldo)}</p>
     </section>}
     <label className="block">Buscar por folio, mesa o cliente<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
-    {cargando ? <p>Cargando pedidos…</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visible.map((p) => <button disabled={guardando || !!borrador} className="min-h-32 rounded-2xl border border-slate-200 bg-white p-4 text-left disabled:opacity-50" key={p.id} onClick={() => { setSeleccionado(p); setAnulando(null); setError('') }} aria-label={`Ver pedido ${p.folio}`}><span className="block text-2xl font-bold">Pedido {p.folio} · {dinero(p.total)}</span><span className="block">{estados[p.estado]} · {hora(p.creado_en)}</span><span className="block">{p.mesa_referencia || p.cliente_nombre}</span></button>)}</div>}
+    {cargando ? <p>Cargando pedidos…</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visible.map((p) => <button disabled={guardando || !!borrador} className="min-h-32 rounded-2xl border border-slate-200 bg-white p-4 text-left disabled:opacity-50" key={p.id} onClick={() => { setSeleccionado(p); setAnulando(null); setError('') }} aria-label={`Ver pedido ${p.folio}`}><span className="block text-2xl font-bold">Pedido {p.folio} · {dinero(p.total)}</span><span className="block">{estados[p.estado]} · {hora(p.creado_en)}</span><span className="block">{p.mesa_referencia || p.cliente_nombre}</span>{p.estado_cocina && <span className="mt-2 inline-block rounded-lg bg-teal-50 px-2 py-1 font-semibold text-teal-800">Cocina: {nombresCocina[p.estado_cocina]}</span>}</button>)}</div>}
     {!cargando && !visible.length && <p>No hay pedidos con esos filtros para hoy.</p>}
   </div>
 }

@@ -22,7 +22,10 @@ describe('Cocina independiente del cobro (base aislada)', () => {
   async function crear() {
     return (await http().post('/pedidos').set(cajero()).send({ id: randomUUID(), tipo_venta_id: 1, mesa_referencia: 'Mesa cocina', lineas: [linea()] }).expect(201)).body;
   }
-  const cambiar = (id: string, actual: string, destino: string) => http().post(`/cocina/${id}/estado`).set(headers()).send({ estado_actual: actual, estado_cocina: destino });
+  async function cambiar(id: string, actual: string, destino: string, codigo = 201) {
+    const p = /^[a-f0-9-]{36}$/.test(id) ? await base.prisma.pedido.findUnique({ where: { id } }) : null;
+    return http().post(`/cocina/${id}/estado`).set(headers()).send({ estado_actual: actual, estado_cocina: destino, version_actual: p?.version ?? 1 }).expect(codigo);
+  }
   function esperar(evento: string) {
     return new Promise<unknown>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error(`No llegó ${evento}`)), 4000);
@@ -49,7 +52,7 @@ describe('Cocina independiente del cobro (base aislada)', () => {
     expect(fila).toMatchObject({ estado_cocina: 'PENDIENTE', mesa_referencia: 'Mesa cocina', pedido_detalle: [{ nuevo: false, notas: 'Sin cebolla' }] });
     expect(fila).not.toHaveProperty('total'); expect(fila).not.toHaveProperty('pago');
     const avisoEstado = esperar('pedido:actualizado');
-    await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION').expect(201);
+    await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION', 201);
     expect(await avisoEstado).toEqual({ pedido_id: p.id });
     expect((await http().get(`/pedidos/${p.id}`).set(cajero()).expect(200)).body.estado_cocina).toBe('EN_PREPARACION');
     socket.disconnect();
@@ -59,7 +62,7 @@ describe('Cocina independiente del cobro (base aislada)', () => {
     const p = await crear();
     await http().post('/caja/pagos').set(cajero()).send({ id: randomUUID(), pedido_id: p.id, metodo_pago_id: 1, monto: 45 }).expect(201);
     for (const [actual, destino] of [['PENDIENTE', 'EN_PREPARACION'], ['EN_PREPARACION', 'LISTO'], ['LISTO', 'ENTREGADO']]) {
-      await cambiar(p.id, actual, destino).expect(201);
+      await cambiar(p.id, actual, destino, 201);
       const comprobante = await http().get(`/caja/pedidos/${p.id}/comprobante`).set(cajero()).expect(200);
       expect(comprobante.body.pedido).toMatchObject({ estado: 'PAGADO', estado_cocina: destino, pagado: '45.00', saldo: '0.00' });
     }
@@ -72,30 +75,30 @@ describe('Cocina independiente del cobro (base aislada)', () => {
 
   it('valida transiciones, reintentos y dos cocineros simultáneos', async () => {
     const p = await crear();
-    await cambiar(p.id, 'PENDIENTE', 'ENTREGADO').expect(400);
-    const respuestas = await Promise.all([1, 2].map(() => cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION').expect(201)));
+    await cambiar(p.id, 'PENDIENTE', 'ENTREGADO', 400);
+    const respuestas = await Promise.all([1, 2].map(() => cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION', 201)));
     expect(respuestas.every(r => r.body.estado_cocina === 'EN_PREPARACION')).toBe(true);
-    await cambiar(p.id, 'EN_PREPARACION', 'LISTO').expect(201);
-    await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION').expect(409);
+    await cambiar(p.id, 'EN_PREPARACION', 'LISTO', 201);
+    await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION', 409);
     await http().post(`/cocina/${p.id}/estado`).set(headers()).send({ estado_cocina: 'OTRO' }).expect(400);
   });
 
   it('los agregados después son NUEVO y reabren preparación sin duplicar ni mostrar líneas anuladas', async () => {
     const p = await crear();
-    await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION').expect(201); await cambiar(p.id, 'EN_PREPARACION', 'LISTO').expect(201);
+    await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION', 201); await cambiar(p.id, 'EN_PREPARACION', 'LISTO', 201);
     const extra = linea(); const cuerpo = { lineas: [extra] };
     await http().post(`/pedidos/${p.id}/lineas`).set(cajero()).send(cuerpo).expect(201);
     let lista = (await http().get('/cocina').set(headers()).expect(200)).body;
     let fila = lista.find((f: { id: string }) => f.id === p.id);
     expect(fila.estado_cocina).toBe('PENDIENTE');
     expect(fila.pedido_detalle.find((l: { id: string }) => l.id === extra.id).nuevo).toBe(true);
-    await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION').expect(201); await cambiar(p.id, 'EN_PREPARACION', 'LISTO').expect(201);
+    await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION', 201); await cambiar(p.id, 'EN_PREPARACION', 'LISTO', 201);
     await http().post(`/pedidos/${p.id}/lineas`).set(cajero()).send(cuerpo).expect(201);
     expect((await base.prisma.pedido.findUniqueOrThrow({ where: { id: p.id } })).estado_cocina).toBe('LISTO');
     await http().post(`/pedidos/${p.id}/lineas/${extra.id}/anulacion`).set(cajero()).send({ motivo: 'Ya no lo pidió' }).expect(201);
     lista = (await http().get('/cocina').set(headers()).expect(200)).body; fila = lista.find((f: { id: string }) => f.id === p.id);
     expect(fila.pedido_detalle).toHaveLength(1);
-    await cambiar(p.id, 'LISTO', 'ENTREGADO').expect(201);
+    await cambiar(p.id, 'LISTO', 'ENTREGADO', 201);
     await http().post(`/pedidos/${p.id}/lineas`).set(cajero()).send({ lineas: [linea()] }).expect(201);
     expect((await base.prisma.pedido.findUniqueOrThrow({ where: { id: p.id } })).estado_cocina).toBe('PENDIENTE');
   });
@@ -107,7 +110,7 @@ describe('Cocina independiente del cobro (base aislada)', () => {
     await base.prisma.pedido.update({ where: { id: anulado.id }, data: { estado: 'ANULADO' } });
     const lista = (await http().get('/cocina').set(headers()).expect(200)).body.map((f: { id: string }) => f.id);
     expect(lista).toContain(pendiente.id); expect(lista).not.toContain(entregado.id); expect(lista).not.toContain(anulado.id);
-    await cambiar(anulado.id, 'PENDIENTE', 'EN_PREPARACION').expect(409);
+    await cambiar(anulado.id, 'PENDIENTE', 'EN_PREPARACION', 409);
   });
 
   it('bloquea roles, centros, UUID inválidos y pedidos de otro centro', async () => {
@@ -116,9 +119,18 @@ describe('Cocina independiente del cobro (base aislada)', () => {
     await http().post(`/cocina/${p.id}/estado`).set(cajero()).send({ estado_actual: 'PENDIENTE', estado_cocina: 'EN_PREPARACION' }).expect(403);
     await http().get('/cocina').set(headers('cocina-prueba', 2)).expect(403);
     await http().get('/cocina').set(headers('cocina-admin', 2)).expect(200);
-    await http().post(`/cocina/${p.id}/estado`).set(headers('cocina-admin', 2)).send({ estado_actual: 'PENDIENTE', estado_cocina: 'EN_PREPARACION' }).expect(404);
-    await cambiar('no-uuid', 'PENDIENTE', 'EN_PREPARACION').expect(400);
-    await cambiar(randomUUID(), 'PENDIENTE', 'EN_PREPARACION').expect(404);
+    await http().post(`/cocina/${p.id}/estado`).set(headers('cocina-admin', 2)).send({ estado_actual: 'PENDIENTE', estado_cocina: 'EN_PREPARACION', version_actual: 1 }).expect(404);
+    await cambiar('no-uuid', 'PENDIENTE', 'EN_PREPARACION', 400);
+    await cambiar(randomUUID(), 'PENDIENTE', 'EN_PREPARACION', 404);
+  });
+
+  it('no marca listo con una pantalla antigua si llegaron productos nuevos durante la preparación', async () => {
+    const p = await crear();
+    const preparando = await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION');
+    await http().post(`/pedidos/${p.id}/lineas`).set(cajero()).send({ lineas: [linea()] }).expect(201);
+    await http().post(`/cocina/${p.id}/estado`).set(headers()).send({ estado_actual: 'EN_PREPARACION', estado_cocina: 'LISTO', version_actual: preparando.body.version }).expect(409);
+    expect((await base.prisma.pedido.findUniqueOrThrow({ where: { id: p.id } })).estado_cocina).toBe('EN_PREPARACION');
+    await cambiar(p.id, 'EN_PREPARACION', 'LISTO');
   });
 
   it('actualiza bases anteriores, conserva preparación previa y repetir la actualización no reinicia estados', async () => {

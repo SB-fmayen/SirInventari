@@ -4,7 +4,16 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-01 01:00 (hora de Guatemala) · Codex
+2026-11-01 01:07 (hora de Guatemala) · Codex
+
+## Tarea 9 · Cocina terminada
+
+- Pantalla real en `/cocina`: columnas Pendientes, En preparación y Listos; entregados del día opcionales; tarjetas con folio, tipo, mesa/cliente, fecha/hora de Guatemala, cantidades, notas y minutos de espera. Los agregados posteriores llevan NUEVO con su hora. Actualización automática y aviso/reconexión mediante el hook Socket.IO existente; botón de consulta manual.
+- Pedidos y Caja muestran la preparación en las tarjetas y el detalle seleccionado al recibir avisos. Caja conserva el monto escrito cuando cambia la preparación. Cocina se vuelve a montar al cambiar de centro y descarta respuestas antiguas.
+- API exige la versión vigente del pedido además del estado anterior: si llegaron productos durante la preparación, una pantalla antigua no puede marcarlos listos sin revisarlos. Se conservan los bloqueos y reintentos seguros del avance anterior.
+- Verificación final: API 14 unitarias y 72 de integración (8 de Cocina); web 53 pruebas (51 de suite completa más 2 pruebas nuevas de ruta/permisos, ejecutadas en `app.test.tsx`). Build y lint de ambas aplicaciones correctos, con los 5 avisos web previos y aviso previo de tamaño del paquete. API local `/salud` correcta, `/cocina` exige sesión (401 sin token), y Vite sirve la pantalla nueva (200). No se usaron credenciales reales en las pruebas ni se crearon pedidos de prueba en la base del usuario.
+- Falta únicamente la prueba visual del usuario con cuentas reales en dos pestañas/dispositivos; guía detallada en `docs/pruebas-manuales.md`. No se declara publicación ni Fase 1 aprobada para producción: siguen los pendientes de R2.
+- Archivos: `apps/web/src/paginas/Cocina.tsx`, `lib/cocina.ts`, `App.tsx`, `paginas/Pedidos.tsx`, `paginas/Caja.tsx`, `pruebas/cocina.test.tsx`, `pruebas/app.test.tsx`; controlador/servicio y prueba de Cocina en API; SQL/modelo Prisma del avance anterior; guía manual y esta libreta. Avance de backend guardado en `b72e720`.
 
 ## Tarea 9 · Cocina, avance con autorización
 
@@ -51,15 +60,15 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Tarea actual
 
-Tarea 9 · Cocina en tiempo real, retomada con autorización del usuario. Publicación tiene preparación local; no se creó ni publicó nada en la nube.
+Tarea 9 · Cocina en tiempo real terminada y probada automáticamente. El usuario pidió priorizar su cierre; rediseño de Pedidos queda anotado para después. Publicación tiene preparación local, pendiente de aprobación/configuración y seguridad R2.
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
 - Tarea 9: conexiones Socket.IO autenticadas, salas por centro calculadas por el servidor, notificación después de guardar pedidos/agregados/anulaciones y actualización de Pedidos al conectar o recibir avisos. Desconecta usuarios desactivados antes de publicar un aviso. La app avisa al perder conexión y reconecta sola.
-- Falta pantalla Cocina y estados de preparación independientes del cobro. Ver punto 4 de "Necesito del usuario"; no se modificó el esquema.
+- **Resuelto:** pantalla Cocina y preparación independiente del cobro, con cambio de esquema autorizado; ver el cierre de Tarea 9 al inicio.
 - Archivos: `apps/api/src/tiempo-real/`, `src/pedidos/pedidos.module.ts` y `pedidos.service.ts`, `test/tiempo-real.e2e-spec.ts`; dependencias/package-lock de API y app; hook `apps/web/src/hooks/useTiempoReal.ts`, integración en `paginas/Pedidos.tsx` y pruebas `pruebas/tiempo-real.test.tsx` y `app.test.tsx`.
 - Pruebas al guardar esta parte: API 13 unitarias y 43 de integración; app 32. Conexiones reales de Socket.IO prueban aviso sin recargar, aislamiento por centro y desactivación. La app prueba token/centro, reconexión y limpieza al cambiar centro. Build y lint correctos (los mismos 5 avisos anteriores en app).
-- Tarea 13: Dockerfile de API, contexto restringido, Firebase Hosting, CI y publicación con identidad federada preparada pero desactivada, soporte ADC en Cloud Run y guía `docs/publicacion.md` con propuesta de costos. No se pudo construir el contenedor local porque `docker` no está disponible; tampoco se ejecutó GitHub Actions ni se hizo push. Falta aprobación de plan/costo, configurar proyecto/IAM/secretos/CI, resolver seguridad de R2 y terminar Cocina antes de publicar.
+- Tarea 13: Dockerfile de API, contexto restringido, Firebase Hosting, CI y publicación con identidad federada preparada pero desactivada, soporte ADC en Cloud Run y guía `docs/publicacion.md` con propuesta de costos. No se pudo construir el contenedor local porque `docker` no está disponible; tampoco se ejecutó GitHub Actions ni se hizo push. Falta aprobación de plan/costo, configurar proyecto/IAM/secretos/CI, resolver seguridad de R2 y validar el flujo con cuentas reales antes de publicar (Cocina ya terminada).
 - Últimas pruebas: API 14 unitarias y 64 de integración; app 41 (también pasan con la configuración ficticia de Firebase prevista en CI). Build/lint correctos. Arranque real del JS compilado en puerto temporal 3099 y `/salud` correctos; se detuvo ese proceso al terminar. Los catálogos de producción se prueban en una base temporal vacía y no crean usuarios, centros ni turnos ficticios.
 - Archivos de preparación: `.dockerignore`, `.github/workflows/verificar-y-publicar.yml`, `firebase.json`, `apps/api/Dockerfile`, `apps/api/package.json`, autenticación Firebase y su prueba, `main.ts`, `.env.example`, `.gitignore`, pruebas de catálogos de producción, `db/03_catalogos_produccion.sql`, `docs/publicacion.md` y `docs/ejemplos/README.md`. El SQL 01 de tablas/triggers/funciones no se modificó.
 
@@ -77,6 +86,7 @@ Tarea 9 · Cocina en tiempo real, retomada con autorización del usuario. Public
 | 6 | Categorías, productos y precio y disponibilidad por centro | Ver `git log --grep "Tarea 6"` |
 | 7 | Apertura, cierre e historial de turnos por centro | Ver `git log --grep "Tarea 7"` |
 | 8 | Pedidos con folio, líneas con usuario/hora y anulación con motivo | `ced9d1e` y ver `git log --grep "Tarea 8"` |
+| 9 | Cocina, estados independientes, agregados NUEVO y avisos a Pedidos/Caja | `b72e720` y ver `git log --grep "Tarea 9"` |
 | 10 | Caja, cobros divididos, vuelto, comprobante y bloqueos contra duplicados | Ver `git log --grep "Tarea 10"` |
 | 11 | Reportes por centro y rango, historial y descarga CSV | Ver `git log --grep "Tarea 11"` |
 | 12 (parte disponible) | Pruebas automáticas aisladas y guía manual; falta validar Cocina al terminar Tarea 9 | Ver `git log --grep "Tarea 12"` |
@@ -110,7 +120,7 @@ Notas:
 
 ## Siguiente tarea
 
-Retomar primero Tarea 9 cuando el usuario responda sobre el esquema. Para cerrar Fase 1: terminar Cocina y sus pruebas. La Tarea 13 tiene preparación local guardada y espera aprobación/configuración del usuario y resolver los pendientes de R2. La Tarea 14 necesita el archivo real del POS; requisitos en `docs/ejemplos/README.md`. No crear servicios ni habilitar `PUBLICAR_APROBADO` sin aprobación.
+Cocina y sus pruebas automáticas terminadas. Siguiente del plan: cerrar validación manual de Fase 1 y completar revisión R2 de Cocina/pendientes antes de publicar. El usuario también pidió mejorar el diseño de Pedidos después de Tarea 9. La Tarea 13 espera aprobación/configuración y resolver los pendientes de R2. La Tarea 14 necesita el archivo real del POS; requisitos en `docs/ejemplos/README.md`. No crear servicios ni habilitar `PUBLICAR_APROBADO` sin aprobación.
 
 ### Resultado de R2
 
@@ -182,7 +192,8 @@ Retomar primero Tarea 9 cuando el usuario responda sobre el esquema. Para cerrar
 - R1 · **Resuelto en Tarea 12:** todas las pruebas de integración usan bases temporales, sin limpiar usuarios ni ventas de la base de desarrollo.
 - R1 · La relación Prisma `centro_venta.turno_caja` representa como uno-a-uno el índice parcial de turno abierto, aunque puede haber varios turnos cerrados. Ya advertido arriba; revisar la representación en una tarea separada, sin cambiar el SQL.
 - R1 · La reactivación en Firebase puede fallar y solo deja un aviso en el servidor (`GestorUsuariosFirebase.cambiarActivo`), aunque la pantalla confirma que quedó activo en la base. Definir cómo comunicar y reintentar ese fallo sin perder la protección al desactivar; requiere coordinar el flujo app/API.
-- R2 · **Bloquea completar Fase 1:** terminar Tarea 9 y probar Cocina con un pedido pagado antes de cocinar; requiere la decisión del esquema del punto 4 de "Necesito del usuario". Faltan pantalla, marcador NUEVO y estados de preparación.
+- R2 · **Resuelto en Tarea 9:** pantalla, marcador NUEVO y preparación separada; pruebas verifican pago antes de cocinar, estados sin reabrir saldo, permisos, concurrencia y sockets. Falta validación visual con cuentas reales.
+- Diseño solicitado por el usuario: mejorar la toma de pedidos y revisar la facilidad de uso de cada módulo después de cerrar Cocina. No se rediseñó Pedidos en Tarea 9.
 - R2 · **Antes de publicación:** revisar/actualizar dependencias en tarea separada. API: cadena `gaxios/gcp-metadata/google-gax/rimraf/glob/minimatch` (6 moderados). App: `@grpc/grpc-js` arrastrado por Firestore/Firebase (4 avisos altos propagados), `minimatch/ts-morph` y `deepmerge/shadcn`. Referencias de npm: [grpc](https://github.com/advisories/GHSA-m9gg-hp2v-232j), [glob](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4), [minimatch](https://github.com/advisories/GHSA-g3hv-75wg-m249), [deepmerge](https://github.com/advisories/GHSA-gcqx-w48m-w2h4). La app importa Auth, no Firestore; verificar alcance real además de actualizar. npm propone bajar Firebase a 9.14.0 y shadcn a 1.0.0 como cambios mayores: no aplicar eso automáticamente.
 - R2 · Un pedido cuyo total sea cero no tiene ruta de finalización en Caja (los pagos exigen monto positivo). Definir el flujo de cortesías/venta gratuita en tarea separada; no permitir pagos de cero saltándose el esquema.
 - R2 · Socket.IO avisa dentro de una sola instancia de API. Para Cloud Run piloto limitar a una instancia; antes de escalar a varias, añadir un adaptador de difusión compartida y pruebas entre réplicas. No cambiar la arquitectura durante la revisión.
@@ -197,10 +208,10 @@ Retomar primero Tarea 9 cuando el usuario responda sobre el esquema. Para cerrar
    `GOOGLE_APPLICATION_CREDENTIALS=C:/claves/sirinventari-admin.json`. Nunca subirlo a Git.
    Mientras no esté, se puede crear el usuario en la consola de Firebase y registrarlo en la pantalla Usuarios con la opción "Ya existe en Firebase (tengo su UID)".
 3. ~~Abrir Codex para la revisión R1~~ **Hecho:** revisión ejecutada y resultados anotados arriba.
-4. **Tarea 9 · Autorizar separar el estado de cocina del estado de cobro.** `pedido.estado` mezcla `PAGADO` con `EN_PREPARACION/LISTO/ENTREGADO`. Cobrar antes de cocinar pierde el estado de preparación; cambiar PAGADO por LISTO volvería a abrir el pedido para cobros/productos. Propuesta pendiente de respuesta: añadir `pedido.estado_cocina` con valores PENDIENTE, EN_PREPARACION, LISTO y ENTREGADO, independiente de `pedido.estado`. Se preguntó al usuario; no se aplicó ninguna modificación a tablas, triggers o funciones.
+4. **Tarea 9 · Autorizado y terminado el 2026-11-01:** el usuario aprobó añadir `pedido.estado_cocina` independiente del cobro. Campo aplicado a la base local, SQL fuente/Prisma actualizados y Cocina terminada. Puede probarla en dos pestañas siguiendo la guía manual.
 5. **Tarea 13 · Revisar y aprobar plan/costo en `docs/publicacion.md`.** Propuesta para un centro: `us-central1`, Cloud SQL 1 vCPU/3.75 GiB, Cloud Run 1 vCPU/1 GiB y una instancia máxima, reserva estimada USD 130/mes antes de impuestos (no es un tope automático). Confirmar proyecto/facturación, centros reales y acceso a configuración de Google Cloud/GitHub. El flujo exige `PUBLICAR_APROBADO=true` y el entorno protegido `produccion`; hoy no está habilitado. Configurar `CI_DB_PASSWORD` para las pruebas de GitHub. Docker/gcloud no están disponibles en esta sesión; el contenedor y la publicación necesitan validación posterior.
 6. **Tarea 14 · Archivo real de ejemplo del cierre del POS**, anonimizado y con su formato/encabezados originales, en `docs/ejemplos`. No se inventó un archivo ni un parser.
-7. **Fuente del catálogo real recibida:** el usuario proporcionó `https://shukoslaiguana.com/`. Sus 12 categorías ya se cargaron en la base local; productos, precios y detalle de combos/módulos todavía no se han importado. Cantidades de la pantalla corregidas. Usar el sitio como fuente en la próxima solicitud de carga de productos.
+7. **Catálogo real cargado:** fuente `https://shukoslaiguana.com/`, 12 categorías y 152 opciones de productos/precios, incluidos tamaños y extras/complementos publicados. Cantidades de la pantalla corregidas. Ver captura y carga repetible en `docs/datos/`.
 
 ## Cómo probar lo último
 

@@ -10,7 +10,7 @@ Estas pruebas son para desarrollo o un centro de prueba. Usar el POS en modo de 
 4. Abrir `http://localhost:5173`. Debe aparecer Iniciar sesión; al entrar, API conectada.
 5. Usar cuentas de prueba ADMIN, GERENTE, CAJERO, MESERO y COCINA creadas en Firebase y registradas en Usuarios. No compartir contraseñas entre personas.
 
-Si aparecen todas las secciones en construcción y no se ve centro ni Usuarios como ADMIN, se está mostrando la interfaz anterior. Confirmar `http://localhost:5173` y recargar: el servidor de desarrollo entrega en `/sw.js` un script para retirar el worker de una compilación previa, sin borrar la sesión ni los datos locales. La versión actual pide elegir centro si hay varios; en Pedidos muestra “Pedidos del día” y “Nuevo pedido”. Solo Cocina sigue pendiente. Vite no cambia de puerto automáticamente si 5173 está ocupado.
+Si aparecen todas las secciones en construcción y no se ve centro ni Usuarios como ADMIN, se está mostrando la interfaz anterior. Confirmar `http://localhost:5173` y recargar: el servidor de desarrollo entrega en `/sw.js` un script para retirar el worker de una compilación previa, sin borrar la sesión ni los datos locales. La versión actual pide elegir centro si hay varios; en Pedidos muestra “Pedidos del día” y “Nuevo pedido”. Cocina muestra las columnas de preparaci?n. Vite no cambia de puerto automáticamente si 5173 está ocupado.
 
 ## Pruebas automáticas antes de empezar
 
@@ -78,11 +78,21 @@ Si aparecen todas las secciones en construcción y no se ve centro ni Usuarios c
 5. Ver historial: quién creó/agregó/cobró, horas y notas.
 6. Descargar CSV: abrirlo y revisar acentos, precios, centro, fechas y totales.
 
-## Cocina y tiempo real: pendiente de completar
+## Cocina y tiempo real (Tarea 9)
 
-- Los avisos de nuevos pedidos y agregados ya actualizan Pedidos y Caja sin recargar, solo dentro del centro autorizado.
-- Al perder conexión se muestra el aviso de reconexión; al volver se recargan los datos.
-- **No aprobar todavía la Fase 1 completa:** faltan la pantalla Cocina, el marcador NUEVO y las transiciones En preparación → Listo → Entregado. Esperan la decisión del esquema indicada en ESTADO.md, porque PAGADO y los estados de cocina comparten actualmente un campo.
-- Después de resolverlo, probar dos dispositivos: un pedido nuevo aparece en Cocina sin recargar, un agregado posterior aparece como NUEVO, los cambios de estado llegan a mesero/caja y un pedido cobrado antes de cocinar sigue en Cocina sin volver a abrir su saldo.
+Para una base existente, ejecutar una vez `db/05_estado_cocina.sql` y regenerar Prisma/reiniciar la API. La base local ya fue actualizada con autorización del usuario. Una base nueva incluye el campo en `01_esquema_v0.3.sql`.
+
+1. Abrir dos pestañas o dispositivos con el mismo centro. Como ADMIN o GERENTE puede probarse todo; con usuarios separados, MESERO toma pedidos, COCINA prepara y CAJERO cobra.
+2. En una pestaña abrir Cocina. En otra crear un pedido con mesa/cliente, dos productos y notas. Debe aparecer solo en Pendientes, con folio, tipo, fecha/hora de Guatemala, cantidades, notas y minutos de espera. Las líneas iniciales no llevan NUEVO.
+3. Tocar **Empezar preparación**. Se mueve a En preparación. Pedidos y Caja muestran «Cocina: En preparación» sin recargar, incluido el pedido seleccionado. El monto escrito en Caja permanece igual.
+4. Agregar otro producto desde Pedidos: aparece con **NUEVO**, hora y notas en Cocina. Anular una línea con motivo la quita de la comanda, sin borrar su historial del pedido.
+5. Tocar **Marcar listo**, comprobar el aviso en Pedidos/Caja, luego **Marcar entregado**. Sale de la cola activa; activar **Mostrar entregados de hoy** para consultarlo.
+6. Crear otro pedido, cobrarlo completo antes de prepararlo y completar los tres pasos en Cocina. Debe conservar PAGADO y saldo Q0.00; no permite otro cobro ni agregar productos. Un pedido pagado sigue visible en Cocina hasta entregarlo.
+7. En un pedido sin pagar listo/entregado, agregar un producto nuevo: vuelve a Pendientes y el agregado lleva NUEVO. Reenviar la misma línea no duplica ni reinicia la preparación.
+8. Con dos cocineros, probar cambios simultáneos: no avanza dos pasos con el mismo botón. Si llegaron productos nuevos mientras se veía una versión anterior, muestra que el pedido cambió y pide revisarlo antes de continuar.
+9. Interrumpir la conexión: aparece «Sin conexión en tiempo real. Reconectando…». Al volver recupera los pedidos y estados. **Actualizar Cocina** permite consultar manualmente mientras la API sea accesible. Esto todavía no es modo sin internet.
+10. Cambiar de centro: no deben aparecer pedidos del centro anterior. MESERO y CAJERO no pueden cambiar la preparación ni abrir Cocina; COCINA no puede cobrar. Los pendientes de días anteriores siguen visibles con su fecha; los entregados antiguos no ocupan la cola.
+
+Las pruebas automáticas cubren estos flujos con Firebase simulado, bases desechables y sockets reales. La prueba visual con cuentas reales en dos dispositivos queda para el usuario. La publicación sigue pendiente de aprobación de costos y de los pendientes de seguridad de R2.
 
 El modo sin internet, impresión térmica, conciliación del POS y autorizaciones de gerente pertenecen a las fases siguientes; no están aprobados con esta lista.

@@ -95,6 +95,23 @@ function abrir(ruta = '/') {
   )
 }
 
+describe('Ruta de Cocina (Tarea 9)', () => {
+  it('abre el tablero real para ADMIN, sin la pantalla en construcción', async () => {
+    simularApi({ salud: { status: 200, cuerpo: SALUD_OK }, otras: { '/cocina': { status: 200, cuerpo: [] } } })
+    abrir('/cocina')
+    expect(await screen.findByRole('region', { name: 'Pendientes' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'En preparación' })).toBeInTheDocument()
+    expect(screen.queryByText(/Esta pantalla está en construcción/)).not.toBeInTheDocument()
+  })
+
+  it('impide que un MESERO entre a Cocina escribiendo la dirección', async () => {
+    const peticiones = simularApi({ salud: 'sin-red', sesion: { status: 200, cuerpo: { ...ADMIN, rol: 'MESERO' } } })
+    abrir('/cocina')
+    expect(await screen.findByRole('heading', { name: 'No tienes permiso' })).toBeInTheDocument()
+    expect(peticiones.mock.calls.some(([url]) => url.endsWith('/cocina'))).toBe(false)
+  })
+})
+
 beforeEach(() => {
   localStorage.clear()
   firebase.usuarioActual = { uid: 'uid-admin' }
