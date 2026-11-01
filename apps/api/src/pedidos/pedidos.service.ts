@@ -16,6 +16,16 @@ const incluir = {
 } satisfies Prisma.pedidoInclude;
 type Conexion = Prisma.TransactionClient;
 type DatosLineas = ReturnType<typeof lineas>;
+const incluirCocina = {
+  tipo_venta: { select: { nombre: true } },
+  pedido_detalle: { where: { estado: 'ACTIVA' as const }, select: {
+    id: true, cantidad: true, notas: true, agregado_en: true, producto: { select: { nombre: true } },
+  }, orderBy: [{ agregado_en: 'asc' as const }, { id: 'asc' as const }] },
+} satisfies Prisma.pedidoInclude;
+const seleccionarCocina = {
+  id: true, folio: true, fecha_operacion: true, creado_en: true, estado_cocina: true,
+  mesa_referencia: true, cliente_nombre: true, ...incluirCocina,
+} satisfies Prisma.pedidoSelect;
 
 @Injectable()
 export class PedidosService {
@@ -43,6 +53,38 @@ export class PedidosService {
 
   detalle(centroId: number, id: string) { return this.detalleEn(this.prisma, centroId, id); }
 
+  private respuestaCocina(p: Prisma.pedidoGetPayload<{ select: typeof seleccionarCocina }>) {
+    return { ...p, fecha_operacion: p.fecha_operacion.toISOString().slice(0, 10),
+      pedido_detalle: p.pedido_detalle.map(l => ({ ...l, nuevo: l.agregado_en.getTime() > p.creado_en.getTime() })) };
+  }
+
+  async cocina(centroId: number) {
+    const [hoy] = await this.prisma.$queryRaw<{ fecha: Date }[]>`SELECT ventas.fecha_guatemala() AS fecha`;
+    const filas = await this.prisma.pedido.findMany({ where: {
+      centro_venta_id: centroId, estado: { not: 'ANULADO' }, pedido_detalle: { some: { estado: 'ACTIVA' } },
+      OR: [{ estado_cocina: { not: 'ENTREGADO' } }, { fecha_operacion: hoy.fecha }],
+    }, select: seleccionarCocina, orderBy: [{ creado_en: 'asc' }, { folio: 'asc' }] });
+    return filas.map(p => this.respuestaCocina(p));
+  }
+
+  cambiarCocina(centroId: number, usuarioId: number, id: string, actual: string, destino: string) {
+    return this.avisar(centroId, this.prisma.$transaction(async tx => {
+      const estado = await this.bloquear(tx, centroId, id);
+      if (estado === 'ANULADO') throw new ConflictException('Un pedido anulado no se puede preparar.');
+      const p = await tx.pedido.findUniqueOrThrow({ where: { id }, select: seleccionarCocina });
+      if (!p.pedido_detalle.length) throw new ConflictException('El pedido no tiene productos activos para preparar.');
+      const siguiente: Record<string, string> = { PENDIENTE: 'EN_PREPARACION', EN_PREPARACION: 'LISTO', LISTO: 'ENTREGADO' };
+      if (siguiente[actual] !== destino) throw new BadRequestException('Sigue el orden: En preparación, Listo y Entregado.');
+      if (p.estado_cocina === destino) return this.respuestaCocina(p); // Reintento, sin avanzar dos veces.
+      if (p.estado_cocina !== actual) throw new ConflictException('El estado de cocina cambió. Actualiza el pedido antes de continuar.');
+      await tx.$queryRaw`SELECT set_config('app.usuario_id', ${String(usuarioId)}, true)`;
+      const actualizado = await tx.pedido.update({ where: { id }, data: {
+        estado_cocina: destino, actualizado_en: new Date(), version: { increment: 1 },
+      }, select: seleccionarCocina });
+      return this.respuestaCocina(actualizado);
+    }));
+  }
+
   async pendientes(centroId: number) {
     const filas = await this.prisma.pedido.findMany({ where: { centro_venta_id: centroId, estado: { notIn: ['PAGADO', 'ANULADO'] }, total: { gt: 0 } }, include: incluir, orderBy: [{ creado_en: 'asc' }, { folio: 'asc' }] });
     return filas.map((p) => this.respuesta(p)).filter((p) => Number(p.saldo) > 0);
@@ -68,7 +110,8 @@ export class PedidosService {
     return filas[0].estado;
   }
 
-  private async agregarEn(tx: Conexion, centroId: number, usuarioId: number, pedidoId: string, nuevas: DatosLineas, estado: string) {
+  private async agregarEn(tx: Conexion, centroId: number, usuarioId: number, pedidoId: string, nuevas: DatosLineas, estado: string, inicialEn?: Date) {
+    let agregadas = false;
     for (const l of nuevas) {
       const existente = await tx.pedido_detalle.findUnique({ where: { id: l.id } });
       if (existente) {
@@ -82,8 +125,13 @@ export class PedidosService {
       if (!producto || !producto.activo || !producto.categoria.activo || producto.producto_centro[0]?.disponible === false) {
         throw new BadRequestException('Uno de los productos ya no está disponible en este centro. Actualiza el catálogo.');
       }
-      await tx.pedido_detalle.create({ data: { ...l, pedido_id: pedidoId, agregado_por: usuarioId, precio_unitario: producto.producto_centro[0]?.precio ?? producto.precio_base } });
+      await tx.pedido_detalle.create({ data: { ...l, ...(inicialEn ? { agregado_en: inicialEn } : {}), pedido_id: pedidoId, agregado_por: usuarioId, precio_unitario: producto.producto_centro[0]?.precio ?? producto.precio_base } });
+      agregadas = true;
     }
+    // Si llegan productos después de estar listo/entregado, la comanda vuelve a pendientes.
+    // Un reenvío idéntico no reinicia el estado; un pedido pagado sigue bloqueado arriba.
+    if (agregadas) await tx.pedido.updateMany({ where: { id: pedidoId, estado_cocina: { in: ['LISTO', 'ENTREGADO'] } },
+      data: { estado_cocina: 'PENDIENTE', actualizado_en: new Date(), version: { increment: 1 } } });
   }
 
   async crear(centroId: number, usuarioId: number, datos: ReturnType<typeof nuevoPedido>) {
@@ -103,9 +151,9 @@ export class PedidosService {
         if (tipo.codigo === 'MESA' && !datos.mesa_referencia) throw new BadRequestException('Indica la mesa del pedido.');
         if (tipo.codigo !== 'MESA' && !datos.cliente_nombre) throw new BadRequestException('Indica el nombre del cliente.');
         const [folio] = await tx.$queryRaw<{ numero: number }[]>`SELECT ventas.siguiente_folio(${centroId}::smallint, ventas.fecha_guatemala()) AS numero`;
-        await tx.pedido.create({ data: { id: datos.id, centro_venta_id: centroId, creado_por: usuarioId, tipo_venta_id: datos.tipo_venta_id,
+        const creado = await tx.pedido.create({ data: { id: datos.id, centro_venta_id: centroId, creado_por: usuarioId, tipo_venta_id: datos.tipo_venta_id,
           mesa_referencia: datos.mesa_referencia, cliente_nombre: datos.cliente_nombre, folio: folio.numero } });
-        await this.agregarEn(tx, centroId, usuarioId, datos.id, datos.lineas, 'ABIERTO');
+        await this.agregarEn(tx, centroId, usuarioId, datos.id, datos.lineas, 'ABIERTO', creado.creado_en);
       }
       return this.detalleEn(tx, centroId, datos.id);
     }, { timeout: 15000 }));

@@ -136,6 +136,7 @@ model pedido {
   mesa_referencia String?          @db.VarChar(30)
   cliente_nombre  String?          @db.VarChar(100)
   estado          estado_pedido    @default(ABIERTO)
+  estado_cocina   String           @default("PENDIENTE") @db.VarChar(20)
   subtotal        Decimal          @default(0) @db.Decimal(12, 2)
   descuento       Decimal          @default(0) @db.Decimal(12, 2)
   total           Decimal          @default(0) @db.Decimal(12, 2)

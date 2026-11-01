@@ -150,6 +150,9 @@ CREATE TABLE pedido (
   mesa_referencia VARCHAR(30),
   cliente_nombre  VARCHAR(100),
   estado          estado_pedido NOT NULL DEFAULT 'ABIERTO',
+  -- Autorizado el 2026-11-01: la preparación no cambia el estado de cobro.
+  estado_cocina   VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE'
+    CONSTRAINT ck_pedido_estado_cocina CHECK (estado_cocina IN ('PENDIENTE','EN_PREPARACION','LISTO','ENTREGADO')),
   subtotal        NUMERIC(12,2) NOT NULL DEFAULT 0,
   descuento       NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (descuento >= 0),
   total           NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (total >= 0),

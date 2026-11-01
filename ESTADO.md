@@ -4,7 +4,15 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-01 00:49 (hora de Guatemala) · Codex
+2026-11-01 01:00 (hora de Guatemala) · Codex
+
+## Tarea 9 · Cocina, avance con autorización
+
+- El usuario autorizó el 2026-11-01 añadir `pedido.estado_cocina` y pidió completar primero Cocina; la mejora del diseño de toma de pedidos se atenderá después.
+- Backend funcionando: lista de comandas por centro para ADMIN/GERENTE/COCINA, sin importes ni datos de pago; pendientes de días anteriores y entregados del día de Guatemala, líneas activas y marca NUEVO para agregados posteriores. Los estados siguen PENDIENTE → EN_PREPARACION → LISTO → ENTREGADO.
+- Cambio de estado con bloqueo de fila, comprobación del estado anterior, reintentos sin doble avance, auditoría con usuario y avisos Socket.IO. Cocina nunca cambia `pedido.estado`; cobrar antes de preparar conserva PAGADO y bloquea cobros/productos adicionales. Agregar productos nuevos a un pedido listo/entregado sin pagar devuelve la preparación a pendientes; reenviar la misma línea no la reinicia.
+- Campo y CHECK en el SQL fuente, actualización repetible `db/05_estado_cocina.sql` aplicada a la base local y modelo/cliente Prisma actualizados. Bases anteriores conservan el estado de preparación conocido; no se modificaron las funciones de cobro. Las líneas iniciales comparten la hora de creación para distinguirlas de agregados.
+- Pruebas de esta parte: 14 unitarias y 71 de integración de API, incluidas 7 nuevas de Cocina (Socket real, pago antes de cocinar, concurrencia, agregados/anulados, días anteriores, permisos y actualización de bases existentes). Build y lint de API correctos. Falta terminar/verificar interfaz y avisos visibles en Caja/Pedidos.
 
 ## Productos del menú La Iguana cargados
 
@@ -43,7 +51,7 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Tarea actual
 
-Tarea 13 · Publicación. **Preparación local lista; no se creó ni publicó nada en la nube.** Cocina y cierre de Fase 1 siguen pendientes.
+Tarea 9 · Cocina en tiempo real, retomada con autorización del usuario. Publicación tiene preparación local; no se creó ni publicó nada en la nube.
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
