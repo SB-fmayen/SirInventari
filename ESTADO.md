@@ -4,11 +4,11 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 22:06 (hora de Guatemala) · Codex
+2026-10-31 22:56 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-Tarea 12 · Pruebas de Fase 1. **Automatización y guía listas; validación de Cocina pendiente de Tarea 9.**
+R2 · Revisión de Tareas 6 a 12. **Realizada con pendientes; Fase 1 aún no aprobada por Cocina.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
@@ -34,6 +34,7 @@ Tarea 12 · Pruebas de Fase 1. **Automatización y guía listas; validación de 
 | 10 | Caja, cobros divididos, vuelto, comprobante y bloqueos contra duplicados | Ver `git log --grep "Tarea 10"` |
 | 11 | Reportes por centro y rango, historial y descarga CSV | Ver `git log --grep "Tarea 11"` |
 | 12 (parte disponible) | Pruebas automáticas aisladas y guía manual; falta validar Cocina al terminar Tarea 9 | Ver `git log --grep "Tarea 12"` |
+| R2 | Revisión de partes implementadas de Tareas 6 a 12; no aprueba todavía Cocina ni publicación | Ver `git log --grep "Tarea R2"` |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -63,7 +64,15 @@ Notas:
 
 ## Siguiente tarea
 
-Revisión R2 de las partes implementadas de Tareas 6 a 12. No aprobar la Fase 1 completa hasta terminar Cocina y sus pruebas.
+Preparar la guía/archivos de Tarea 13 sin crear servicios de pago, mientras se espera la decisión de Cocina. Antes de publicar: terminar Tarea 9, sus pruebas y los pendientes de seguridad de R2.
+
+### Resultado de R2
+
+- Revisadas las partes implementadas de Tareas 6 a 12 contra plan, especificación y esquema: precios/centros, folios e idempotencia, líneas/autoría, cobros/saldo/voucher, coordinación cierre-cobro, comprobantes, permisos, reportes/descuentos y aislamiento de pruebas. Cocina sigue incompleta; no se aprueba la Fase 1 completa.
+- Correcciones mínimas: el borrador ahora redondea cada línea a centavos antes de sumar, igual que PostgreSQL, con BigInt para evitar pérdida de precisión. Socket.IO vuelve a verificar el token antes de cada aviso y desconecta sesiones vencidas; antes solo verificaba el token al conectar.
+- Pruebas finales de esta revisión: API 13 unitarias y 63 de integración (incluyen los 7 casos SQL); app 41. Build y lint correctos. Se mantienen los avisos de lint, tamaño web y deprecación de consultas concurrentes de `pg`; no se hicieron cambios de arquitectura, librerías ni SQL durante R2.
+- Auditoría de dependencias de producción (`npm.cmd audit --omit=dev --json`, 2026-10-31): API 6 avisos moderados; app 10 avisos propagados (4 altos, 4 moderados y 2 bajos). No equivale a 10 fallos explotables independientes. Detalles y acciones separadas abajo; no se ejecutó `audit fix` ni se cambiaron versiones en esta revisión.
+- Archivos corregidos: `apps/api/src/tiempo-real/tiempo-real.gateway.ts` y su prueba; `apps/web/src/lib/importes.ts`, `paginas/Pedidos.tsx` y `pruebas/importes.test.ts`.
 
 ### Resultado de Tarea 12 (parte disponible)
 
@@ -127,6 +136,11 @@ Revisión R2 de las partes implementadas de Tareas 6 a 12. No aprobar la Fase 1 
 - R1 · **Resuelto en Tarea 12:** todas las pruebas de integración usan bases temporales, sin limpiar usuarios ni ventas de la base de desarrollo.
 - R1 · La relación Prisma `centro_venta.turno_caja` representa como uno-a-uno el índice parcial de turno abierto, aunque puede haber varios turnos cerrados. Ya advertido arriba; revisar la representación en una tarea separada, sin cambiar el SQL.
 - R1 · La reactivación en Firebase puede fallar y solo deja un aviso en el servidor (`GestorUsuariosFirebase.cambiarActivo`), aunque la pantalla confirma que quedó activo en la base. Definir cómo comunicar y reintentar ese fallo sin perder la protección al desactivar; requiere coordinar el flujo app/API.
+- R2 · **Bloquea completar Fase 1:** terminar Tarea 9 y probar Cocina con un pedido pagado antes de cocinar; requiere la decisión del esquema del punto 4 de "Necesito del usuario". Faltan pantalla, marcador NUEVO y estados de preparación.
+- R2 · **Antes de publicación:** revisar/actualizar dependencias en tarea separada. API: cadena `gaxios/gcp-metadata/google-gax/rimraf/glob/minimatch` (6 moderados). App: `@grpc/grpc-js` arrastrado por Firestore/Firebase (4 avisos altos propagados), `minimatch/ts-morph` y `deepmerge/shadcn`. Referencias de npm: [grpc](https://github.com/advisories/GHSA-m9gg-hp2v-232j), [glob](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4), [minimatch](https://github.com/advisories/GHSA-g3hv-75wg-m249), [deepmerge](https://github.com/advisories/GHSA-gcqx-w48m-w2h4). La app importa Auth, no Firestore; verificar alcance real además de actualizar. npm propone bajar Firebase a 9.14.0 y shadcn a 1.0.0 como cambios mayores: no aplicar eso automáticamente.
+- R2 · Un pedido cuyo total sea cero no tiene ruta de finalización en Caja (los pagos exigen monto positivo). Definir el flujo de cortesías/venta gratuita en tarea separada; no permitir pagos de cero saltándose el esquema.
+- R2 · Socket.IO avisa dentro de una sola instancia de API. Para Cloud Run piloto limitar a una instancia; antes de escalar a varias, añadir un adaptador de difusión compartida y pruebas entre réplicas. No cambiar la arquitectura durante la revisión.
+- R2 · El paquete web es de unos 505 kB y Vite avisa por tamaño. Separar carga de pantallas en una tarea de rendimiento; no se reorganizó el código durante R2.
 
 ## Necesito del usuario
 

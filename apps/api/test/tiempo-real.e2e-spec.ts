@@ -21,11 +21,12 @@ describe('Avisos Socket.IO por centro (e2e)', () => {
   const mesero = `socket-m-${randomUUID()}`;
   const cocina = `socket-c-${randomUUID()}`;
   const idsLineas: string[] = [];
+  const revocados = new Set<string>();
 
   beforeAll(async () => {
     base = await crearBaseAislada();
     const modulo = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(PrismaService).useValue(base.prisma).overrideProvider(VerificadorFirebase)
-      .useValue({ verificar: async (token: string) => { if (!token.startsWith('socket-')) throw new Error(); return { uid: token } } }).compile();
+      .useValue({ verificar: async (token: string) => { if (!token.startsWith('socket-') || revocados.has(token)) throw new Error(); return { uid: token } } }).compile();
     app = modulo.createNestApplication(); await app.listen(0, '127.0.0.1'); url = await app.getUrl(); prisma = app.get(PrismaService);
     for (let n = 0; n < 2; n++) centros.push((await prisma.centro_venta.create({ data: { codigo: `S${randomUUID().slice(0, 8)}`, nombre: `Centro socket ${n}` } })).id);
     for (const [token, rol] of [[mesero, 'MESERO'], [cocina, 'COCINA']] as const) {
@@ -72,6 +73,15 @@ describe('Avisos Socket.IO por centro (e2e)', () => {
     const pedido = await crear(); expect(await evento).toEqual({ pedido_id: pedido.body.id });
     expect(avisosOtros).toHaveLength(0);
     mismo.disconnect(); otro.disconnect();
+  });
+
+  it('si el token vence después de conectar, no recibe otro aviso', async () => {
+    const socket = conectar(cocina, centros[0]); const conectado = esperar(socket, 'connect'); socket.connect(); await conectado;
+    revocados.add(cocina);
+    const avisos: unknown[] = []; socket.on('pedido:actualizado', (aviso: unknown) => avisos.push(aviso));
+    const desconectado = esperar(socket, 'disconnect'); await crear(); await desconectado;
+    expect(avisos).toHaveLength(0);
+    revocados.delete(cocina);
   });
 
   it('al desactivar al usuario se desconecta antes de recibir otro aviso', async () => {

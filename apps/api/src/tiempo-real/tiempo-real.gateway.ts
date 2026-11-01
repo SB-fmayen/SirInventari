@@ -30,6 +30,7 @@ export class TiempoRealGateway implements OnGatewayInit {
         const { uid } = await this.firebase.verificar(token);
         if (!await this.autorizado(uid, centro_id)) throw new Error();
         socket.data.uid = uid;
+        socket.data.token = token;
         socket.data.centro_id = centro_id;
         // No acepta nombres de salas enviados por el cliente.
         await socket.join(`centro:${centro_id}`);
@@ -45,7 +46,12 @@ export class TiempoRealGateway implements OnGatewayInit {
       if (!this.servidor) return;
       const conexiones = await this.servidor.in(`centro:${centroId}`).fetchSockets();
       for (const socket of conexiones) {
-        if (await this.autorizado(String(socket.data.uid), centroId)) {
+        let autorizado = false;
+        try {
+          const { uid } = await this.firebase.verificar(String(socket.data.token));
+          autorizado = uid === socket.data.uid && await this.autorizado(uid, centroId);
+        } catch { /* Una sesión vencida se desconecta; la app renueva el token al reconectar. */ }
+        if (autorizado) {
           // Solo avisa del cambio; los datos se consultan mediante la API protegida.
           socket.emit('pedido:actualizado', { pedido_id: pedidoId });
         } else socket.disconnect(true);

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ErrorApi } from '@/lib/api'
 import { useSesion } from '@/sesion/SesionProvider'
 import { useTiempoReal } from '@/hooks/useTiempoReal'
+import { totalLineas } from '@/lib/importes'
 
 interface Producto { id: number; nombre: string; sku: string; precio: string; categoria: { id: number; nombre: string } }
 interface TipoVenta { id: number; codigo: string; nombre: string }
@@ -112,7 +113,7 @@ export function Pedidos() {
       <div className="grid gap-2 sm:grid-cols-3">{productos.filter((p) => !filtro || p.categoria.id === Number(filtro)).map((p) => <button type="button" className={`${secundario} py-3 text-left`} disabled={guardando} key={p.id} aria-label={`Agregar ${p.nombre} por ${dinero(p.precio)}`} onClick={() => setBorrador({ ...borrador, lineas: [...borrador.lineas, { id: crypto.randomUUID(), producto_id: p.id, cantidad: '1', notas: '' }] })}>{p.nombre}<span className="block text-sm">{dinero(p.precio)}</span></button>)}</div>
       {!productos.length && <p>No hay productos disponibles en este centro.</p>}
       <ul className="space-y-3">{borrador.lineas.map((l, indice) => <li className="grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-4" key={l.id}><strong>{productos.find((p) => p.id === l.producto_id)?.nombre}</strong><label>Cantidad {indice + 1}<input className={campo} required type="number" min="0.01" max="999999.99" step="0.01" value={l.cantidad} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { cantidad: e.target.value })} /></label><label>Notas {indice + 1}<input className={campo} maxLength={200} value={l.notas} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { notas: e.target.value })} /></label><button type="button" className={secundario} disabled={guardando} aria-label={`Quitar línea ${indice + 1}`} onClick={() => setBorrador({ ...borrador, lineas: borrador.lineas.filter((actual) => actual.id !== l.id) })}>Quitar</button></li>)}</ul>
-      <p className="font-semibold">Total de los productos nuevos: {dinero(borrador.lineas.reduce((suma, l) => suma + Number(l.cantidad) * Number(productos.find((p) => p.id === l.producto_id)?.precio ?? 0), 0))}</p>
+      <p className="font-semibold">Total de los productos nuevos: Q {totalLineas(borrador.lineas.map((l) => ({ cantidad: l.cantidad, precio: productos.find((p) => p.id === l.producto_id)?.precio ?? '0' })))}</p>
       <div className="flex gap-2"><button className={boton} disabled={guardando}>Guardar pedido</button><button type="button" className={secundario} disabled={guardando} onClick={() => setBorrador(null)}>Cancelar</button></div>
     </form>}
     {seleccionado && !borrador && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
