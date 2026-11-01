@@ -9,6 +9,7 @@ import { SaludModule } from './salud/salud.module.js';
 import { UsuariosModule } from './usuarios/usuarios.module.js';
 import { CatalogoModule } from './catalogo/catalogo.module.js';
 import { TurnosModule } from './turnos/turnos.module.js';
+import { PedidosModule } from './pedidos/pedidos.module.js';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TurnosModule } from './turnos/turnos.module.js';
     UsuariosModule,
     CatalogoModule,
     TurnosModule,
+    PedidosModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: FiltroErrores }],
 })

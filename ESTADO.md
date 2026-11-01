@@ -4,15 +4,18 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 21:33 (hora de Guatemala) · Codex
+2026-10-31 21:37 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-Tarea 7 · Turnos de caja. **Terminada.**
+Tarea 8 · Pedidos. **API terminada; falta la pantalla.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
-- (nada a medias)
+- Tarea 8: API terminada y probada. Falta pantalla de lista del día, toma de pedidos, líneas agregadas y anulación con motivo, con UUID generados por la app, y pruebas de la pantalla.
+- Archivos: `apps/api/src/pedidos/`, `test/pedidos.e2e-spec.ts`, registro en `app.module.ts` y exportación de CatalogoService en `catalogo.module.ts`.
+- Pruebas al guardar esta parte: API 13 unitarias y 40 de integración, build y lint correctos. Las pruebas nuevas usan un centro y usuarios propios; no tocan pedidos reales. Aviso de deprecación de `pg` al ejecutar consultas concurrentes de Prisma en las pruebas, sin fallos.
+- API: UUID idempotentes, folio con `siguiente_folio` y fecha de Guatemala dentro de transacción, precio calculado en el servidor por centro, bloqueo del pedido para agregar/anular, usuario/hora por línea, motivo obligatorio y lista del día con búsqueda. `/pedidos/catalogo` permite al personal de pedidos leer solo productos disponibles; el catálogo de administración mantiene sus permisos.
 
 ## Tareas terminadas
 
@@ -56,7 +59,7 @@ Notas:
 
 ## Siguiente tarea
 
-Tarea 8 · Pedidos.
+Terminar Tarea 8 · Pedidos (pantalla y pruebas).
 
 ### Resultado de Tarea 7
 
