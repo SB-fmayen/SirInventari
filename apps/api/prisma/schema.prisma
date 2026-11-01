@@ -1,0 +1,393 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+  moduleFormat    = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["ventas"]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model auditoria {
+  id          BigInt   @id @default(autoincrement())
+  tabla       String   @db.VarChar(50)
+  registro_id String   @db.VarChar(50)
+  accion      String   @db.VarChar(10)
+  antes       Json?
+  despues     Json?
+  usuario_id  Int?
+  fecha       DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([tabla, registro_id], map: "ix_auditoria_registro")
+  @@schema("ventas")
+}
+
+model categoria {
+  id       Int        @id @default(autoincrement())
+  nombre   String     @unique @db.VarChar(60)
+  orden    Int        @default(0) @db.SmallInt
+  activo   Boolean    @default(true)
+  producto producto[]
+
+  @@schema("ventas")
+}
+
+model centro_venta {
+  id              Int               @id @default(autoincrement()) @db.SmallInt
+  codigo          String            @unique @db.VarChar(10)
+  nombre          String            @db.VarChar(100)
+  direccion       String?           @db.VarChar(200)
+  telefono        String?           @db.VarChar(20)
+  activo          Boolean           @default(true)
+  creado_en       DateTime          @default(now()) @db.Timestamptz(6)
+  dispositivo     dispositivo[]
+  folio_contador  folio_contador[]
+  pedido          pedido[]
+  pos_transaccion pos_transaccion[]
+  producto_centro producto_centro[]
+  sync_conflicto  sync_conflicto[]
+  turno_caja      turno_caja?
+  usuario_centro  usuario_centro[]
+
+  @@schema("ventas")
+}
+
+model dispositivo {
+  id                    Int              @id @default(autoincrement())
+  centro_venta_id       Int              @db.SmallInt
+  codigo                String           @unique @db.VarChar(10)
+  nombre                String           @db.VarChar(60)
+  tipo                  tipo_dispositivo
+  activo                Boolean          @default(true)
+  registrado_en         DateTime         @default(now()) @db.Timestamptz(6)
+  ultima_sincronizacion DateTime?        @db.Timestamptz(6)
+  centro_venta          centro_venta     @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pago                  pago[]
+  pedido                pedido[]
+  sync_conflicto        sync_conflicto[]
+
+  @@schema("ventas")
+}
+
+model folio_contador {
+  centro_venta_id Int          @db.SmallInt
+  fecha_operacion DateTime     @db.Date
+  ultimo_folio    Int          @default(0)
+  centro_venta    centro_venta @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([centro_venta_id, fecha_operacion])
+  @@schema("ventas")
+}
+
+model metodo_pago {
+  id                  Int     @id @default(autoincrement()) @db.SmallInt
+  codigo              String  @unique @db.VarChar(15)
+  nombre              String  @db.VarChar(50)
+  requiere_referencia Boolean @default(false)
+  requiere_terminal   Boolean @default(false)
+  pago                pago[]
+
+  @@schema("ventas")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model pago {
+  id                                   String            @id @db.Uuid
+  pedido_id                            String            @db.Uuid
+  metodo_pago_id                       Int               @db.SmallInt
+  turno_id                             Int
+  fecha_operacion                      DateTime          @default(dbgenerated("fecha_guatemala()")) @db.Date
+  monto                                Decimal           @db.Decimal(12, 2)
+  terminal_pos                         String?           @db.VarChar(30)
+  referencia_pos                       String?           @db.VarChar(40)
+  estado                               estado_pago       @default(APLICADO)
+  registrado_por                       Int
+  registrado_en                        DateTime          @default(now()) @db.Timestamptz(6)
+  anulado_por                          Int?
+  anulado_en                           DateTime?         @db.Timestamptz(6)
+  motivo_anulacion                     String?           @db.VarChar(200)
+  dispositivo_id                       Int?
+  origen                               origen_registro   @default(EN_LINEA)
+  sincronizado_en                      DateTime          @default(now()) @db.Timestamptz(6)
+  usuario_pago_anulado_porTousuario    usuario?          @relation("pago_anulado_porTousuario", fields: [anulado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dispositivo                          dispositivo?      @relation(fields: [dispositivo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  metodo_pago                          metodo_pago       @relation(fields: [metodo_pago_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pedido                               pedido            @relation(fields: [pedido_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario_pago_registrado_porTousuario usuario           @relation("pago_registrado_porTousuario", fields: [registrado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  turno_caja                           turno_caja        @relation(fields: [turno_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pos_transaccion                      pos_transaccion[]
+
+  @@index([pedido_id], map: "ix_pago_pedido")
+  @@schema("ventas")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pedido {
+  id              String           @id @db.Uuid
+  centro_venta_id Int              @db.SmallInt
+  fecha_operacion DateTime         @default(dbgenerated("fecha_guatemala()")) @db.Date
+  folio           Int
+  tipo_venta_id   Int              @db.SmallInt
+  turno_id        Int?
+  mesa_referencia String?          @db.VarChar(30)
+  cliente_nombre  String?          @db.VarChar(100)
+  estado          estado_pedido    @default(ABIERTO)
+  subtotal        Decimal          @default(0) @db.Decimal(12, 2)
+  descuento       Decimal          @default(0) @db.Decimal(12, 2)
+  total           Decimal          @default(0) @db.Decimal(12, 2)
+  creado_por      Int
+  creado_en       DateTime         @default(now()) @db.Timestamptz(6)
+  actualizado_en  DateTime         @default(now()) @db.Timestamptz(6)
+  version         Int              @default(1)
+  dispositivo_id  Int?
+  origen          origen_registro  @default(EN_LINEA)
+  folio_offline   String?          @unique @db.VarChar(20)
+  sincronizado_en DateTime         @default(now()) @db.Timestamptz(6)
+  pago            pago[]
+  centro_venta    centro_venta     @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario         usuario          @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dispositivo     dispositivo?     @relation(fields: [dispositivo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tipo_venta      tipo_venta       @relation(fields: [tipo_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  turno_caja      turno_caja?      @relation(fields: [turno_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pedido_detalle  pedido_detalle[]
+
+  @@unique([centro_venta_id, fecha_operacion, folio])
+  @@index([centro_venta_id, fecha_operacion, estado], map: "ix_pedido_centro_fecha")
+  @@schema("ventas")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pedido_detalle {
+  id                                           String          @id @db.Uuid
+  pedido_id                                    String          @db.Uuid
+  producto_id                                  Int
+  cantidad                                     Decimal         @db.Decimal(8, 2)
+  precio_unitario                              Decimal         @db.Decimal(10, 2)
+  importe                                      Decimal?        @default(dbgenerated("(cantidad * precio_unitario)")) @db.Decimal(12, 2)
+  notas                                        String?         @db.VarChar(200)
+  estado                                       estado_linea    @default(ACTIVA)
+  agregado_por                                 Int
+  agregado_en                                  DateTime        @default(now()) @db.Timestamptz(6)
+  anulado_por                                  Int?
+  anulado_en                                   DateTime?       @db.Timestamptz(6)
+  motivo_anulacion                             String?         @db.VarChar(200)
+  origen                                       origen_registro @default(EN_LINEA)
+  usuario_pedido_detalle_agregado_porTousuario usuario         @relation("pedido_detalle_agregado_porTousuario", fields: [agregado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario_pedido_detalle_anulado_porTousuario  usuario?        @relation("pedido_detalle_anulado_porTousuario", fields: [anulado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pedido                                       pedido          @relation(fields: [pedido_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  producto                                     producto        @relation(fields: [producto_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([pedido_id], map: "ix_detalle_pedido")
+  @@schema("ventas")
+}
+
+model pos_transaccion {
+  id                  BigInt              @id @default(autoincrement())
+  centro_venta_id     Int                 @db.SmallInt
+  fecha_operacion     DateTime            @db.Date
+  fecha_hora          DateTime?           @db.Timestamptz(6)
+  terminal_pos        String              @db.VarChar(30)
+  referencia_pos      String              @db.VarChar(40)
+  monto               Decimal             @db.Decimal(12, 2)
+  ultimos4            String?             @db.Char(4)
+  archivo_origen      String?             @db.VarChar(200)
+  pago_id             String?             @db.Uuid
+  estado_conciliacion estado_conciliacion @default(PENDIENTE)
+  importado_en        DateTime            @default(now()) @db.Timestamptz(6)
+  centro_venta        centro_venta        @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pago                pago?               @relation(fields: [pago_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([terminal_pos, fecha_operacion, referencia_pos])
+  @@schema("ventas")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model producto {
+  id              Int               @id @default(autoincrement())
+  categoria_id    Int
+  sku             String            @unique @db.VarChar(30)
+  nombre          String            @db.VarChar(120)
+  precio_base     Decimal           @db.Decimal(10, 2)
+  activo          Boolean           @default(true)
+  pedido_detalle  pedido_detalle[]
+  categoria       categoria         @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  producto_centro producto_centro[]
+
+  @@schema("ventas")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model producto_centro {
+  producto_id     Int
+  centro_venta_id Int          @db.SmallInt
+  precio          Decimal?     @db.Decimal(10, 2)
+  disponible      Boolean      @default(true)
+  centro_venta    centro_venta @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  producto        producto     @relation(fields: [producto_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([producto_id, centro_venta_id])
+  @@schema("ventas")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sync_conflicto {
+  id              BigInt           @id @default(autoincrement())
+  centro_venta_id Int              @db.SmallInt
+  dispositivo_id  Int
+  tipo_operacion  String           @db.VarChar(20)
+  operacion_id    String           @unique @db.Uuid
+  datos           Json
+  motivo          String
+  estado          estado_conflicto @default(PENDIENTE)
+  recibido_en     DateTime         @default(now()) @db.Timestamptz(6)
+  resuelto_por    Int?
+  resuelto_en     DateTime?        @db.Timestamptz(6)
+  nota_resolucion String?          @db.VarChar(300)
+  centro_venta    centro_venta     @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dispositivo     dispositivo      @relation(fields: [dispositivo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario         usuario?         @relation(fields: [resuelto_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([centro_venta_id], map: "ix_conflicto_pendiente", where: raw("(estado = 'PENDIENTE'::estado_conflicto)"))
+  @@schema("ventas")
+}
+
+model tipo_venta {
+  id     Int      @id @default(autoincrement()) @db.SmallInt
+  codigo String   @unique @db.VarChar(15)
+  nombre String   @db.VarChar(50)
+  pedido pedido[]
+
+  @@schema("ventas")
+}
+
+model turno_caja {
+  id                                      Int          @id @default(autoincrement())
+  centro_venta_id                         Int          @unique(map: "uq_turno_abierto", where: raw("(estado = 'ABIERTO'::estado_turno)")) @db.SmallInt
+  fecha_operacion                         DateTime     @default(dbgenerated("fecha_guatemala()")) @db.Date
+  abierto_por                             Int
+  abierto_en                              DateTime     @default(now()) @db.Timestamptz(6)
+  fondo_inicial                           Decimal      @default(0) @db.Decimal(10, 2)
+  cerrado_por                             Int?
+  cerrado_en                              DateTime?    @db.Timestamptz(6)
+  efectivo_contado                        Decimal?     @db.Decimal(10, 2)
+  estado                                  estado_turno @default(ABIERTO)
+  pago                                    pago[]
+  pedido                                  pedido[]
+  usuario_turno_caja_abierto_porTousuario usuario      @relation("turno_caja_abierto_porTousuario", fields: [abierto_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  centro_venta                            centro_venta @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario_turno_caja_cerrado_porTousuario usuario?     @relation("turno_caja_cerrado_porTousuario", fields: [cerrado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("ventas")
+}
+
+model usuario {
+  id                                                  Int              @id @default(autoincrement())
+  firebase_uid                                        String           @unique @db.VarChar(128)
+  nombre                                              String           @db.VarChar(100)
+  email                                               String           @unique @db.VarChar(150)
+  rol                                                 rol_usuario
+  activo                                              Boolean          @default(true)
+  creado_en                                           DateTime         @default(now()) @db.Timestamptz(6)
+  pago_pago_anulado_porTousuario                      pago[]           @relation("pago_anulado_porTousuario")
+  pago_pago_registrado_porTousuario                   pago[]           @relation("pago_registrado_porTousuario")
+  pedido                                              pedido[]
+  pedido_detalle_pedido_detalle_agregado_porTousuario pedido_detalle[] @relation("pedido_detalle_agregado_porTousuario")
+  pedido_detalle_pedido_detalle_anulado_porTousuario  pedido_detalle[] @relation("pedido_detalle_anulado_porTousuario")
+  sync_conflicto                                      sync_conflicto[]
+  turno_caja_turno_caja_abierto_porTousuario          turno_caja[]     @relation("turno_caja_abierto_porTousuario")
+  turno_caja_turno_caja_cerrado_porTousuario          turno_caja[]     @relation("turno_caja_cerrado_porTousuario")
+  usuario_centro                                      usuario_centro[]
+
+  @@schema("ventas")
+}
+
+model usuario_centro {
+  usuario_id      Int
+  centro_venta_id Int          @db.SmallInt
+  centro_venta    centro_venta @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario         usuario      @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([usuario_id, centro_venta_id])
+  @@schema("ventas")
+}
+
+enum estado_conciliacion {
+  PENDIENTE
+  CONCILIADO
+  SIN_PEDIDO
+  DIFERENCIA_MONTO
+  DUPLICADO
+
+  @@schema("ventas")
+}
+
+enum estado_conflicto {
+  PENDIENTE
+  RESUELTO
+  DESCARTADO
+
+  @@schema("ventas")
+}
+
+enum estado_linea {
+  ACTIVA
+  ANULADA
+
+  @@schema("ventas")
+}
+
+enum estado_pago {
+  APLICADO
+  ANULADO
+
+  @@schema("ventas")
+}
+
+enum estado_pedido {
+  ABIERTO
+  EN_PREPARACION
+  LISTO
+  ENTREGADO
+  PAGADO
+  ANULADO
+
+  @@schema("ventas")
+}
+
+enum estado_turno {
+  ABIERTO
+  CERRADO
+
+  @@schema("ventas")
+}
+
+enum origen_registro {
+  EN_LINEA
+  SIN_INTERNET
+  MANUAL
+
+  @@schema("ventas")
+}
+
+enum rol_usuario {
+  ADMIN
+  GERENTE
+  CAJERO
+  MESERO
+  COCINA
+
+  @@schema("ventas")
+}
+
+enum tipo_dispositivo {
+  CAJA
+  TABLET
+  COCINA
+  GERENCIA
+
+  @@schema("ventas")
+}

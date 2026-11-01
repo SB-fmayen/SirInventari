@@ -1,0 +1,6 @@
+node_modules
+# Variables de entorno: se usa el .env de la raíz del proyecto
+.env
+
+# Cliente de Prisma (se genera con: npx prisma generate)
+/src/generated/prisma
