@@ -1,0 +1,32 @@
+# Base de datos local para desarrollo (PostgreSQL 16, hora de Guatemala).
+# Uso:  docker compose up -d
+# Los scripts de db/ se ejecutan solos la PRIMERA vez que se crea el volumen.
+# Para empezar de cero:  docker compose down -v  y luego  docker compose up -d
+services:
+  db:
+    image: postgres:16
+    container_name: sirinventari-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: America/Guatemala
+      PGTZ: America/Guatemala
+    # Zona horaria del servidor en Guatemala (no cambia el esquema)
+    command: ["postgres", "-c", "timezone=America/Guatemala", "-c", "log_timezone=America/Guatemala"]
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - datos_db:/var/lib/postgresql/data
+      - ./db/01_esquema_v0.3.sql:/docker-entrypoint-initdb.d/01_esquema_v0.3.sql:ro
+      - ./db/02_datos_iniciales.sql:/docker-entrypoint-initdb.d/02_datos_iniciales.sql:ro
+      - ./db/pruebas:/pruebas:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  datos_db:
