@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ErrorApi } from '@/lib/api'
 import { useSesion } from '@/sesion/SesionProvider'
+import { useTiempoReal } from '@/hooks/useTiempoReal'
 
 interface Producto { id: number; nombre: string; sku: string; precio: string; categoria: { id: number; nombre: string } }
 interface TipoVenta { id: number; codigo: string; nombre: string }
@@ -59,6 +60,7 @@ export function Pedidos() {
       setSeleccionado((actual) => actual ? ps.find((p) => p.id === actual.id) ?? actual : null)
     } catch (e) { setError(mensaje(e)) }
   }
+  const conectado = useTiempoReal(actualizar)
   function comenzar(agregar: boolean) {
     setAgregando(agregar); setError(''); setAviso(''); setAnulando(null)
     if (!agregar) setSeleccionado(null)
@@ -98,6 +100,7 @@ export function Pedidos() {
 
   return <div className="mx-auto max-w-6xl space-y-5">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-3xl font-bold">Pedidos del día</h1><p>{centro?.nombre} · Horas de Guatemala</p></div><div className="flex gap-2"><button className={secundario} disabled={guardando} onClick={() => void actualizar()}>Actualizar</button><button className={boton} disabled={guardando || cargando || !!borrador || !tipos.length} onClick={() => comenzar(false)}>Nuevo pedido</button></div></div>
+    <p className={conectado ? 'text-teal-800' : 'text-amber-800'}>{conectado ? 'Cambios en tiempo real conectados.' : 'Sin conexión en tiempo real. Reconectando… Puedes tocar Actualizar.'}</p>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}
     {aviso && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-emerald-800">{aviso}</p>}
     {borrador && <form aria-label={agregando ? 'Agregar productos' : 'Nuevo pedido'} className="space-y-4 rounded-2xl border border-teal-200 bg-white p-5" onSubmit={(e) => { e.preventDefault(); void guardar() }}>

@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { lineas, nuevoPedido } from './validacion-pedido.js';
+import { TiempoRealGateway } from '../tiempo-real/tiempo-real.gateway.js';
 
 const incluir = {
   tipo_venta: { select: { codigo: true, nombre: true } },
@@ -18,7 +19,13 @@ type DatosLineas = ReturnType<typeof lineas>;
 
 @Injectable()
 export class PedidosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly tiempoReal: TiempoRealGateway) {}
+
+  private async avisar<T extends { id: string }>(centroId: number, operacion: Promise<T>): Promise<T> {
+    const resultado = await operacion;
+    await this.tiempoReal.publicar(centroId, resultado.id);
+    return resultado;
+  }
 
   tipos() { return this.prisma.tipo_venta.findMany({ orderBy: { id: 'asc' } }); }
 
@@ -75,7 +82,7 @@ export class PedidosService {
   }
 
   async crear(centroId: number, usuarioId: number, datos: ReturnType<typeof nuevoPedido>) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.avisar(centroId, this.prisma.$transaction(async (tx) => {
       // Coordina reenvíos simultáneos del mismo UUID incluso antes de que exista la fila.
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${datos.id}))::text`;
       const existente = await tx.pedido.findUnique({ where: { id: datos.id } });
@@ -96,25 +103,26 @@ export class PedidosService {
         await this.agregarEn(tx, centroId, usuarioId, datos.id, datos.lineas, 'ABIERTO');
       }
       return this.detalleEn(tx, centroId, datos.id);
-    }, { timeout: 15000 });
+    }, { timeout: 15000 }));
   }
 
   agregar(centroId: number, usuarioId: number, id: string, nuevas: DatosLineas) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.avisar(centroId, this.prisma.$transaction(async (tx) => {
       const estado = await this.bloquear(tx, centroId, id);
       await this.agregarEn(tx, centroId, usuarioId, id, nuevas, estado);
       return this.detalleEn(tx, centroId, id);
-    }, { timeout: 15000 });
+    }, { timeout: 15000 }));
   }
 
   anularLinea(centroId: number, usuarioId: number, id: string, lineaId: string, motivo: string) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.avisar(centroId, this.prisma.$transaction(async (tx) => {
       const estado = await this.bloquear(tx, centroId, id);
       if (estado === 'PAGADO' || estado === 'ANULADO') throw new ConflictException('No puedes cambiar un pedido pagado o anulado.');
       const linea = await tx.pedido_detalle.findFirst({ where: { id: lineaId, pedido_id: id } });
       if (!linea) throw new NotFoundException('No se encontró ese producto en el pedido.');
       if (linea.estado === 'ACTIVA') await tx.pedido_detalle.update({ where: { id: lineaId }, data: { estado: 'ANULADA', anulado_por: usuarioId, anulado_en: new Date(), motivo_anulacion: motivo } });
       return this.detalleEn(tx, centroId, id);
-    });
+    }));
   }
+
 }

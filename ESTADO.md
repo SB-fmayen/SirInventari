@@ -4,15 +4,18 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 21:44 (hora de Guatemala) · Codex
+2026-10-31 21:50 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-Tarea 8 · Pedidos. **Terminada.**
+Tarea 9 · Cocina en tiempo real. **Avisos terminados; estados de cocina pendientes de aprobación del esquema.**
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
-- (nada a medias)
+- Tarea 9: conexiones Socket.IO autenticadas, salas por centro calculadas por el servidor, notificación después de guardar pedidos/agregados/anulaciones y actualización de Pedidos al conectar o recibir avisos. Desconecta usuarios desactivados antes de publicar un aviso. La app avisa al perder conexión y reconecta sola.
+- Falta pantalla Cocina y estados de preparación independientes del cobro. Ver punto 4 de "Necesito del usuario"; no se modificó el esquema.
+- Archivos: `apps/api/src/tiempo-real/`, `src/pedidos/pedidos.module.ts` y `pedidos.service.ts`, `test/tiempo-real.e2e-spec.ts`; dependencias/package-lock de API y app; hook `apps/web/src/hooks/useTiempoReal.ts`, integración en `paginas/Pedidos.tsx` y pruebas `pruebas/tiempo-real.test.tsx` y `app.test.tsx`.
+- Pruebas al guardar esta parte: API 13 unitarias y 43 de integración; app 32. Conexiones reales de Socket.IO prueban aviso sin recargar, aislamiento por centro y desactivación. La app prueba token/centro, reconexión y limpieza al cambiar centro. Build y lint correctos (los mismos 5 avisos anteriores en app).
 
 ## Tareas terminadas
 
@@ -57,7 +60,7 @@ Notas:
 
 ## Siguiente tarea
 
-Tarea 9 · Cocina en tiempo real.
+Tarea 9 espera respuesta sobre el esquema. Mientras tanto seguir con Tarea 10 · Caja, que puede completarse sin ese cambio.
 
 ### Resultado de Tarea 8
 
@@ -105,6 +108,7 @@ Tarea 9 · Cocina en tiempo real.
    `GOOGLE_APPLICATION_CREDENTIALS=C:/claves/sirinventari-admin.json`. Nunca subirlo a Git.
    Mientras no esté, se puede crear el usuario en la consola de Firebase y registrarlo en la pantalla Usuarios con la opción "Ya existe en Firebase (tengo su UID)".
 3. ~~Abrir Codex para la revisión R1~~ **Hecho:** revisión ejecutada y resultados anotados arriba.
+4. **Tarea 9 · Autorizar separar el estado de cocina del estado de cobro.** `pedido.estado` mezcla `PAGADO` con `EN_PREPARACION/LISTO/ENTREGADO`. Cobrar antes de cocinar pierde el estado de preparación; cambiar PAGADO por LISTO volvería a abrir el pedido para cobros/productos. Propuesta pendiente de respuesta: añadir `pedido.estado_cocina` con valores PENDIENTE, EN_PREPARACION, LISTO y ENTREGADO, independiente de `pedido.estado`. Se preguntó al usuario; no se aplicó ninguna modificación a tablas, triggers o funciones.
 
 ## Cómo probar lo último
 

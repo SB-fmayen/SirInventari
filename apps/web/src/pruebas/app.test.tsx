@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '@/App'
 import { SesionProvider } from '@/sesion/SesionProvider'
 
+vi.mock('@/hooks/useTiempoReal', () => ({ useTiempoReal: () => false }))
+
 // ---------- Firebase simulado ----------
 const firebase = vi.hoisted(() => ({
   usuarioActual: null as { uid: string } | null,
