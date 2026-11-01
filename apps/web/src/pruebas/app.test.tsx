@@ -445,6 +445,42 @@ describe('Caja (Tarea 10)', () => {
   })
 })
 
+describe('Reportes (Tarea 11)', () => {
+  const reporte = { desde: '2026-10-31', hasta: '2026-10-31', resumen: { total_pedidos: 2, total_vendido: '45.01', ticket_promedio: '22.51', descuentos: '0.02' }, por_tipo: [{ nombre: 'Mesa', cantidad: '2', total: '45.01' }], por_hora: [{ nombre: '21:00', cantidad: '2', total: '45.01' }], por_producto: [{ nombre: 'PLT-1 · Plato del día', cantidad: '2', total: '45.01' }], por_pago: [{ nombre: 'Efectivo', cantidad: '2', total: '45.01' }], pedidos: [{ id: 'pedido-reporte', folio: 1, fecha_operacion: '2026-10-31', total: '45.01', tipo: 'Mesa' }] }
+  it('consulta el rango del centro y muestra el historial del pedido', async () => {
+    const fetchFalso = simularApi({ salud: 'sin-red', sesion: conRol('GERENTE'), otras: {
+      '/reportes/ventas': { status: 200, cuerpo: reporte },
+      '/reportes/ventas?desde=2026-10-01&hasta=2026-10-31': { status: 200, cuerpo: { ...reporte, desde: '2026-10-01' } },
+      '/reportes/pedidos/pedido-reporte/historial': { status: 200, cuerpo: { folio: 1, eventos: [{ fecha: '2026-11-01T03:00:00Z', usuario: 'Ana Mesera', descripcion: 'Agregó 1 de Plato del día.' }] } },
+    } })
+    abrir('/reportes')
+    expect(await screen.findByText('Ticket promedio')).toBeInTheDocument()
+    expect(screen.getByText('Q 22.51')).toBeInTheDocument()
+    await userEvent.clear(screen.getByLabelText('Desde')); await userEvent.type(screen.getByLabelText('Desde'), '2026-10-01')
+    await userEvent.click(screen.getByRole('button', { name: 'Consultar ventas' }))
+    expect(await screen.findByText('Mostrando del 01/10/2026 al 31/10/2026.')).toBeInTheDocument()
+    expect(fetchFalso.mock.calls.find(([url]) => url.includes('desde=2026-10-01'))?.[1]).toMatchObject({ headers: { 'X-Centro-Id': '1' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Ver historial del pedido 1' }))
+    expect(await screen.findByRole('heading', { name: 'Historial del pedido 1' })).toBeInTheDocument()
+    expect(screen.getByText('Agregó 1 de Plato del día.')).toBeInTheDocument()
+  })
+
+  it('prepara un CSV para descargar con el nombre del centro y el rango consultado', async () => {
+    const crear = vi.fn((_archivo: Blob) => 'blob:reporte')
+    const URLOriginal = URL
+    vi.stubGlobal('URL', class extends URLOriginal { static createObjectURL = crear; static revokeObjectURL = vi.fn() })
+    const clic = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    simularApi({ salud: 'sin-red', sesion: conRol('GERENTE'), otras: { '/reportes/ventas': { status: 200, cuerpo: reporte } } })
+    abrir('/reportes'); await screen.findByText('Ticket promedio')
+    await userEvent.click(screen.getByRole('button', { name: 'Descargar CSV' }))
+    expect(crear).toHaveBeenCalledOnce()
+    expect(crear.mock.calls[0][0]).toBeInstanceOf(Blob)
+    expect(clic).toHaveBeenCalledOnce()
+    const enlace = clic.mock.instances[0] as HTMLAnchorElement
+    expect(enlace.download).toBe('ventas-CV01-2026-10-31-2026-10-31.csv')
+  })
+})
+
 describe('Permisos por rol y centro (Tarea 5)', () => {
   it('al cambiar de usuario el formulario muestra los datos del usuario elegido', async () => {
     simularApi({

@@ -4,11 +4,11 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-10-31 21:55 (hora de Guatemala) · Codex
+2026-10-31 22:01 (hora de Guatemala) · Codex
 
 ## Tarea actual
 
-Tarea 10 · Caja. **Terminada.** Tarea 9 sigue esperando aprobación del esquema.
+Tarea 11 · Reportes. **Terminada.** Tarea 9 sigue esperando aprobación del esquema.
 
 ## Si está a medias: qué falta y qué archivos se tocaron
 
@@ -32,6 +32,7 @@ Tarea 10 · Caja. **Terminada.** Tarea 9 sigue esperando aprobación del esquema
 | 7 | Apertura, cierre e historial de turnos por centro | Ver `git log --grep "Tarea 7"` |
 | 8 | Pedidos con folio, líneas con usuario/hora y anulación con motivo | `ced9d1e` y ver `git log --grep "Tarea 8"` |
 | 10 | Caja, cobros divididos, vuelto, comprobante y bloqueos contra duplicados | Ver `git log --grep "Tarea 10"` |
+| 11 | Reportes por centro y rango, historial y descarga CSV | Ver `git log --grep "Tarea 11"` |
 
 Notas:
 - Tarea 0: el plan dice `db/01_esquema_v0.2.sql`, pero el proyecto ya usa `db/01_esquema_v0.3.sql`, que corrige los 8 puntos de `REVISION.md`. La v0.3 es la fuente de verdad.
@@ -61,7 +62,16 @@ Notas:
 
 ## Siguiente tarea
 
-Tarea 9 espera respuesta sobre el esquema. Mientras tanto seguir con Tarea 11 · Reportes.
+Tarea 9 espera respuesta sobre el esquema. Mientras tanto seguir con Tarea 12 · Pruebas de Fase 1.
+
+### Resultado de Tarea 11
+
+- Reportes solo ADMIN/GERENTE, por centro y rango válido de hasta 366 días. Incluye pedidos PAGADOS según fecha de operación; excluye anulados y pedidos con saldo pendiente, aunque tengan abonos. Las formas de pago corresponden a esos mismos pedidos.
+- Total de pedidos, total vendido, ticket promedio, descuentos, ventas por tipo, hora de Guatemala y producto, desglose de pagos, e historial de creación/líneas/anulaciones/cobros con nombre y hora.
+- Descuentos distribuidos por producto con Decimal y reparto de centavos por residuo; todos los desgloses conservan el total neto. Consulta de ventas en transacción RepeatableRead.
+- CSV con centro y rango consultados, comillas escapadas, UTF-8 y protección para que nombres que empiezan con signos de fórmula se abran como texto.
+- Pruebas: API 13 unitarias y 54 de integración; app 39. Incluye ventas divididas, abonos excluidos, centavos/descuentos, fechas, permisos, historial y descarga CSV. Build y lint correctos; 5 avisos anteriores en app y aviso de tamaño del paquete web (504 kB); no se reorganizó la carga de pantallas en esta tarea.
+- Archivos: `apps/api/src/reportes/`, registro en `app.module.ts`, `test/reportes.e2e-spec.ts`; página `apps/web/src/paginas/Reportes.tsx`, `lib/csv.ts`, ruta y pruebas `csv.test.ts` y `app.test.tsx`.
 
 ### Resultado de Tarea 10
 
