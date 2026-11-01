@@ -1,0 +1,1469 @@
+{
+  "fuente": "https://shukoslaiguana.com",
+  "capturado_en": "2026-11-01T06:45:29.106Z",
+  "categorias": [
+    {
+      "nombre": "LASAÑA",
+      "url": "https://shukoslaiguana.com/menu/Lasa%C3%B1a",
+      "orden": 1
+    },
+    {
+      "nombre": "ENTRADAS",
+      "url": "https://shukoslaiguana.com/menu/Entradas",
+      "orden": 2
+    },
+    {
+      "nombre": "HAMBURGUESAS",
+      "url": "https://shukoslaiguana.com/menu/Hamburguesas",
+      "orden": 3
+    },
+    {
+      "nombre": "PIZZAS PERSONALES",
+      "url": "https://shukoslaiguana.com/menu/pizzas-personales",
+      "orden": 4
+    },
+    {
+      "nombre": "PIZZAS GRANDES",
+      "url": "https://shukoslaiguana.com/menu/pizzas-grandes",
+      "orden": 5
+    },
+    {
+      "nombre": "DON CALZONE",
+      "url": "https://shukoslaiguana.com/menu/don-calzone",
+      "orden": 6
+    },
+    {
+      "nombre": "ENRROLLADOS",
+      "url": "https://shukoslaiguana.com/menu/enrrollados",
+      "orden": 7
+    },
+    {
+      "nombre": "CONO PIZZA",
+      "url": "https://shukoslaiguana.com/menu/cono-pizza",
+      "orden": 8
+    },
+    {
+      "nombre": "TORTILLAS DE HARINA",
+      "url": "https://shukoslaiguana.com/menu/tortillas-de-harina",
+      "orden": 9
+    },
+    {
+      "nombre": "SHUKOS",
+      "url": "https://shukoslaiguana.com/menu/shukos",
+      "orden": 10
+    },
+    {
+      "nombre": "EXTRAS",
+      "url": "https://shukoslaiguana.com/menu/Extras",
+      "orden": 11
+    },
+    {
+      "nombre": "BEBIDAS",
+      "url": "https://shukoslaiguana.com/menu/Bebidas",
+      "orden": 12
+    }
+  ],
+  "paginas": [
+    {
+      "url": "https://shukoslaiguana.com/menu/Lasa%C3%B1a",
+      "categoria": "LASAÑA",
+      "seccion": "Lasaña",
+      "productos": 3
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Entradas",
+      "categoria": "ENTRADAS",
+      "seccion": "Entradas",
+      "productos": 5
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Hamburguesas",
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "productos": 9
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/don-calzone",
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone",
+      "productos": 0
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/pizzas-personales",
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales",
+      "productos": 0
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Tradicionales?parent=don-calzone",
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Tradicionales",
+      "productos": 7
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/pizzas-grandes",
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes",
+      "productos": 0
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20(1%20Ingrediente)?parent=pizzas-personales",
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales (1 Ingrediente)",
+      "productos": 7
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone",
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "productos": 9
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20(1%20Ingrediente)?parent=pizzas-grandes",
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes (1 Ingrediente)",
+      "productos": 7
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20de%20Especialidad?parent=pizzas-personales",
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales de Especialidad",
+      "productos": 8
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Premium?parent=don-calzone",
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Premium",
+      "productos": 4
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes",
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "productos": 10
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20Premium?parent=pizzas-personales",
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales Premium",
+      "productos": 4
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes",
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "productos": 9
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/enrrollados",
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrrollados",
+      "productos": 0
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/tortillas-de-harina",
+      "categoria": "TORTILLAS DE HARINA",
+      "seccion": "Tortillas de Harina",
+      "productos": 0
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/cono-pizza",
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza",
+      "productos": 0
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Enrollado%20-%20Tradicionales?parent=enrrollados",
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Tradicionales",
+      "productos": 7
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Tortillas%20de%20Harina%20-%20Especialidad?parent=tortillas-de-harina",
+      "categoria": "TORTILLAS DE HARINA",
+      "seccion": "Tortillas de Harina - Especialidad",
+      "productos": 5
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Tradicionales?parent=cono-pizza",
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Tradicionales",
+      "productos": 7
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados",
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "productos": 9
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza",
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "productos": 9
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Enrollado%20-%20Premium?parent=enrrollados",
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Premium",
+      "productos": 4
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Premium?parent=cono-pizza",
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Premium",
+      "productos": 4
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/shukos",
+      "categoria": "SHUKOS",
+      "seccion": "Shukos",
+      "productos": 0
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Bebidas",
+      "categoria": "BEBIDAS",
+      "seccion": "Bebidas",
+      "productos": 4
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Extras",
+      "categoria": "EXTRAS",
+      "seccion": "Extras",
+      "productos": 3
+    },
+    {
+      "url": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos",
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "productos": 9
+    }
+  ],
+  "productos": [
+    {
+      "categoria": "LASAÑA",
+      "seccion": "Lasaña",
+      "nombre": "Lasaña en salsa Alfredo (blanca)",
+      "precio": "65.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Lasa%C3%B1a"
+    },
+    {
+      "categoria": "LASAÑA",
+      "seccion": "Lasaña",
+      "nombre": "Lasaña a la boloñesa",
+      "precio": "55.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Lasa%C3%B1a"
+    },
+    {
+      "categoria": "LASAÑA",
+      "seccion": "Lasaña",
+      "nombre": "Porción extra de pan",
+      "precio": "15.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Lasa%C3%B1a"
+    },
+    {
+      "categoria": "ENTRADAS",
+      "seccion": "Entradas",
+      "nombre": "Alitas (10 unidades)",
+      "precio": "60.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Entradas"
+    },
+    {
+      "categoria": "ENTRADAS",
+      "seccion": "Entradas",
+      "nombre": "Cheese bread",
+      "precio": "25.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Entradas"
+    },
+    {
+      "categoria": "ENTRADAS",
+      "seccion": "Entradas",
+      "nombre": "Parmesan bread",
+      "precio": "25.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Entradas"
+    },
+    {
+      "categoria": "ENTRADAS",
+      "seccion": "Entradas",
+      "nombre": "Fundido de queso",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Entradas"
+    },
+    {
+      "categoria": "ENTRADAS",
+      "seccion": "Entradas",
+      "nombre": "Chiles toreados",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Entradas"
+    },
+    {
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "nombre": "Hamburguesa simple",
+      "precio": "20.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Hamburguesas"
+    },
+    {
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "nombre": "Quesoburguesa simple",
+      "precio": "23.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Hamburguesas"
+    },
+    {
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "nombre": "Torito simple",
+      "precio": "28.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Hamburguesas"
+    },
+    {
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "nombre": "Hamburguesa doble",
+      "precio": "23.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Hamburguesas"
+    },
+    {
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "nombre": "Quesoburguesa doble",
+      "precio": "28.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Hamburguesas"
+    },
+    {
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "nombre": "Torito doble",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Hamburguesas"
+    },
+    {
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "nombre": "Super torito",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Hamburguesas"
+    },
+    {
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "nombre": "Papas fritas",
+      "precio": "15.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Hamburguesas"
+    },
+    {
+      "categoria": "HAMBURGUESAS",
+      "seccion": "Hamburguesas",
+      "nombre": "Extra combo: Agrega papas + bebida",
+      "precio": "15.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Hamburguesas"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Tradicionales",
+      "nombre": "Pepperoni",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Tradicionales?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Tradicionales",
+      "nombre": "Jamón",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Tradicionales?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Tradicionales",
+      "nombre": "Salami",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Tradicionales?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Tradicionales",
+      "nombre": "Carne Italiana",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Tradicionales?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Tradicionales",
+      "nombre": "Salchicha Italiana",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Tradicionales?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Tradicionales",
+      "nombre": "Champiñones",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Tradicionales?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Tradicionales",
+      "nombre": "Chorizo",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Tradicionales?parent=don-calzone"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales (1 Ingrediente)",
+      "nombre": "Pepperoni",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20(1%20Ingrediente)?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales (1 Ingrediente)",
+      "nombre": "Jamón",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20(1%20Ingrediente)?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales (1 Ingrediente)",
+      "nombre": "Salami",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20(1%20Ingrediente)?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales (1 Ingrediente)",
+      "nombre": "Carne italiana",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20(1%20Ingrediente)?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales (1 Ingrediente)",
+      "nombre": "Salchicha italiana",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20(1%20Ingrediente)?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales (1 Ingrediente)",
+      "nombre": "Champiñones",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20(1%20Ingrediente)?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales (1 Ingrediente)",
+      "nombre": "Chorizo",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20(1%20Ingrediente)?parent=pizzas-personales"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "nombre": "Tocino",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "nombre": "4 Quesos",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "nombre": "Hawaiana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "nombre": "Americana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "nombre": "Deluxe",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "nombre": "5 Carnes",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "nombre": "Margarita",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "nombre": "Hot Dog Cheese",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Especialidades",
+      "nombre": "Vegetariana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Especialidades?parent=don-calzone"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes (1 Ingrediente)",
+      "nombre": "Pepperoni",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20(1%20Ingrediente)?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes (1 Ingrediente)",
+      "nombre": "Jamón",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20(1%20Ingrediente)?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes (1 Ingrediente)",
+      "nombre": "Salami",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20(1%20Ingrediente)?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes (1 Ingrediente)",
+      "nombre": "Carne italiana",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20(1%20Ingrediente)?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes (1 Ingrediente)",
+      "nombre": "Salchicha italiana",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20(1%20Ingrediente)?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes (1 Ingrediente)",
+      "nombre": "Champiñones",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20(1%20Ingrediente)?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes (1 Ingrediente)",
+      "nombre": "Chorizo",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20(1%20Ingrediente)?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales de Especialidad",
+      "nombre": "Tocino",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20de%20Especialidad?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales de Especialidad",
+      "nombre": "4 Quesos",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20de%20Especialidad?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales de Especialidad",
+      "nombre": "Hawaiana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20de%20Especialidad?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales de Especialidad",
+      "nombre": "Americana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20de%20Especialidad?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales de Especialidad",
+      "nombre": "Deluxe",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20de%20Especialidad?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales de Especialidad",
+      "nombre": "5 Carnes",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20de%20Especialidad?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales de Especialidad",
+      "nombre": "Margarita",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20de%20Especialidad?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales de Especialidad",
+      "nombre": "Vegetariana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20de%20Especialidad?parent=pizzas-personales"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Premium",
+      "nombre": "Teocinteca",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Premium?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Premium",
+      "nombre": "Suprema",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Premium?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Premium",
+      "nombre": "8 Carnes",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Premium?parent=don-calzone"
+    },
+    {
+      "categoria": "DON CALZONE",
+      "seccion": "Don Calzone - Premium",
+      "nombre": "Churrasco",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Don%20Calzone%20-%20Premium?parent=don-calzone"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "Tocino",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "4 Quesos",
+      "precio": "100.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "Corazón",
+      "precio": "100.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "Hawaiana",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "Americana",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "Deluxe",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "5 Carnes",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "Margarita",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "Hot dog cheese",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes de Especialidad",
+      "nombre": "Vegetariana",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20de%20Especialidad?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales Premium",
+      "nombre": "Suprema",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20Premium?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales Premium",
+      "nombre": "8 Carnes",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20Premium?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales Premium",
+      "nombre": "Teocinteca",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20Premium?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS PERSONALES",
+      "seccion": "Pizzas Personales Premium",
+      "nombre": "Súper Tocineta 1+1",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Personales%20Premium?parent=pizzas-personales"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "nombre": "Teocinteca",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "nombre": "Suprema",
+      "precio": "140.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "nombre": "Cheese Bites",
+      "precio": "130.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "nombre": "8 Carnes",
+      "precio": "160.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "nombre": "Churrasco",
+      "precio": "150.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "nombre": "Súper Tocineta 1+1",
+      "precio": "160.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "nombre": "4 Estaciones",
+      "precio": "230.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "nombre": "De la Casa",
+      "precio": "175.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "PIZZAS GRANDES",
+      "seccion": "Pizzas Grandes Premium",
+      "nombre": "Pizza Alfredo",
+      "precio": "160.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Pizzas%20Grandes%20Premium?parent=pizzas-grandes"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Tradicionales",
+      "nombre": "Pepperoni",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Tradicionales?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Tradicionales",
+      "nombre": "Jamón",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Tradicionales?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Tradicionales",
+      "nombre": "Salami",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Tradicionales?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Tradicionales",
+      "nombre": "Carne Italiana",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Tradicionales?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Tradicionales",
+      "nombre": "Salchicha Italiana",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Tradicionales?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Tradicionales",
+      "nombre": "Champiñones",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Tradicionales?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Tradicionales",
+      "nombre": "Chorizo",
+      "precio": "35.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Tradicionales?parent=enrrollados"
+    },
+    {
+      "categoria": "TORTILLAS DE HARINA",
+      "seccion": "Tortillas de Harina - Especialidad",
+      "nombre": "Gringo",
+      "precio": "45.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Tortillas%20de%20Harina%20-%20Especialidad?parent=tortillas-de-harina"
+    },
+    {
+      "categoria": "TORTILLAS DE HARINA",
+      "seccion": "Tortillas de Harina - Especialidad",
+      "nombre": "Hawaiano",
+      "precio": "45.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Tortillas%20de%20Harina%20-%20Especialidad?parent=tortillas-de-harina"
+    },
+    {
+      "categoria": "TORTILLAS DE HARINA",
+      "seccion": "Tortillas de Harina - Especialidad",
+      "nombre": "Pizzero",
+      "precio": "45.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Tortillas%20de%20Harina%20-%20Especialidad?parent=tortillas-de-harina"
+    },
+    {
+      "categoria": "TORTILLAS DE HARINA",
+      "seccion": "Tortillas de Harina - Especialidad",
+      "nombre": "Mixta de embutidos",
+      "precio": "45.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Tortillas%20de%20Harina%20-%20Especialidad?parent=tortillas-de-harina"
+    },
+    {
+      "categoria": "TORTILLAS DE HARINA",
+      "seccion": "Tortillas de Harina - Especialidad",
+      "nombre": "Mixta de embutidos con queso",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Tortillas%20de%20Harina%20-%20Especialidad?parent=tortillas-de-harina"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Tradicionales",
+      "nombre": "Pepperoni",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Tradicionales?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Tradicionales",
+      "nombre": "Jamón",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Tradicionales?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Tradicionales",
+      "nombre": "Salami",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Tradicionales?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Tradicionales",
+      "nombre": "Carne Italiana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Tradicionales?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Tradicionales",
+      "nombre": "Salchicha Italiana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Tradicionales?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Tradicionales",
+      "nombre": "Champiñones",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Tradicionales?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Tradicionales",
+      "nombre": "Chorizo",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Tradicionales?parent=cono-pizza"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "nombre": "Tocino",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "nombre": "4 Quesos",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "nombre": "Hawaiana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "nombre": "Americana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "nombre": "Deluxe",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "nombre": "5 Carnes",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "nombre": "Margarita",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "nombre": "Hot Dog Cheese",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Especialidades",
+      "nombre": "Vegetariana",
+      "precio": "40.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Especialidades?parent=enrrollados"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "nombre": "Tocino",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "nombre": "4 Quesos",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "nombre": "Hawaiana",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "nombre": "Americana",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "nombre": "Deluxe",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "nombre": "5 Carnes",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "nombre": "Margarita",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "nombre": "Hot Dog Cheese",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Especialidades",
+      "nombre": "Vegetariana",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Especialidades?parent=cono-pizza"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Premium",
+      "nombre": "Teocinteca",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Premium?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Premium",
+      "nombre": "Suprema",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Premium?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Premium",
+      "nombre": "8 Carnes",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Premium?parent=enrrollados"
+    },
+    {
+      "categoria": "ENRROLLADOS",
+      "seccion": "Enrollado - Premium",
+      "nombre": "Churrasco",
+      "precio": "50.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Enrollado%20-%20Premium?parent=enrrollados"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Premium",
+      "nombre": "Teocinteca",
+      "precio": "60.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Premium?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Premium",
+      "nombre": "Suprema",
+      "precio": "60.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Premium?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Premium",
+      "nombre": "8 Carnes",
+      "precio": "60.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Premium?parent=cono-pizza"
+    },
+    {
+      "categoria": "CONO PIZZA",
+      "seccion": "Cono Pizza - Premium",
+      "nombre": "Churrasco",
+      "precio": "60.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Cono%20Pizza%20-%20Premium?parent=cono-pizza"
+    },
+    {
+      "categoria": "BEBIDAS",
+      "seccion": "Bebidas",
+      "nombre": "Gaseosas en lata",
+      "precio": "10.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Bebidas"
+    },
+    {
+      "categoria": "BEBIDAS",
+      "seccion": "Bebidas",
+      "nombre": "Coca-cola 2.5 Lt",
+      "precio": "25.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Bebidas"
+    },
+    {
+      "categoria": "BEBIDAS",
+      "seccion": "Bebidas",
+      "nombre": "Botella de agua pura",
+      "precio": "5.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Bebidas"
+    },
+    {
+      "categoria": "BEBIDAS",
+      "seccion": "Bebidas",
+      "nombre": "Agua Mineral",
+      "precio": "8.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Bebidas"
+    },
+    {
+      "categoria": "EXTRAS",
+      "seccion": "Extras",
+      "nombre": "Pan extra (ajo o mantequilla)",
+      "precio": "15.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Extras"
+    },
+    {
+      "categoria": "EXTRAS",
+      "seccion": "Extras",
+      "nombre": "Picante de la casa",
+      "precio": "15.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Extras"
+    },
+    {
+      "categoria": "EXTRAS",
+      "seccion": "Extras",
+      "nombre": "Agrega un snack + bebida",
+      "precio": "10.00",
+      "variantes": [],
+      "fuente": "https://shukoslaiguana.com/menu/Extras"
+    },
+    {
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "nombre": "Americano",
+      "precio": "25.00",
+      "variantes": [
+        {
+          "nombre": "Pequeño",
+          "precio": "25.00"
+        },
+        {
+          "nombre": "Grande",
+          "precio": "40.00"
+        }
+      ],
+      "fuente": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos"
+    },
+    {
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "nombre": "Gringo",
+      "precio": "25.00",
+      "variantes": [
+        {
+          "nombre": "Pequeño",
+          "precio": "25.00"
+        },
+        {
+          "nombre": "Grande",
+          "precio": "40.00"
+        }
+      ],
+      "fuente": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos"
+    },
+    {
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "nombre": "Hawaiano",
+      "precio": "25.00",
+      "variantes": [
+        {
+          "nombre": "Pequeño",
+          "precio": "25.00"
+        },
+        {
+          "nombre": "Grande",
+          "precio": "40.00"
+        }
+      ],
+      "fuente": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos"
+    },
+    {
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "nombre": "Mixto",
+      "precio": "25.00",
+      "variantes": [
+        {
+          "nombre": "Pequeño",
+          "precio": "25.00"
+        },
+        {
+          "nombre": "Grande",
+          "precio": "40.00"
+        }
+      ],
+      "fuente": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos"
+    },
+    {
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "nombre": "Mixta al pizzero",
+      "precio": "25.00",
+      "variantes": [
+        {
+          "nombre": "Pequeño",
+          "precio": "25.00"
+        },
+        {
+          "nombre": "Grande",
+          "precio": "40.00"
+        }
+      ],
+      "fuente": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos"
+    },
+    {
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "nombre": "Al Pastor",
+      "precio": "35.00",
+      "variantes": [
+        {
+          "nombre": "Pequeño",
+          "precio": "35.00"
+        },
+        {
+          "nombre": "Grande",
+          "precio": "65.00"
+        }
+      ],
+      "fuente": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos"
+    },
+    {
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "nombre": "Cheese Dog",
+      "precio": "25.00",
+      "variantes": [
+        {
+          "nombre": "Pequeño",
+          "precio": "25.00"
+        },
+        {
+          "nombre": "Grande",
+          "precio": "40.00"
+        }
+      ],
+      "fuente": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos"
+    },
+    {
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "nombre": "Chilli Dog",
+      "precio": "25.00",
+      "variantes": [
+        {
+          "nombre": "Pequeño",
+          "precio": "25.00"
+        },
+        {
+          "nombre": "Grande",
+          "precio": "40.00"
+        }
+      ],
+      "fuente": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos"
+    },
+    {
+      "categoria": "SHUKOS",
+      "seccion": "Shukos - Especialidades",
+      "nombre": "Sándwich Italiano",
+      "precio": "25.00",
+      "variantes": [
+        {
+          "nombre": "Pequeño",
+          "precio": "25.00"
+        },
+        {
+          "nombre": "Grande",
+          "precio": "40.00"
+        }
+      ],
+      "fuente": "https://shukoslaiguana.com/menu/Shukos%20-%20Especialidades?parent=shukos"
+    }
+  ]
+}

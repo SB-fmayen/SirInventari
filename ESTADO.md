@@ -4,7 +4,15 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-01 00:38 (hora de Guatemala) · Codex
+2026-11-01 00:49 (hora de Guatemala) · Codex
+
+## Productos del menú La Iguana cargados
+
+- Corregido el alcance de la carga anterior: faltaban los productos. Se recorrieron 29 páginas públicas, incluidas las subcategorías, y se obtuvieron 143 productos del menú. Los 9 shukos tienen dos tamaños con precios propios: se guardan como 18 opciones; total importado: 152 productos vendibles en las 12 categorías.
+- Cantidades por categoría: Lasaña 3, Entradas 5, Hamburguesas 9, Pizzas personales 19, Pizzas grandes 26, Don Calzone 20, Enrrollados 20, Cono pizza 20, Tortillas de harina 5, Shukos 18, Extras 3 y Bebidas 4. Se conservaron los dos productos de ejemplo; total local 154.
+- Se identifican los productos con nombres como «Pizza personal - Pepperoni» y «Shuko - Americano - Grande», para distinguirlos al tomar pedidos. Se conservaron los precios publicados, incluidos los tamaños. No se modificaron tablas, triggers ni funciones.
+- Fuente y captura con precios y enlaces por producto: `docs/datos/menu-iguana.json`. Extracción pública sin ejecutar scripts del sitio: `apps/web/scripts/extraer-menu-iguana.mjs`. Carga local transaccional con SKU estable: `apps/api/scripts/cargar-menu-iguana.mjs`. Instrucciones en `docs/datos/README.md`.
+- Verificación: simulación con ROLLBACK, carga real y nueva carga con 0 productos nuevos; comprobados los 152 nombres, precios y categorías contra la captura. El servicio real de Catálogo devuelve los 152 disponibles en el centro 1 y las 12 categorías; comprobados además precios de pizza personal/grande y shukos grande Americano Q40 y Al Pastor Q65. Pasan 14 pruebas unitarias de API y 5 de integración de catálogo. No se afirma una inspección visual del navegador del usuario; debe recargar Catálogo o Pedidos.
 
 ## Categorías del menú La Iguana cargadas
 
@@ -12,7 +20,7 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 - La base local tenía Platos y Bebidas. Se crearon 11 categorías; Bebidas se reutilizó sin cambiar su ID/nombre y se ordenó en el lugar 12. Se conserva Platos y todos los productos existentes. Total actual: 13 categorías, todas activas. Las categorías son globales según el esquema actual.
 - Script de datos repetible `db/04_categorias_iguana.sql`: transacción y comparación de nombres sin distinguir mayúsculas ni espacios laterales, para no duplicar Bebidas/BEBIDAS. No modifica tablas, triggers ni funciones.
 - Verificado primero con ROLLBACK, luego carga real y segunda ejecución sin duplicados. Se comprobó que existe exactamente una fila por cada categoría del menú. Pasan 14 pruebas unitarias de API y 4 de integración de Catálogo.
-- Esta solicitud carga categorías, no productos/precios. Se ven al recargar Catálogo; en Pedidos solo aparecen categorías con productos disponibles. La URL ya sirve como fuente para una posterior carga de productos/precios, sin volver a pedir al usuario una lista que ya proporcionó mediante el sitio.
+- La carga inicial solo incluyó categorías. La carga de productos y precios ya se completó; ver la sección anterior. Se ven al recargar Catálogo o Pedidos.
 - Archivos: `db/04_categorias_iguana.sql` y `ESTADO.md`.
 
 ## Ajuste solicitado: cantidades y catálogo real
