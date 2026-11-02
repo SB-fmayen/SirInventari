@@ -6,6 +6,13 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-01 01:07 (hora de Guatemala) · Codex
 
+## Avance R2 · Dependencias antes de publicación (2026-11-02)
+
+- Retirada herramienta sin uso `@nestjs/mau` de API y fijado gRPC 1.13.6 dentro de Firestore en app. Auditorías sin avisos altos/críticos; quedan 7 moderados en API y 14 moderados/bajos en app. Detalles y límites en `docs/dependencias-seguridad.md`.
+- Pasan 14 pruebas unitarias API y 53 web; build/lint correctos con avisos web previos. Integración pendiente: no hay PostgreSQL en 5432; el servicio encontrado en 5433 rechaza las credenciales locales. No se cambiaron `.env`, contraseñas ni esquema.
+- Necesito del usuario: restablecer la base prevista por `DATABASE_URL` para repetir las 72 pruebas de integración. Publicación y archivo POS siguen pendientes de los puntos indicados abajo. Seguridad R2 todavía no se declara cerrada.
+- Archivos: `apps/api/package.json`, `apps/api/package-lock.json`, `apps/web/package.json`, `apps/web/package-lock.json`, `docs/dependencias-seguridad.md` y esta libreta.
+
 ## Tarea 9 · Cocina terminada
 
 - Pantalla real en `/cocina`: columnas Pendientes, En preparación y Listos; entregados del día opcionales; tarjetas con folio, tipo, mesa/cliente, fecha/hora de Guatemala, cantidades, notas y minutos de espera. Los agregados posteriores llevan NUEVO con su hora. Actualización automática y aviso/reconexión mediante el hook Socket.IO existente; botón de consulta manual.
