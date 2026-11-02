@@ -37,6 +37,7 @@ export function Pedidos() {
   const [agregando, setAgregando] = useState(false)
   const [buscar, setBuscar] = useState('')
   const [filtro, setFiltro] = useState('')
+  const [buscarProducto, setBuscarProducto] = useState('')
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
@@ -65,6 +66,7 @@ export function Pedidos() {
   const conectado = useTiempoReal(actualizar)
   function comenzar(agregar: boolean) {
     setAgregando(agregar); setError(''); setAviso(''); setAnulando(null)
+    setBuscarProducto(''); setFiltro('')
     if (!agregar) setSeleccionado(null)
     setBorrador({ id: agregar ? seleccionado!.id : crypto.randomUUID(), tipo_venta_id: String(tipos[0]?.id ?? ''), mesa_referencia: '', cliente_nombre: '', lineas: [] })
   }
@@ -114,12 +116,18 @@ export function Pedidos() {
       {!agregando && <div className="grid gap-3 sm:grid-cols-2"><label>Tipo de venta<select required disabled={guardando} className={campo} value={borrador.tipo_venta_id} onChange={(e) => setBorrador({ ...borrador, tipo_venta_id: e.target.value })}>{tipos.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}</select></label>
         {tipo?.codigo === 'MESA' ? <label>Mesa<input required maxLength={30} disabled={guardando} className={campo} value={borrador.mesa_referencia} onChange={(e) => setBorrador({ ...borrador, mesa_referencia: e.target.value })} /></label> : <label>Nombre del cliente<input required maxLength={100} disabled={guardando} className={campo} value={borrador.cliente_nombre} onChange={(e) => setBorrador({ ...borrador, cliente_nombre: e.target.value })} /></label>}
       </div>}
-      <label className="block">Categoría<select className={campo} value={filtro} onChange={(e) => setFiltro(e.target.value)}><option value="">Todas</option>{categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></label>
-      <div className="grid gap-2 sm:grid-cols-3">{productos.filter((p) => !filtro || p.categoria.id === Number(filtro)).map((p) => <button type="button" className={`${secundario} py-3 text-left`} disabled={guardando} key={p.id} aria-label={`Agregar ${p.nombre} por ${dinero(p.precio)}`} onClick={() => setBorrador({ ...borrador, lineas: [...borrador.lineas, { id: crypto.randomUUID(), producto_id: p.id, cantidad: '1', notas: '' }] })}>{p.nombre}<span className="block text-sm">{dinero(p.precio)}</span></button>)}</div>
+      <div className="toma-pedido"><div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2"><label className="block">Categoría<select className={campo} value={filtro} onChange={(e) => setFiltro(e.target.value)}><option value="">Todas</option>{categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></label>
+      <label className="block">Buscar producto<input type="search" className={campo} value={buscarProducto} onChange={(e) => setBuscarProducto(e.target.value)} placeholder="Nombre o SKU" /></label></div>
+      <div className="productos-menu grid gap-3 sm:grid-cols-2">{productos.filter((p) => (!filtro || p.categoria.id === Number(filtro)) && `${p.nombre} ${p.sku}`.toLocaleLowerCase('es').includes(buscarProducto.toLocaleLowerCase('es').trim())).map((p) => <button type="button" className={`${secundario} producto-menu py-3 text-left`} disabled={guardando} key={p.id} aria-label={`Agregar ${p.nombre} por ${dinero(p.precio)}`} onClick={() => setBorrador({ ...borrador, lineas: [...borrador.lineas, { id: crypto.randomUUID(), producto_id: p.id, cantidad: '1', notas: '' }] })}><span>{p.nombre}</span><span className="block text-base font-bold text-teal-800">{dinero(p.precio)} <span aria-hidden className="float-right">+</span></span></button>)}</div>
+      {!!productos.length && !productos.some((p) => (!filtro || p.categoria.id === Number(filtro)) && `${p.nombre} ${p.sku}`.toLocaleLowerCase('es').includes(buscarProducto.toLocaleLowerCase('es').trim())) && <p>No hay productos con esos filtros.</p>}
       {!productos.length && <p>No hay productos disponibles en este centro.</p>}
+      </div><div className="resumen-pedido space-y-4"><h3 className="text-lg font-bold">Tu pedido <span className="text-sm font-normal text-slate-500">· {borrador.lineas.length} líneas</span></h3>
+      {!borrador.lineas.length && <p className="rounded-xl border border-dashed border-slate-300 p-5 text-slate-600">Toca un producto del menú para agregarlo. Aquí puedes ajustar cantidades y notas.</p>}
       <ul className="space-y-3">{borrador.lineas.map((l, indice) => <li className="grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-4" key={l.id}><strong>{productos.find((p) => p.id === l.producto_id)?.nombre}</strong><label>Cantidad {indice + 1}<input className={campo} required type="number" min="1" max="999999" step="1" value={l.cantidad} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { cantidad: e.target.value })} /></label><label>Notas {indice + 1}<input className={campo} maxLength={200} value={l.notas} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { notas: e.target.value })} /></label><button type="button" className={secundario} disabled={guardando} aria-label={`Quitar línea ${indice + 1}`} onClick={() => setBorrador({ ...borrador, lineas: borrador.lineas.filter((actual) => actual.id !== l.id) })}>Quitar</button></li>)}</ul>
       <p className="font-semibold">Total de los productos nuevos: Q {totalLineas(borrador.lineas.map((l) => ({ cantidad: l.cantidad, precio: productos.find((p) => p.id === l.producto_id)?.precio ?? '0' })))}</p>
       <div className="flex gap-2"><button className={boton} disabled={guardando}>Guardar pedido</button><button type="button" className={secundario} disabled={guardando} onClick={() => setBorrador(null)}>Cancelar</button></div>
+      </div></div>
     </form>}
     {seleccionado && !borrador && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-2xl font-bold">Pedido {seleccionado.folio}</h2><p>{seleccionado.tipo_venta.nombre} · {seleccionado.mesa_referencia || seleccionado.cliente_nombre} · {estados[seleccionado.estado]}</p><p>Tomado por {seleccionado.usuario.nombre} a las {hora(seleccionado.creado_en)}</p></div>{editable && <button className={boton} disabled={guardando} onClick={() => comenzar(true)}>Agregar productos</button>}</div>

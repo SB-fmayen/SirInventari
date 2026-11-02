@@ -128,3 +128,51 @@
     @apply font-sans;
     }
 }
+
+/* Superficies compartidas de los módulos; los formularios conservan sus acciones. */
+.aplicacion { background: #f3f5f7; color: #172b35; }
+.barra-aplicacion { box-shadow: 0 1px 8px #17323b08; }
+.contenido-aplicacion { min-width: 0; }
+.contenido-aplicacion > div > :first-child:has(h1) { margin-bottom: 1.5rem; }
+.contenido-aplicacion h1 { letter-spacing: -.035em; }
+.contenido-aplicacion h2 { letter-spacing: -.02em; }
+.contenido-aplicacion :is(section, form).bg-white {
+  box-shadow: 0 3px 18px #17323b06;
+}
+.contenido-aplicacion :is(input:not([type=checkbox]):not([type=radio]), select) {
+  transition: border-color .15s, box-shadow .15s;
+}
+.contenido-aplicacion :is(input, select, button, summary):focus-visible {
+  outline: 3px solid #0f766e;
+  outline-offset: 3px;
+}
+.contenido-aplicacion table thead { background: #eef3f4; color: #52646b; }
+.contenido-aplicacion table tbody tr:hover { background: #f7faf9; }
+.contenido-aplicacion table th { white-space: nowrap; }
+.tarjeta-modulo > span:first-child { width: 3.25rem; height: 3.25rem; border-radius: 1rem; }
+.saltar-contenido { position: fixed; top: -8rem; left: 1rem; z-index: 50; padding: 1rem; border-radius: .75rem; background: white; color: #115e59; }
+.saltar-contenido:focus { top: 1rem; }
+.productos-menu { max-height: 30rem; overflow-y: auto; padding: .25rem; }
+.producto-menu { display: flex; min-height: 6rem; flex-direction: column; justify-content: space-between; gap: .5rem; border: 1px solid #e2e8e8; background: white; }
+.producto-menu:hover:not(:disabled) { border-color: #0f766e; background: #f0fdfa; }
+.resumen-pedido { border: 1px solid #e2e8e8; border-radius: 1rem; padding: 1rem; background: #f8fafb; }
+@media (min-width: 1280px) {
+  .barra-aplicacion { min-height: 6rem; padding-left: 16rem; }
+  .barra-aplicacion > div { min-height: 6rem; justify-content: flex-end; padding-inline: 2rem; }
+  .barra-aplicacion > div > a { position: fixed; left: 0; top: 0; width: 16rem; height: 6rem; padding: 1.25rem; background: #123139; }
+  .barra-aplicacion > div > a span span:first-child { color: #f0fdfa; }
+  .barra-aplicacion > div > a span span:last-child { color: #b7ccce; font-size: .7rem; }
+  .menu-aplicacion { position: fixed; inset: 6rem auto 0 0; width: 16rem; flex-direction: column; gap: .5rem; overflow-y: auto; background: #123139; padding: 1rem; }
+  .menu-aplicacion a { min-height: 3.5rem; border-radius: .75rem; padding: .75rem 1rem; background: transparent; color: #c3d5d6; font-size: 1rem; }
+  .menu-aplicacion a:hover { background: #20464d; color: white; }
+  .menu-aplicacion a[aria-current=page] { background: #d7f4e9; color: #134b43; }
+  .menu-aplicacion a svg { width: 1.25rem; height: 1.25rem; }
+  .contenido-aplicacion { margin-left: 16rem; padding: 2rem; }
+  .toma-pedido { display: grid; grid-template-columns: minmax(0, 1fr) minmax(19rem, .85fr); align-items: start; gap: 1.5rem; }
+  .resumen-pedido { position: sticky; top: 7rem; }
+  .resumen-pedido li { grid-template-columns: 1fr 1fr; }
+  .resumen-pedido li > strong { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aplicacion *, .aplicacion *::before, .aplicacion *::after { transition-duration: 0s !important; }
+}

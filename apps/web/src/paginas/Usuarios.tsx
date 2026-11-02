@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { LoaderCircle, Pencil, UserPlus } from 'lucide-react'
 import { ErrorApi } from '@/lib/api'
+import { PermisosRoles } from '@/componentes/PermisosRoles'
 import { cn } from '@/lib/utils'
 import { useSesion } from '@/sesion/SesionProvider'
 import { NOMBRE_ROL, type CentroVenta, type Rol, type UsuarioSistema } from '@/sesion/tipos'
@@ -75,6 +76,7 @@ export function Usuarios({ usuario: yo }: { usuario: UsuarioSistema }) {
         </button>
       </div>
 
+      <PermisosRoles />
       {error && (
         <p role="alert" className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-base font-medium text-red-800">
           {error}

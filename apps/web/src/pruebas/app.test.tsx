@@ -341,6 +341,27 @@ describe('Pedidos (Tarea 8)', () => {
   const tipos = [{ id: 1, codigo: 'MESA', nombre: 'Consumo en mesa' }]
   const otras = (pedidos: object[]) => ({ '/pedidos': { status: 200, cuerpo: pedidos }, '/pedidos/catalogo': { status: 200, cuerpo: menu }, '/pedidos/tipos': { status: 200, cuerpo: tipos } })
 
+  it('busca productos por nombre o SKU sin perder las cantidades y notas del pedido', async () => {
+    simularApi({ salud: 'sin-red', sesion: conRol('MESERO'), otras: otras([]) })
+    abrir('/pedidos')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo pedido' })).toBeEnabled())
+    await userEvent.click(screen.getByRole('button', { name: 'Nuevo pedido' }))
+    await userEvent.type(screen.getByLabelText('Buscar producto'), 'beb-1')
+    await userEvent.click(screen.getByRole('button', { name: /Agregar Limonada/ }))
+    fireEvent.change(screen.getByLabelText('Cantidad 1'), { target: { value: '2' } })
+    await userEvent.type(screen.getByLabelText('Notas 1'), 'Sin hielo')
+    await userEvent.clear(screen.getByLabelText('Buscar producto'))
+    await userEvent.type(screen.getByLabelText('Buscar producto'), 'pizza')
+    expect(screen.getByText('No hay productos con esos filtros.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Agregar Limonada/ })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Cantidad 1')).toHaveValue(2)
+    expect(screen.getByLabelText('Notas 1')).toHaveValue('Sin hielo')
+    expect(screen.getByText('Total de los productos nuevos: Q 37.50')).toBeInTheDocument()
+    await userEvent.clear(screen.getByLabelText('Buscar producto'))
+    await userEvent.type(screen.getByLabelText('Buscar producto'), 'LIMONADA')
+    expect(screen.getByRole('button', { name: /Agregar Limonada/ })).toBeInTheDocument()
+  })
+
   it('las flechas suman unidades completas y el total conserva los precios en centavos', async () => {
     simularApi({ salud: 'sin-red', sesion: conRol('MESERO'), otras: {
       ...otras([]), '/pedidos/catalogo': { status: 200, cuerpo: [{ ...menu[0], nombre: 'Plato del día', precio: '45.00' }] },

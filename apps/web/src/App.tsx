@@ -50,8 +50,9 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
   const misSecciones = seccionesDe(usuario.rol)
 
   return (
-    <div className="flex min-h-svh flex-col bg-slate-50">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white">
+    <div className="aplicacion flex min-h-svh flex-col bg-slate-50">
+      <a href="#contenido" className="saltar-contenido">Ir al contenido</a>
+      <header className="barra-aplicacion sticky top-0 z-10 border-b border-slate-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link to="/" className="flex items-center gap-3">
             <img src="/logo.svg" alt="" className="size-11" />
@@ -89,7 +90,7 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
             </button>
           </div>
         </div>
-        <nav aria-label="Menú principal" className="flex gap-2 overflow-x-auto px-4 pb-3">
+        <nav aria-label="Menú principal" className="menu-aplicacion flex gap-2 overflow-x-auto px-4 pb-3">
           <EnlaceMenu ruta="/" nombre="Inicio" icono={House} fin />
           {misSecciones.map((s) => (
             <EnlaceMenu key={s.ruta} ruta={s.ruta} nombre={s.nombre} icono={s.icono} />
@@ -97,7 +98,7 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
         </nav>
       </header>
 
-      <main className="flex-1 p-4 sm:p-6">
+      <main id="contenido" tabIndex={-1} className="contenido-aplicacion flex-1 p-4 sm:p-6">
         <Routes>
           <Route path="/" element={<Inicio secciones={misSecciones} />} />
           {SECCIONES.map((s) => (

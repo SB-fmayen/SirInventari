@@ -4,7 +4,16 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-01 01:07 (hora de Guatemala) · Codex
+2026-11-02 (hora de Guatemala) · Codex
+
+## Solicitud del usuario · PostgreSQL, eliminación, roles y diseño
+
+- Diagnóstico: `.env` apunta a localhost:5432, sin servidor escuchando. El servicio PostgreSQL 16 instalado está en 5433 y rechaza tanto las credenciales de `DATABASE_URL` como las variables `POSTGRES_*` (coinciden entre sí). Se pidió al usuario confirmar instalación/cambio de contraseña y actualizar la conexión directamente en `.env`, sin enviar secretos al chat. No se restablecieron contraseñas ni se reemplazaron datos.
+- Solicitud de eliminación para ADMIN pendiente de precisar qué registros. Se consultó al usuario; no se implementó borrado permanente ni se cambió la base sin esa definición.
+- Renovación implementada: menú lateral en escritorio y horizontal en tablet/móvil, tarjetas de Inicio, estilos comunes de módulos y toma de pedidos con menú/buscador por nombre o SKU y resumen en dos columnas en escritorio. Se conservan las funciones existentes. Tabla de accesos por rol desplegable en Usuarios; detalle en `docs/roles-y-accesos.md`.
+- Referencia y revisión visual pendiente en `docs/diseno-modulos.md`: el servicio de acceso al navegador está indisponible. Falta inspección visual con sesión real; no se afirma haberla hecho.
+- Verificación de este avance: 54 pruebas web correctas, build y lint correctos (5 avisos de lint y aviso de tamaño previos). Prueba nueva cubre búsqueda por nombre/SKU sin perder cantidades, notas ni total. Integración sigue bloqueada por la conexión de PostgreSQL.
+- Archivos: `apps/web/src/App.tsx`, `src/index.css`, `src/paginas/Inicio.tsx`, `Pedidos.tsx`, `Usuarios.tsx`, `src/componentes/PermisosRoles.tsx`, `src/pruebas/app.test.tsx`, las dos guías anteriores y esta libreta.
 
 ## Avance R2 · Dependencias antes de publicación (2026-11-02)
 
