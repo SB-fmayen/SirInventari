@@ -4,7 +4,14 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-02 (hora de Guatemala) · Codex
+2026-11-03 (hora de Guatemala) · Codex
+
+## Cierre solicitado por el usuario · Retomar mañana
+
+- Todas las mejoras guardadas en `7aecdc3` y `c930f19`; 156 pruebas automáticas correctas en la última verificación. Guía completa en `docs/mejoras-aprobadas.md`.
+- Apagados API (29716), Vite (16448), Prisma Studio (16380), contenedor `sirinventari-db` y Docker Desktop. Comprobado que no hay escucha en 3000, 5173, 5555 ni 5432. No se eliminaron contenedores, volúmenes, datos, borradores locales ni respaldos. La instalación nativa ajena al proyecto en 5433 no se modificó.
+- Siguiente: iniciar la base con `scripts/iniciar-base-local.ps1`, levantar API/app y abrir Prisma Studio si el usuario lo necesita; después validar con el usuario cada módulo siguiendo la guía. Falta la revisión visual/manual; no publicar ni dar R2 por cerrada todavía.
+- Los archivos locales sin seguimiento `REVISION.md` y `Modo relevo Claude Code y Codex.pdf` se conservaron y no se incluyeron en Git. No había cambios de código sin guardar al cerrar; este cierre solo actualiza `ESTADO.md`.
 
 ## Mejoras aprobadas · Implementadas, pendientes de validación con el usuario
 
