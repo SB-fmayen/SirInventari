@@ -87,14 +87,16 @@ export class PedidosService {
   }
 
   async pendientes(centroId: number) {
-    const filas = await this.prisma.pedido.findMany({ where: { centro_venta_id: centroId, estado: { notIn: ['PAGADO', 'ANULADO'] }, total: { gt: 0 } }, include: incluir, orderBy: [{ creado_en: 'asc' }, { folio: 'asc' }] });
-    return filas.map((p) => this.respuesta(p)).filter((p) => Number(p.saldo) > 0);
+    const filas = await this.prisma.pedido.findMany({ where: { centro_venta_id: centroId, estado: { notIn: ['PAGADO', 'ANULADO'] } }, include: incluir, orderBy: [{ creado_en: 'asc' }, { folio: 'asc' }] });
+    return filas.map((p) => this.respuesta(p)).filter((p) => Number(p.saldo) >= 0);
   }
 
-  async listar(centroId: number, buscar: string) {
+  async listar(centroId: number, buscar: string, anteriores = false, fecha?: string) {
+    if (fecha && (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !Number.isFinite(new Date(`${fecha}T00:00:00Z`).getTime()) || new Date(`${fecha}T00:00:00Z`).toISOString().slice(0,10) !== fecha)) throw new BadRequestException('La fecha no es válida.');
     const [dia] = await this.prisma.$queryRaw<{ fecha: Date }[]>`SELECT ventas.fecha_guatemala() AS fecha`;
     const filas = await this.prisma.pedido.findMany({
-      where: { centro_venta_id: centroId, fecha_operacion: dia.fecha,
+      where: { centro_venta_id: centroId,
+        AND: [anteriores ? { OR: [{fecha_operacion:dia.fecha},{estado:{notIn:['PAGADO','ANULADO']}}] } : {fecha_operacion:fecha ? new Date(`${fecha}T00:00:00Z`) : dia.fecha}],
         ...(buscar ? { OR: [
           { mesa_referencia: { contains: buscar, mode: 'insensitive' as const } },
           { cliente_nombre: { contains: buscar, mode: 'insensitive' as const } },

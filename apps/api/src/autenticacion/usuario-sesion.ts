@@ -19,6 +19,7 @@ export interface UsuarioSesion {
   rol: Rol;
   /** Centros donde puede trabajar. El ADMIN puede en todos los centros activos. */
   centros: CentroSesion[];
+  permisos?: { modulo: string; accion: string; permitido: boolean }[];
 }
 
 export type RequestConUsuario = Request & { usuario?: UsuarioSesion; centroId?: number };

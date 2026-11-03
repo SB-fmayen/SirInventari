@@ -59,6 +59,11 @@ export class AutenticacionGuard implements CanActivate {
     if (roles && !roles.includes(usuario.rol)) {
       throw new ForbiddenException('No tienes permiso para hacer esto.');
     }
+    if (usuario.rol !== 'ADMIN') {
+      const modulo = req.path.split('/')[1];
+      const accion = req.method === 'GET' ? 'ver' : req.method === 'DELETE' || req.path.endsWith('/anulacion') ? 'anular' : req.method === 'PATCH' || /\/(estado|cierre)$/.test(req.path) ? 'editar' : 'crear';
+      if (usuario.permisos?.some(p => p.modulo === modulo && (p.accion === 'ver' || p.accion === accion) && !p.permitido)) throw new ForbiddenException('Tu administrador restringió esta acción para tu usuario.');
+    }
 
     // Centro de venta elegido en la app: debe ser uno de los centros del usuario
     const encabezado = req.headers['x-centro-id'];
@@ -89,6 +94,7 @@ export class AutenticacionGuard implements CanActivate {
             .filter((c) => c.activo)
             .sort((a, b) => a.id - b.id);
 
+    const permisos = await this.prisma.permiso_usuario.findMany({ where: { usuario_id: usuario.id }, select: { modulo: true, accion: true, permitido: true } });
     return {
       id: usuario.id,
       firebaseUid: usuario.firebase_uid,
@@ -96,6 +102,7 @@ export class AutenticacionGuard implements CanActivate {
       email: usuario.email,
       rol: usuario.rol as Rol,
       centros: centros.map((c) => ({ id: c.id, codigo: c.codigo, nombre: c.nombre })),
+      ...(permisos.length ? { permisos } : {}),
     };
   }
 }

@@ -47,7 +47,7 @@ export default function App() {
 function Principal({ usuario }: { usuario: UsuarioSistema }) {
   const { salir, centro, cambiarCentro } = useSesion()
   const { estado, fechaOperacion, revisarAhora } = useSaludApi()
-  const misSecciones = seccionesDe(usuario.rol)
+  const misSecciones = seccionesDe(usuario.rol).filter(s => !usuario.permisos?.some(p => p.modulo === s.ruta.slice(1) && p.accion === 'ver' && !p.permitido))
 
   return (
     <div className="aplicacion flex min-h-svh flex-col bg-slate-50">
@@ -105,7 +105,7 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
             <Route
               key={s.ruta}
               path={s.ruta}
-              element={!puedeEntrar(usuario.rol, s) ? <SinPermiso /> : s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : s.ruta === '/pedidos' ? <Pedidos /> : s.ruta === '/caja' ? <Caja /> : s.ruta === '/reportes' ? <Reportes /> : s.ruta === '/cocina' ? <Cocina key={centro?.id} /> : <EnConstruccion seccion={s} />}
+              element={!puedeEntrar(usuario.rol, s) || !misSecciones.includes(s) ? <SinPermiso /> : <div key={`${centro?.id}-${s.ruta}`}>{s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : s.ruta === '/pedidos' ? <Pedidos /> : s.ruta === '/caja' ? <Caja /> : s.ruta === '/reportes' ? <Reportes /> : s.ruta === '/cocina' ? <Cocina /> : <EnConstruccion seccion={s} />}</div>}
             />
           ))}
           <Route path="*" element={<NoEncontrada />} />

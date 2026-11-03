@@ -46,7 +46,8 @@ describe('Turnos de caja (e2e)', () => {
   });
 
   it('cierra una vez, calcula la diferencia y conserva historial al abrir otro', async () => {
-    const res = await http().post(`/turnos/${turnoId}/cierre`).set(headers()).send({ efectivo_contado: '99.10' }).expect(201);
+    await http().post(`/turnos/${turnoId}/cierre`).set(headers()).send({ efectivo_contado: '99.10' }).expect(400);
+    const res = await http().post(`/turnos/${turnoId}/cierre`).set(headers()).send({ efectivo_contado: '99.10', motivo_diferencia: 'Faltante contado en prueba' }).expect(201);
     expect(res.body).toMatchObject({ estado: 'CERRADO', efectivo_esperado: '100.10', diferencia: '-1.00', nombre_cierre: 'Cajera prueba' });
     await http().post(`/turnos/${turnoId}/cierre`).set(headers()).send({ efectivo_contado: 0 }).expect(409);
     await http().post('/turnos').set(headers()).send({ fondo_inicial: 0 }).expect(201);
@@ -66,7 +67,7 @@ describe('Turnos de caja (e2e)', () => {
       await tx.pago.create({ data: { id: randomUUID(), pedido_id: pedido.id, metodo_pago_id: 2, turno_id: t.id, monto: '24.80', registrado_por: usuarioId, terminal_pos: 'PRUEBA', referencia_pos: randomUUID() } });
       // El servicio usa la transacción real de la prueba para que todos los datos se deshagan.
       const servicio = new TurnosService({ $transaction: (operacion: (conexion: Prisma.TransactionClient) => Promise<unknown>) => operacion(tx) } as unknown as PrismaService);
-      const cierre = await servicio.cerrar(centroId, usuarioId, t.id, '120.20');
+      const cierre = await servicio.cerrar(centroId, usuarioId, t.id, '120.20', 'Diferencia de conteo', true);
       expect(cierre).toMatchObject({ efectivo_ventas: '20.20', efectivo_esperado: '120.30', diferencia: '-0.10' });
       throw deshacer;
     })).rejects.toBe(deshacer);

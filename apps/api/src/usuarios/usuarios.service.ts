@@ -139,6 +139,12 @@ export class UsuariosService {
     if (cambios.centros) await this.revisarCentros(cambios.centros);
 
     const usuario = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(784210)::text`;
+      const vigente = await tx.usuario.findUniqueOrThrow({ where: { id } });
+      if (vigente.activo && vigente.rol === 'ADMIN' && cambios.rol && cambios.rol !== 'ADMIN' &&
+          await tx.usuario.count({ where: { activo: true, rol: 'ADMIN' } }) <= 1) {
+        throw new ConflictException('Debe quedar al menos un administrador activo. Crea o activa otro antes de cambiar este rol.');
+      }
       await tx.usuario.update({
         where: { id },
         data: {
@@ -160,18 +166,21 @@ export class UsuariosService {
   }
 
   /** Activa o desactiva. Un usuario desactivado pierde el acceso de inmediato (la API revisa la base). */
-  async cambiarActivo(id: number, activo: boolean, quienPide: number): Promise<UsuarioListado> {
+  async cambiarActivo(id: number, activo: boolean, quienPide: number) {
     if (id === quienPide && !activo) {
       throw new BadRequestException('No puedes desactivar tu propio usuario.');
     }
     const existente = await this.prisma.usuario.findUnique({ where: { id } });
     if (!existente) throw new NotFoundException('No se encontró el usuario.');
-    const usuario = await this.prisma.usuario.update({
-      where: { id },
-      data: { activo },
-      include: INCLUIR_CENTROS,
+    const usuario = await this.prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(784210)::text`;
+      const vigente = await tx.usuario.findUniqueOrThrow({ where: { id } });
+      if (!activo && vigente.activo && vigente.rol === 'ADMIN' && await tx.usuario.count({ where: { activo: true, rol: 'ADMIN' } }) <= 1) {
+        throw new ConflictException('Debe quedar al menos un administrador activo.');
+      }
+      return tx.usuario.update({ where: { id }, data: { activo }, include: INCLUIR_CENTROS });
     });
-    await this.firebase.cambiarActivo(usuario.firebase_uid, activo);
-    return aListado(usuario);
+    const sincronizacion = await this.firebase.cambiarActivo(usuario.firebase_uid, activo);
+    return { ...aListado(usuario), sincronizacion };
   }
 }

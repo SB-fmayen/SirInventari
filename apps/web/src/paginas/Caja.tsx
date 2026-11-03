@@ -3,6 +3,8 @@ import { ErrorApi } from '@/lib/api'
 import { useSesion } from '@/sesion/SesionProvider'
 import { useTiempoReal } from '@/hooks/useTiempoReal'
 import { nombresCocina, type EstadoCocina } from '@/lib/cocina'
+import { AccionControl } from '@/componentes/AccionControl'
+import { useCambiosSinGuardar } from '@/hooks/useCambiosSinGuardar'
 
 interface Pedido {
   id: string; folio: number; fecha_operacion: string; estado: string; estado_cocina: EstadoCocina; total: string; pagado: string; saldo: string
@@ -39,6 +41,9 @@ export function Caja() {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [fechaHistorial, setFechaHistorial] = useState('')
+  const [historial, setHistorial] = useState<Pedido[] | null>(null)
+  useCambiosSinGuardar(intento !== null || !!terminal || !!voucher)
 
   const consultar = useCallback(async () => {
     const [ps, ms, ts] = await Promise.all([api<Pedido[]>('/caja/pendientes'), api<Metodo[]>('/caja/metodos'), api<{ estado: string }[]>('/turnos')])
@@ -101,6 +106,7 @@ export function Caja() {
     {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}
     {aviso && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-emerald-800">{aviso}{vuelto !== null && ` Vuelto: ${dinero(vuelto)}.`}</p>}
     {intento && !guardando && <p className="rounded-xl bg-amber-50 p-4 text-amber-900">No se confirmó el resultado del cobro. Reintenta el mismo pago para verificarlo sin duplicarlo. Conserva esta pantalla abierta.</p>}
+    <details className="rounded-xl border bg-white p-4"><summary className="min-h-10 cursor-pointer font-semibold">Consultar comprobantes anteriores</summary><form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={e=>{e.preventDefault();void api<Pedido[]>(`/caja/historial?fecha=${encodeURIComponent(fechaHistorial)}`).then(setHistorial).catch((e:unknown)=>setError(mensaje(e)))}}><label>Fecha del comprobante<input required className={campo} type="date" value={fechaHistorial} onChange={e=>setFechaHistorial(e.target.value)} /></label><button className={secundario} disabled={bloqueado}>Consultar comprobantes</button></form><ul className="mt-3">{historial?.filter(p=>`${p.folio} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es'))).map(p=><li key={p.id}><button className={`${secundario} my-1`} disabled={bloqueado} onClick={()=>void elegir(p)}>Comprobante {p.folio} · {p.fecha_operacion} · {p.estado} · {dinero(p.total)}</button></li>)}</ul>{historial?.length===0&&<p>No hay comprobantes en esa fecha.</p>}</details>
     {comprobante && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
       <h2 className="text-2xl font-bold">Pedido {comprobante.pedido.folio} · {comprobante.pedido.fecha_operacion.split('-').reverse().join('/')}</h2>
       <p>{comprobante.pedido.mesa_referencia || comprobante.pedido.cliente_nombre}</p>
@@ -108,14 +114,17 @@ export function Caja() {
       <ul>{comprobante.pedido.pedido_detalle.filter((l) => l.estado === 'ACTIVA').map((l) => <li className="flex justify-between gap-3 py-2" key={l.id}><span>{l.cantidad} × {l.producto.nombre}</span><span>{dinero(l.importe)}</span></li>)}</ul>
       <p className="text-xl font-bold">Total: {dinero(comprobante.pedido.total)} · Pagado: {dinero(comprobante.pedido.pagado)} · Saldo: {dinero(comprobante.pedido.saldo)}</p>
       {puedeCobrar && <form aria-label="Cobrar pedido" className="grid gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); void cobrar() }}>
+        <div className="rounded-xl bg-teal-50 p-4 text-teal-950 sm:col-span-2"><strong>Vas a cobrar el pedido {comprobante.pedido.folio} · {comprobante.pedido.mesa_referencia || comprobante.pedido.cliente_nombre}</strong><p>Total {dinero(comprobante.pedido.total)} · Pagado {dinero(comprobante.pedido.pagado)} · Saldo {dinero(comprobante.pedido.saldo)}</p></div>
         <label>Forma de pago<select required className={campo} disabled={bloqueado} value={metodoId} onChange={(e) => { setMetodoId(e.target.value); setTerminal(''); setVoucher('') }}>{metodos.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}</select></label>
         <label>Monto a cobrar<input className={campo} required type="number" min="0.01" max={comprobante.pedido.saldo} step="0.01" disabled={bloqueado} value={monto} onChange={(e) => setMonto(e.target.value)} /></label>
         {metodo?.codigo === 'EFECTIVO' && <><label>Efectivo recibido<input className={campo} required type="number" min={monto} max="9999999999.99" step="0.01" disabled={bloqueado} value={recibido} onChange={(e) => setRecibido(e.target.value)} /></label><p className="self-center">Vuelto previsto: {dinero(Math.max(0, Number(recibido) - Number(monto)))}</p></>}
+        {metodo?.codigo === 'EFECTIVO' && <div className="flex flex-wrap gap-2 sm:col-span-2"><button type="button" className={secundario} disabled={bloqueado} onClick={()=>setRecibido(monto)}>Importe exacto</button>{[20,50,100,200].map(n=><button type="button" className={secundario} disabled={bloqueado} key={n} onClick={()=>setRecibido(String(n))}>Recibí Q {n}</button>)}</div>}
         {metodo?.requiere_terminal && <label>Terminal del POS<input required className={campo} maxLength={30} disabled={bloqueado} value={terminal} onChange={(e) => setTerminal(e.target.value)} /></label>}
         {metodo?.requiere_referencia && <label>Número de autorización o referencia<input required className={campo} maxLength={40} disabled={bloqueado} value={voucher} onChange={(e) => setVoucher(e.target.value)} /></label>}
         <button className={boton} disabled={guardando || (!turnoAbierto && !intento) || !metodo}>{intento ? 'Reintentar el mismo pago' : 'Registrar pago'}</button>
       </form>}
-      <section aria-label="Comprobante" className="rounded-xl border border-slate-200 p-4"><h3 className="text-xl font-bold">Comprobante · Pedido {comprobante.pedido.folio}</h3><p>{comprobante.centro.nombre} · {comprobante.pedido.fecha_operacion.split('-').reverse().join('/')}</p><p>Total: {dinero(comprobante.pedido.total)}</p><ul>{comprobante.pagos.map((p) => <li className="py-2" key={p.id}>{p.metodo_pago.nombre}: {dinero(p.monto)}{p.estado === 'ANULADO' && ' (anulado)'}{p.referencia_pos && ` · Autorización ${p.referencia_pos}`}{p.terminal_pos && ` · Terminal ${p.terminal_pos}`}</li>)}</ul><p>Saldo: {dinero(comprobante.pedido.saldo)}</p></section>
+      {!['PAGADO','ANULADO'].includes(comprobante.pedido.estado) && <AccionControl tipo="CORTESIA" pedidoId={comprobante.pedido.id} etiqueta={Number(comprobante.pedido.total)===0?'Finalizar pedido gratuito':'Solicitar cortesía completa'} alGuardar={()=>elegir(comprobante.pedido)} />}
+      <section aria-label="Comprobante" className="rounded-xl border border-slate-200 p-4"><h3 className="text-xl font-bold">Comprobante · Pedido {comprobante.pedido.folio}</h3><p>{comprobante.centro.nombre} · {comprobante.pedido.fecha_operacion.split('-').reverse().join('/')}</p><p>Total: {dinero(comprobante.pedido.total)}</p><ul>{comprobante.pagos.map((p) => <li className="py-2" key={p.id}>{p.metodo_pago.nombre}: {dinero(p.monto)}{p.estado === 'ANULADO' && ' (anulado)'}{p.referencia_pos && ` · Autorización ${p.referencia_pos}`}{p.terminal_pos && ` · Terminal ${p.terminal_pos}`}{p.estado==='APLICADO'&&<AccionControl tipo="ANULAR_PAGO" pedidoId={comprobante.pedido.id} referencia={p.id} etiqueta={`Anular pago de ${dinero(p.monto)}`} alGuardar={()=>elegir(comprobante.pedido)} />}</li>)}</ul><p>Saldo: {dinero(comprobante.pedido.saldo)}</p></section>
     </section>}
     <label className="block">Buscar pendientes por folio, fecha, mesa o cliente<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
     {cargando ? <p>Cargando Caja…</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibles.map((p) => <button className="min-h-28 rounded-2xl border border-slate-200 bg-white p-4 text-left disabled:opacity-50" disabled={bloqueado} key={p.id} aria-label={`Cobrar pedido ${p.folio}`} onClick={() => void elegir(p)}><span className="block text-xl font-bold">Pedido {p.folio} · Saldo {dinero(p.saldo)}</span><span className="block">{p.fecha_operacion.split('-').reverse().join('/')} · {p.mesa_referencia || p.cliente_nombre}</span>{p.estado_cocina && <span className="mt-2 inline-block rounded-lg bg-teal-50 px-2 py-1 font-semibold text-teal-800">Cocina: {nombresCocina[p.estado_cocina]}</span>}</button>)}</div>}

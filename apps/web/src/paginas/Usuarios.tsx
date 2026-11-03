@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { LoaderCircle, Pencil, UserPlus } from 'lucide-react'
 import { ErrorApi } from '@/lib/api'
 import { PermisosRoles } from '@/componentes/PermisosRoles'
+import { useCambiosSinGuardar } from '@/hooks/useCambiosSinGuardar'
 import { cn } from '@/lib/utils'
 import { useSesion } from '@/sesion/SesionProvider'
 import { NOMBRE_ROL, type CentroVenta, type Rol, type UsuarioSistema } from '@/sesion/tipos'
@@ -32,6 +33,11 @@ export function Usuarios({ usuario: yo }: { usuario: UsuarioSistema }) {
   const [error, setError] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [editando, setEditando] = useState<UsuarioListado | 'nuevo' | null>(null)
+  const [buscar, setBuscar] = useState('')
+  const [filtroRol, setFiltroRol] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('')
+  const [filtroCentro, setFiltroCentro] = useState('')
+  const [pendienteFirebase, setPendienteFirebase] = useState<{ id: number; activo: boolean } | null>(null)
 
   const cargar = useCallback(async () => {
     try {
@@ -51,11 +57,12 @@ export function Usuarios({ usuario: yo }: { usuario: UsuarioSistema }) {
     void cargar()
   }, [cargar])
 
-  async function cambiarActivo(u: UsuarioListado) {
+  async function cambiarActivo(u: UsuarioListado, activo = !u.activo) {
     setAviso(null)
     try {
-      await api(`/usuarios/${u.id}/activo`, { method: 'PATCH', body: JSON.stringify({ activo: !u.activo }) })
-      setAviso(u.activo ? `${u.nombre} quedó desactivado.` : `${u.nombre} quedó activo.`)
+      const r = await api<{ sincronizacion?: { sincronizado: boolean; aviso?: string } }>(`/usuarios/${u.id}/activo`, { method: 'PATCH', body: JSON.stringify({ activo }) })
+      setAviso(r.sincronizacion?.aviso ?? (activo ? `${u.nombre} quedó activo.` : `${u.nombre} quedó desactivado.`))
+      setPendienteFirebase(r.sincronizacion?.sincronizado === false ? { id: u.id, activo } : null)
       await cargar()
     } catch (e) {
       setError(mensajeDe(e))
@@ -77,6 +84,13 @@ export function Usuarios({ usuario: yo }: { usuario: UsuarioSistema }) {
       </div>
 
       <PermisosRoles />
+      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <label>Buscar usuario<input className={claseCampo} value={buscar} onChange={e => setBuscar(e.target.value)} placeholder="Nombre o correo" /></label>
+        <label>Filtrar rol<select className={claseCampo} value={filtroRol} onChange={e => setFiltroRol(e.target.value)}><option value="">Todos</option>{ROLES.map(r => <option key={r} value={r}>{NOMBRE_ROL[r]}</option>)}</select></label>
+        <label>Filtrar estado<select className={claseCampo} value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}><option value="">Todos</option><option value="activo">Activos</option><option value="inactivo">Desactivados</option></select></label>
+        <label>Filtrar centro<select className={claseCampo} value={filtroCentro} onChange={e => setFiltroCentro(e.target.value)}><option value="">Todos</option>{centros.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></label>
+      </div>
+      {pendienteFirebase && <button className="mb-4 min-h-12 rounded-xl border px-4" onClick={() => { const u = usuarios?.find(u => u.id === pendienteFirebase.id); if (u) void cambiarActivo(u, pendienteFirebase.activo) }}>Reintentar sincronización con Firebase</button>}
       {error && (
         <p role="alert" className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-base font-medium text-red-800">
           {error}
@@ -121,7 +135,7 @@ export function Usuarios({ usuario: yo }: { usuario: UsuarioSistema }) {
               </tr>
             </thead>
             <tbody>
-              {usuarios.map((u) => (
+              {usuarios.filter(u => `${u.nombre} ${u.email}`.toLocaleLowerCase('es').includes(buscar.trim().toLocaleLowerCase('es')) && (!filtroRol || u.rol === filtroRol) && (!filtroEstado || u.activo === (filtroEstado === 'activo')) && (!filtroCentro || u.rol === 'ADMIN' || u.centros.some(c => c.id === Number(filtroCentro)))).map((u) => (
                 <tr key={u.id} className={cn('border-t border-slate-100', !u.activo && 'text-slate-400')}>
                   <td className="px-4 py-3">
                     <span className="block font-semibold">{u.nombre}</span>
@@ -199,6 +213,8 @@ function FormularioUsuario({
   const [firebaseUid, setFirebaseUid] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
+  const [modificado, setModificado] = useState(false)
+  useCambiosSinGuardar(modificado)
 
   function alternarCentro(id: number) {
     setElegidos((actual) => (actual.includes(id) ? actual.filter((c) => c !== id) : [...actual, id]))
@@ -241,6 +257,7 @@ function FormularioUsuario({
 
   return (
     <form
+      onChange={() => setModificado(true)}
       onSubmit={alEnviar}
       noValidate
       aria-label={esNuevo ? 'Nuevo usuario' : 'Editar usuario'}

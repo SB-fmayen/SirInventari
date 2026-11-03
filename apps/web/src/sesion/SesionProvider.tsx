@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ErrorApi, pedirApi } from '@/lib/api'
+import { confirmarSalida } from '@/hooks/useCambiosSinGuardar'
 import { cerrarSesion, escucharSesion, iniciarSesion, obtenerToken } from '@/lib/firebase'
 import type { CentroVenta, EstadoSesion, UsuarioSistema } from './tipos'
 
@@ -86,6 +87,7 @@ export function SesionProvider({ children }: { children: ReactNode }) {
   )
 
   const cambiarCentro = useCallback(() => {
+    if (!confirmarSalida()) return
     if (estado.tipo === 'activa') localStorage.removeItem(claveCentro(estado.usuario.id))
     setCentro(null)
   }, [estado])
@@ -104,7 +106,7 @@ export function SesionProvider({ children }: { children: ReactNode }) {
       estado,
       centro,
       entrar: iniciarSesion,
-      salir: cerrarSesion,
+      salir: async () => { if (confirmarSalida()) await cerrarSesion() },
       reintentar: () => setIntento((n) => n + 1),
       elegirCentro,
       cambiarCentro,

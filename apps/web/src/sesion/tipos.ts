@@ -13,6 +13,7 @@ export interface UsuarioSistema {
   email: string
   rol: Rol
   centros: CentroVenta[]
+  permisos?: { modulo: string; accion: string; permitido: boolean }[]
 }
 
 export type EstadoSesion =

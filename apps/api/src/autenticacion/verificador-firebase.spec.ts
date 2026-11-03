@@ -21,7 +21,7 @@ describe('GestorUsuariosFirebase sin cuenta de servicio', () => {
   });
 
   it('desactivar no falla: la base es la que quita el acceso', async () => {
-    await expect(new GestorUsuariosFirebase().cambiarActivo('uid', false)).resolves.toBeUndefined();
+    await expect(new GestorUsuariosFirebase().cambiarActivo('uid', false)).resolves.toMatchObject({ sincronizado: false, aviso: expect.stringContaining('cuenta de servicio') });
   });
 
   it('admite la identidad de Cloud Run sin guardar un archivo de clave privada', () => {

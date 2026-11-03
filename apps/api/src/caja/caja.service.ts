@@ -10,6 +10,7 @@ export class CajaService {
   constructor(private readonly prisma: PrismaService, private readonly pedidos: PedidosService, private readonly tiempoReal: TiempoRealGateway) {}
   metodos() { return this.prisma.metodo_pago.findMany({ orderBy: { id: 'asc' } }); }
   pendientes(centroId: number) { return this.pedidos.pendientes(centroId); }
+  historial(centro: number, fecha?: string, buscar?: string) { return this.pedidos.listar(centro, buscar?.slice(0,100) ?? '', false, fecha); }
 
   async comprobante(centroId: number, id: string) {
     const pedido = await this.pedidos.detalle(centroId, id);

@@ -12,6 +12,7 @@ import { TurnosModule } from './turnos/turnos.module.js';
 import { PedidosModule } from './pedidos/pedidos.module.js';
 import { CajaModule } from './caja/caja.module.js';
 import { ReportesModule } from './reportes/reportes.module.js';
+import { ControlModule } from './control/control.module.js';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ReportesModule } from './reportes/reportes.module.js';
     PedidosModule,
     CajaModule,
     ReportesModule,
+    ControlModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: FiltroErrores }],
 })

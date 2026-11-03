@@ -6,6 +6,14 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-02 (hora de Guatemala) · Codex
 
+## Mejoras aprobadas · En implementación
+
+- El usuario aprobó todas las propuestas por módulo y autorizó implementarlas. Alcance y decisiones en `docs/mejoras-aprobadas.md`.
+- Respaldo privado de la base en `logs/` antes de aplicar `db/06_mejoras_modulos.sql`. SQL fuente y Prisma actualizados: motivos de diferencia/cortesía, fotos y variantes de producto, movimientos de caja, solicitudes de autorización y permisos por usuario. Sin borrar ventas ni crear servicios de pago.
+- Primer bloque operativo: protección del último ADMIN con bloqueo ante cambios simultáneos; filtros de usuarios y reintento de Firebase; restricciones de acciones en API dentro del rol/centro; solicitudes y autorización de cortesías, anulación de pagos y correcciones de cocina; eliminación administrativa solo sin historial. Inicio incorpora resumen/solicitudes y accesos rápidos.
+- Pedidos incorpora filtros/contadores, mesas abiertas, borrador local recuperable, cantidades +/− y notas frecuentes. Turnos incorpora denominaciones, motivo de diferencia, confirmación de pendientes e ingresos/retiros con UUID y bloqueo. Cocina incorpora sonido opcional, demoras, pantalla completa/filtro y solicitud de corrección; Caja incorpora historial, atajos de efectivo y autorizaciones.
+- Verificación previa a los últimos ajustes de interfaz: API 72 integraciones anteriores + 4 nuevas de mejoras correctas, 14 unitarias; web 54 pruebas y build correctos. Las pruebas nuevas verifican ADMIN concurrentes, permisos en API, cortesía idempotente sin pago cero y eliminación protegida. Se continúa con Catálogo/Reportes, interfaz de permisos/eliminación y pruebas finales de todos los bloques.
+
 ## PostgreSQL recuperado · Listo para validación con el usuario
 
 - Resuelta la conexión: Docker Desktop estaba detenido e instalado por usuario fuera del PATH (`%LOCALAPPDATA%/Programs/DockerDesktop`). Se inició con su CLI y recuperó automáticamente el contenedor existente `sirinventari-db`, sano en 5432. La instalación nativa de 5433 es otra base: su registro confirma que allí no existe `ventas_app`; no se cambió su contraseña ni su configuración.

@@ -4,6 +4,8 @@ import { useSesion } from '@/sesion/SesionProvider'
 import { useTiempoReal } from '@/hooks/useTiempoReal'
 import { totalLineas } from '@/lib/importes'
 import { nombresCocina, type EstadoCocina } from '@/lib/cocina'
+import { useCambiosSinGuardar } from '@/hooks/useCambiosSinGuardar'
+import { leerBorrador } from '@/lib/borrador'
 
 interface Producto { id: number; nombre: string; sku: string; precio: string; categoria: { id: number; nombre: string } }
 interface TipoVenta { id: number; codigo: string; nombre: string }
@@ -28,7 +30,9 @@ const estados: Record<string, string> = { ABIERTO: 'Abierto', EN_PREPARACION: 'E
 const mensaje = (e: unknown) => e instanceof ErrorApi ? e.message : 'No se pudo consultar o guardar el pedido. Intenta de nuevo.'
 
 export function Pedidos() {
-  const { api, centro } = useSesion()
+  const { api, centro, estado: sesion } = useSesion()
+  const claveBorrador = `sirinventari.borrador.${sesion?.tipo === 'activa' ? sesion.usuario.id : ''}.${centro?.id}`
+  const [recuperable, setRecuperable] = useState(() => leerBorrador(claveBorrador))
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
   const [tipos, setTipos] = useState<TipoVenta[]>([])
@@ -36,6 +40,9 @@ export function Pedidos() {
   const [borrador, setBorrador] = useState<Borrador | null>(null)
   const [agregando, setAgregando] = useState(false)
   const [buscar, setBuscar] = useState('')
+  const [filtroPedido, setFiltroPedido] = useState('TODOS')
+  const [verAnteriores, setVerAnteriores] = useState(false)
+  const [vistaMesa, setVistaMesa] = useState(false)
   const [filtro, setFiltro] = useState('')
   const [buscarProducto, setBuscarProducto] = useState('')
   const [cargando, setCargando] = useState(true)
@@ -44,10 +51,16 @@ export function Pedidos() {
   const [aviso, setAviso] = useState('')
   const [anulando, setAnulando] = useState<string | null>(null)
   const [motivo, setMotivo] = useState('')
+  useCambiosSinGuardar(!!borrador)
+  useEffect(() => {
+    if (borrador && !agregando) {
+      try { localStorage.setItem(claveBorrador, JSON.stringify(borrador)) } catch { setAviso('No se pudo conservar el borrador en este dispositivo. No salgas antes de guardar.') }
+    }
+  }, [borrador, agregando, claveBorrador])
   const cargar = useCallback(async () => {
-    const [ps, menu, ts] = await Promise.all([api<Pedido[]>('/pedidos'), api<Producto[]>('/pedidos/catalogo'), api<TipoVenta[]>('/pedidos/tipos')])
+    const [ps, menu, ts] = await Promise.all([api<Pedido[]>(verAnteriores ? '/pedidos?anteriores=1' : '/pedidos'), api<Producto[]>('/pedidos/catalogo'), api<TipoVenta[]>('/pedidos/tipos')])
     return { ps, menu, ts }
-  }, [api])
+  }, [api, verAnteriores])
   useEffect(() => {
     let vigente = true
     cargar().then(({ ps, menu, ts }) => { if (vigente) { setPedidos(ps); setProductos(menu); setTipos(ts) } })
@@ -65,6 +78,7 @@ export function Pedidos() {
   }
   const conectado = useTiempoReal(actualizar)
   function comenzar(agregar: boolean) {
+    if (!agregar && recuperable && !window.confirm('Hay un borrador recuperable. ¿Quieres reemplazarlo por un pedido nuevo?')) return
     setAgregando(agregar); setError(''); setAviso(''); setAnulando(null)
     setBuscarProducto(''); setFiltro('')
     if (!agregar) setSeleccionado(null)
@@ -85,6 +99,7 @@ export function Pedidos() {
       const p = await api<Pedido>(agregando ? `/pedidos/${borrador.id}/lineas` : '/pedidos', {
         method: 'POST', body: JSON.stringify(agregando ? { lineas: borrador.lineas } : { ...borrador, tipo_venta_id: Number(borrador.tipo_venta_id) }),
       })
+      if (!agregando) { localStorage.removeItem(claveBorrador); setRecuperable(null) }
       setSeleccionado(p); setBorrador(null)
       setPedidos((lista) => [p, ...lista.filter((actual) => actual.id !== p.id)])
       setAviso(`Pedido ${p.folio} guardado.`)
@@ -102,7 +117,8 @@ export function Pedidos() {
     finally { setGuardando(false) }
   }
   const categorias = [...new Map(productos.map((p) => [p.categoria.id, p.categoria])).values()]
-  const visible = pedidos.filter((p) => `${p.folio} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')))
+  const corresponde = (p: Pedido, filtro: string) => filtro === 'TODOS' || filtro === 'PENDIENTES' && !['PAGADO','ANULADO'].includes(p.estado) || filtro === p.estado || filtro === p.estado_cocina
+  const visible = pedidos.filter((p) => corresponde(p, filtroPedido) && `${p.folio} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')))
   const editable = seleccionado && !['PAGADO', 'ANULADO'].includes(seleccionado.estado)
   const tipo = tipos.find((t) => t.id === Number(borrador?.tipo_venta_id))
 
@@ -111,6 +127,10 @@ export function Pedidos() {
     <p className={conectado ? 'text-teal-800' : 'text-amber-800'}>{conectado ? 'Cambios en tiempo real conectados.' : 'Sin conexión en tiempo real. Reconectando… Puedes tocar Actualizar.'}</p>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}
     {aviso && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-emerald-800">{aviso}</p>}
+    {!borrador && recuperable && <div className="rounded-xl border border-amber-300 bg-amber-50 p-4"><p>Hay un borrador local sin enviar a Cocina.</p><button className={secundario} onClick={() => { setBorrador(recuperable); setAgregando(false); setSeleccionado(null); setAviso('Borrador recuperado. Revisa disponibilidad y precios antes de guardar.') }}>Recuperar borrador</button></div>}
+    <div className="flex flex-wrap gap-2">{[['TODOS','Todos'],['PENDIENTES','Pendientes de cobro'],['PAGADO','Pagados'],['ANULADO','Anulados'],['PENDIENTE','Cocina pendiente'],['EN_PREPARACION','En preparación'],['LISTO','Listos'],['ENTREGADO','Entregados']].map(([codigo,nombre]) => <button type="button" key={codigo} className={filtroPedido === codigo ? boton : secundario} aria-pressed={filtroPedido === codigo} onClick={() => setFiltroPedido(codigo)}>{nombre} ({pedidos.filter(p => corresponde(p,codigo)).length})</button>)}</div>
+    <div className="flex flex-wrap gap-5"><label className="inline-flex min-h-12 items-center gap-2"><input type="checkbox" checked={verAnteriores} onChange={e => setVerAnteriores(e.target.checked)} disabled={!!borrador} />Incluir abiertos de días anteriores</label><label className="inline-flex min-h-12 items-center gap-2"><input type="checkbox" checked={vistaMesa} onChange={e => setVistaMesa(e.target.checked)} />Ver mesas con pedidos abiertos</label></div>
+    {vistaMesa && <section className="rounded-xl border bg-white p-4"><h2 className="text-xl font-bold">Mesas abiertas</h2>{[...new Set(pedidos.filter(p => !!p.mesa_referencia && corresponde(p,'PENDIENTES')).map(p => p.mesa_referencia!))].map(mesa => <button className={`${secundario} m-1`} key={mesa} onClick={() => {setBuscar(mesa);setFiltroPedido('PENDIENTES')}}>{mesa} · {pedidos.filter(p => p.mesa_referencia === mesa && corresponde(p,'PENDIENTES')).length} pedidos</button>)}</section>}
     {borrador && <form aria-label={agregando ? 'Agregar productos' : 'Nuevo pedido'} className="space-y-4 rounded-2xl border border-teal-200 bg-white p-5" onSubmit={(e) => { e.preventDefault(); void guardar() }}>
       <h2 className="text-2xl font-bold">{agregando ? `Agregar al pedido ${seleccionado?.folio}` : 'Nuevo pedido'}</h2>
       {!agregando && <div className="grid gap-3 sm:grid-cols-2"><label>Tipo de venta<select required disabled={guardando} className={campo} value={borrador.tipo_venta_id} onChange={(e) => setBorrador({ ...borrador, tipo_venta_id: e.target.value })}>{tipos.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}</select></label>
@@ -124,9 +144,9 @@ export function Pedidos() {
       {!productos.length && <p>No hay productos disponibles en este centro.</p>}
       </div><div className="resumen-pedido space-y-4"><h3 className="text-lg font-bold">Tu pedido <span className="text-sm font-normal text-slate-500">· {borrador.lineas.length} líneas</span></h3>
       {!borrador.lineas.length && <p className="rounded-xl border border-dashed border-slate-300 p-5 text-slate-600">Toca un producto del menú para agregarlo. Aquí puedes ajustar cantidades y notas.</p>}
-      <ul className="space-y-3">{borrador.lineas.map((l, indice) => <li className="grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-4" key={l.id}><strong>{productos.find((p) => p.id === l.producto_id)?.nombre}</strong><label>Cantidad {indice + 1}<input className={campo} required type="number" min="1" max="999999" step="1" value={l.cantidad} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { cantidad: e.target.value })} /></label><label>Notas {indice + 1}<input className={campo} maxLength={200} value={l.notas} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { notas: e.target.value })} /></label><button type="button" className={secundario} disabled={guardando} aria-label={`Quitar línea ${indice + 1}`} onClick={() => setBorrador({ ...borrador, lineas: borrador.lineas.filter((actual) => actual.id !== l.id) })}>Quitar</button></li>)}</ul>
+      <ul className="space-y-3">{borrador.lineas.map((l, indice) => <li className="grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-4" key={l.id}><strong>{productos.find((p) => p.id === l.producto_id)?.nombre}</strong><div><label>Cantidad {indice + 1}<input className={campo} required type="number" min="1" max="999999" step="1" value={l.cantidad} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { cantidad: e.target.value })} /></label><div className="mt-1 flex gap-2"><button type="button" aria-label={`Disminuir cantidad ${indice+1}`} className={secundario} disabled={guardando || Number(l.cantidad)<=1} onClick={() => cambiarLinea(l.id,{cantidad:String(Math.max(1,Number(l.cantidad)-1))})}>−</button><button type="button" aria-label={`Aumentar cantidad ${indice+1}`} className={secundario} disabled={guardando || Number(l.cantidad)>=999999} onClick={() => cambiarLinea(l.id,{cantidad:String(Math.min(999999,Number(l.cantidad)+1))})}>+</button></div></div><div><label>Notas {indice + 1}<input className={campo} maxLength={200} value={l.notas} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { notas: e.target.value })} /></label><select aria-label={`Nota frecuente ${indice+1}`} className={campo} value="" disabled={guardando} onChange={e => cambiarLinea(l.id,{notas:[l.notas,e.target.value].filter(Boolean).join('; ').slice(0,200)})}><option value="">Agregar nota frecuente</option>{['Sin cebolla','Sin picante','Bien cocido','Para compartir'].map(n => <option key={n}>{n}</option>)}</select></div><button type="button" className={secundario} disabled={guardando} aria-label={`Quitar línea ${indice + 1}`} onClick={() => setBorrador({ ...borrador, lineas: borrador.lineas.filter((actual) => actual.id !== l.id) })}>Quitar</button></li>)}</ul>
       <p className="font-semibold">Total de los productos nuevos: Q {totalLineas(borrador.lineas.map((l) => ({ cantidad: l.cantidad, precio: productos.find((p) => p.id === l.producto_id)?.precio ?? '0' })))}</p>
-      <div className="flex gap-2"><button className={boton} disabled={guardando}>Guardar pedido</button><button type="button" className={secundario} disabled={guardando} onClick={() => setBorrador(null)}>Cancelar</button></div>
+      <div className="flex gap-2"><button className={boton} disabled={guardando}>Guardar pedido</button><button type="button" className={secundario} disabled={guardando} onClick={() => { if (borrador.lineas.length && !window.confirm('¿Descartar los productos sin guardar?')) return; if (!agregando) { localStorage.removeItem(claveBorrador); setRecuperable(null) } setBorrador(null) }}>Cancelar</button></div>
       </div></div>
     </form>}
     {seleccionado && !borrador && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">

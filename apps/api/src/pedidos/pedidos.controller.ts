@@ -14,9 +14,9 @@ export class PedidosController {
     const productos = await this.catalogo.productos(centroId, '');
     return productos.filter((p) => p.disponible_venta);
   }
-  @Get() listar(@CentroActual() centroId: number, @Query('buscar') buscar?: unknown) {
+  @Get() listar(@CentroActual() centroId: number, @Query('buscar') buscar?: unknown, @Query('anteriores') anteriores?: string, @Query('fecha') fecha?: string) {
     if (buscar !== undefined && typeof buscar !== 'string') throw new BadRequestException('La búsqueda no es válida.');
-    return this.pedidos.listar(centroId, texto(buscar, 100) ?? '');
+    return this.pedidos.listar(centroId, texto(buscar, 100) ?? '', anteriores === '1', fecha);
   }
   @Get(':id') detalle(@CentroActual() centroId: number, @Param('id') id: string) { return this.pedidos.detalle(centroId, uuid(id)); }
   @Post() crear(@CentroActual() centroId: number, @UsuarioActual() usuario: UsuarioSesion, @Body() cuerpo: unknown) {

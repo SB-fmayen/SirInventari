@@ -86,15 +86,17 @@ export class GestorUsuariosFirebase {
   }
 
   /** Bloquea o desbloquea el usuario en Firebase. Si no hay cuenta de servicio, no hace nada. */
-  async cambiarActivo(uid: string, activo: boolean): Promise<void> {
-    if (!hayCuentaDeServicio()) return;
+  async cambiarActivo(uid: string, activo: boolean): Promise<{ sincronizado: boolean; aviso?: string }> {
+    if (!hayCuentaDeServicio()) return { sincronizado: false, aviso: 'El acceso local se actualizó. Firebase no se pudo sincronizar porque falta la cuenta de servicio. Configúrala y vuelve a intentar la misma acción.' };
     try {
       const auth = obtenerAuthFirebase();
       await auth.updateUser(uid, { disabled: !activo });
       if (!activo) await auth.revokeRefreshTokens(uid);
+      return { sincronizado: true };
     } catch (error) {
       // La base es la que manda: aunque Firebase falle, el usuario queda sin acceso en la API
       this.logger.warn(`No se pudo actualizar el usuario ${uid} en Firebase: ${String(error)}`);
+      return { sincronizado: false, aviso: 'El acceso local se actualizó, pero Firebase no se pudo sincronizar. Vuelve a intentar la misma acción.' };
     }
   }
 }

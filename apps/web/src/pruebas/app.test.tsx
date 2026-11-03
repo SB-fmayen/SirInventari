@@ -316,6 +316,7 @@ describe('Turnos de caja (Tarea 7)', () => {
     expect(screen.getByText('31/10/2026')).toBeInTheDocument()
     await userEvent.type(screen.getByLabelText('Efectivo contado'), '120.20')
     expect(screen.getByText('Diferencia prevista: Q -0.10')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Motivo de la diferencia'), 'Faltante del conteo')
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar turno' }))
     expect(await screen.findByText('Turno cerrado. Efectivo esperado: Q 120.30. Diferencia: Q -0.10.')).toHaveAttribute('role', 'status')
     const opciones = fetchFalso.mock.calls.find(([url]) => url.endsWith('/turnos/7/cierre'))?.[1]
