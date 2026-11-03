@@ -3,6 +3,7 @@ import { LoaderCircle, Pencil, UserPlus } from 'lucide-react'
 import { ErrorApi } from '@/lib/api'
 import { PermisosRoles } from '@/componentes/PermisosRoles'
 import { useCambiosSinGuardar } from '@/hooks/useCambiosSinGuardar'
+import { EliminarRegistro, PermisosUsuario } from '@/componentes/AdministracionRegistros'
 import { cn } from '@/lib/utils'
 import { useSesion } from '@/sesion/SesionProvider'
 import { NOMBRE_ROL, type CentroVenta, type Rol, type UsuarioSistema } from '@/sesion/tipos'
@@ -179,6 +180,7 @@ export function Usuarios({ usuario: yo }: { usuario: UsuarioSistema }) {
                           {u.activo ? 'Desactivar' : 'Activar'}
                         </button>
                       )}
+                      {u.id !== yo.id && !u.activo && <EliminarRegistro recurso="usuarios" id={u.id} nombre={u.nombre} alGuardar={cargar} />}
                     </div>
                   </td>
                 </tr>
@@ -256,6 +258,8 @@ function FormularioUsuario({
   }
 
   return (
+    <div>
+    {usuario && <PermisosUsuario id={usuario.id} rol={usuario.rol} />}
     <form
       onChange={() => setModificado(true)}
       onSubmit={alEnviar}
@@ -366,6 +370,6 @@ function FormularioUsuario({
           {esNuevo ? 'Crear usuario' : 'Guardar cambios'}
         </button>
       </div>
-    </form>
+    </form></div>
   )
 }

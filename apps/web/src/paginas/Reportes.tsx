@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { ErrorApi } from '@/lib/api'
 import { convertirCsv } from '@/lib/csv'
 import { useSesion } from '@/sesion/SesionProvider'
+import { rangoRapido } from '@/lib/fechas'
+import { ControlVentas } from '@/componentes/ControlVentas'
 
 interface Fila { nombre: string; cantidad: string; total: string }
 interface Reporte {
@@ -61,6 +63,7 @@ export function Reportes() {
   return <div className="mx-auto max-w-6xl space-y-5">
     <div><h1 className="text-3xl font-bold">Reportes de ventas</h1><p>{centro?.nombre} · Horas de Guatemala</p></div>
     <p className="text-slate-600">Incluye pedidos pagados del centro y su fecha de operación. Los pedidos con saldo pendiente y los anulados se excluyen. Los descuentos ya están distribuidos en las ventas por producto.</p>
+    <div className="flex flex-wrap gap-2">{[['hoy','Hoy'],['ayer','Ayer'],['semana','Esta semana'],['mes','Este mes']].map(([tipo,nombre])=><button type="button" className="min-h-12 rounded-xl border bg-white px-4" disabled={cargando} key={tipo} onClick={()=>{const r=rangoRapido(tipo);setDesde(r.desde);setHasta(r.hasta)}}>{nombre}</button>)}</div>
     <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); void consultar() }}>
       <label>Desde<input className={`${campo} block`} type="date" required disabled={cargando} value={desde} onChange={(e) => setDesde(e.target.value)} /></label>
       <label>Hasta<input className={`${campo} block`} type="date" required min={desde} disabled={cargando} value={hasta} onChange={(e) => setHasta(e.target.value)} /></label>
@@ -75,6 +78,7 @@ export function Reportes() {
       <div className="grid gap-5 lg:grid-cols-2"><Tabla titulo="Ventas por tipo" filas={reporte.por_tipo} cantidad="Pedidos" /><Tabla titulo="Ventas por hora" filas={reporte.por_hora} cantidad="Pedidos" /><Tabla titulo="Ventas por producto" filas={reporte.por_producto} cantidad="Unidades" /><Tabla titulo="Formas de pago" filas={reporte.por_pago} cantidad="Pagos" /></div>
       <section><h2 className="mb-3 text-2xl font-bold">Pedidos cobrados e historial</h2><ul className="space-y-2">{reporte.pedidos.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"><span>Pedido {p.folio} · {p.fecha_operacion.split('-').reverse().join('/')} · {p.tipo} · {dinero(p.total)}</span><button className={boton} disabled={cargando} aria-label={`Ver historial del pedido ${p.folio}`} onClick={() => void verHistorial(p.id)}>Ver historial</button></li>)}</ul>{!reporte.pedidos.length && <p>No hay pedidos pagados en este rango.</p>}</section>
     </>}
+    <ControlVentas desde={desde} hasta={hasta}/>
     {historial && <section className="rounded-2xl border border-teal-200 bg-white p-5"><h2 className="mb-3 text-2xl font-bold">Historial del pedido {historial.folio}</h2><ol className="space-y-3">{historial.eventos.map((e, i) => <li key={i}><p className="font-semibold">{e.usuario} · {new Date(e.fecha).toLocaleString('es-GT', { timeZone: 'America/Guatemala' })}</p><p>{e.descripcion}</p></li>)}</ol></section>}
   </div>
 }

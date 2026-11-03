@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { ErrorApi } from '@/lib/api'
 import { useSesion } from '@/sesion/SesionProvider'
+import { EliminarRegistro, PreciosLote } from '@/componentes/AdministracionRegistros'
+import { useCambiosSinGuardar } from '@/hooks/useCambiosSinGuardar'
 
 interface Categoria { id: number; nombre: string; orden: number; activo: boolean }
 interface Producto {
   id: number; sku: string; nombre: string; categoria_id: number; precio_base: string
   activo: boolean; precio_centro: string | null; precio: string; disponible: boolean; disponible_venta: boolean
+  grupo_variantes?: string | null; es_complemento?: boolean; foto_datos?: string | null
 }
 const campo = 'min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-base'
 const boton = 'min-h-12 rounded-xl bg-teal-700 px-4 font-semibold text-white disabled:opacity-50'
@@ -22,6 +25,7 @@ export function Catalogo() {
   const [aviso, setAviso] = useState('')
   const [buscar, setBuscar] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
+  const [estadoProducto, setEstadoProducto] = useState('')
   const [editando, setEditando] = useState<Producto | 'nuevo' | null>(null)
   const [categoriaEditada, setCategoriaEditada] = useState<Categoria | 'nueva' | null>(null)
   const [guardando, setGuardando] = useState(false)
@@ -56,7 +60,7 @@ export function Catalogo() {
   }
 
   const visibles = productos.filter((p) =>
-    (!categoriaId || p.categoria_id === Number(categoriaId)) && `${p.nombre} ${p.sku}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')),
+    (!categoriaId || p.categoria_id === Number(categoriaId)) && (!estadoProducto || estadoProducto==='disponible'&&p.disponible_venta || estadoProducto==='agotado'&&p.activo&&!p.disponible || estadoProducto==='desactivado'&&!p.activo) && `${p.nombre} ${p.sku}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')),
   )
 
   return <div className="mx-auto max-w-6xl space-y-6">
@@ -70,21 +74,23 @@ export function Catalogo() {
     {editando && <FormularioProducto key={editando === 'nuevo' ? 'nuevo' : editando.id} producto={editando === 'nuevo' ? null : editando} categorias={categorias} guardando={guardando} guardar={guardar} cancelar={() => setEditando(null)} centro={centro?.nombre ?? ''} />}
     <section className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold">Categorías</h2><button className={secundario} disabled={guardando} onClick={() => { setCategoriaEditada('nueva'); setEditando(null) }}>Nueva categoría</button></div>
-      {categoriaEditada && <FormularioCategoria key={categoriaEditada === 'nueva' ? 'nueva' : categoriaEditada.id} categoria={categoriaEditada === 'nueva' ? null : categoriaEditada} guardar={guardar} guardando={guardando} cancelar={() => setCategoriaEditada(null)} />}
+      {categoriaEditada && <><FormularioCategoria key={categoriaEditada === 'nueva' ? 'nueva' : categoriaEditada.id} categoria={categoriaEditada === 'nueva' ? null : categoriaEditada} guardar={guardar} guardando={guardando} cancelar={() => setCategoriaEditada(null)} />{categoriaEditada!=='nueva'&&<EliminarRegistro recurso="categorias" id={categoriaEditada.id} nombre={categoriaEditada.nombre} alGuardar={async()=>{setCategoriaEditada(null);await cargar()}}/>}</>}
       <ul className="flex flex-wrap gap-2">{categorias.map((c) => <li key={c.id}><button disabled={guardando} className={secundario} aria-label={`Editar categoría ${c.nombre}`} onClick={() => { setCategoriaEditada(c); setEditando(null) }}>{c.orden} · {c.nombre}{!c.activo && ' (desactivada)'}</button></li>)}</ul>
     </section>
     <div className="grid gap-3 sm:grid-cols-2">
       <label>Buscar por nombre o SKU<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
       <label>Filtrar por categoría<select className={campo} value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}><option value="">Todas</option>{categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></label>
+      <label>Estado del producto<select className={campo} value={estadoProducto} onChange={e=>setEstadoProducto(e.target.value)}><option value="">Todos</option><option value="disponible">Disponibles</option><option value="agotado">Agotados en este centro</option><option value="desactivado">Desactivados</option></select></label>
     </div>
+    <PreciosLote productos={visibles} alGuardar={cargar}/>
     {cargando ? <p role="status">Cargando catálogo…</p> : <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
       <table className="w-full text-left"><thead className="bg-slate-50"><tr>{['Producto', 'Categoría', 'Precio base', 'Precio en este centro', 'Estado', 'Acciones'].map((t) => <th key={t} className="p-3">{t}</th>)}</tr></thead>
         <tbody>{visibles.map((p) => <tr key={p.id} className="border-t border-slate-100">
-          <td className="p-3"><span className="block font-semibold">{p.nombre}</span><span className="text-sm text-slate-500">{p.sku}</span></td>
+          <td className="p-3">{p.foto_datos&&<img src={p.foto_datos} alt="" className="mb-2 size-16 rounded-xl object-cover" loading="lazy"/>}<span className="block font-semibold">{p.nombre}</span><span className="text-sm text-slate-500">{p.sku}</span>{p.grupo_variantes&&<span className="block text-sm">Grupo: {p.grupo_variantes}</span>}{p.es_complemento&&<span className="block text-sm">Complemento</span>}</td>
           <td className="p-3">{categorias.find((c) => c.id === p.categoria_id)?.nombre}</td>
           <td className="p-3">{quetzales(p.precio_base)}</td><td className="p-3">{quetzales(p.precio)}<span className="block text-sm text-slate-500">{p.precio_centro === null ? 'Usa precio base' : 'Precio propio'}</span></td>
           <td className="p-3">{p.disponible_venta ? 'Disponible' : !p.activo ? 'Desactivado' : 'No disponible'}</td>
-          <td className="p-3"><button className={secundario} disabled={guardando} aria-label={`Editar producto ${p.nombre}`} onClick={() => { setEditando(p); setCategoriaEditada(null) }}>Editar</button></td>
+          <td className="p-3"><div className="flex flex-wrap gap-2"><button className={secundario} disabled={guardando} aria-label={`Editar producto ${p.nombre}`} onClick={() => { setEditando(p); setCategoriaEditada(null) }}>Editar</button><button className={secundario} disabled={guardando||!p.activo} aria-label={`${p.disponible?'Marcar agotado':'Marcar disponible'} ${p.nombre}`} onClick={()=>void guardar(`/catalogo/productos/${p.id}/centro`,{disponible:!p.disponible})}>{p.disponible?'Marcar agotado':'Marcar disponible'}</button><EliminarRegistro recurso="productos" id={p.id} nombre={p.nombre} alGuardar={cargar}/></div></td>
         </tr>)}</tbody></table>{visibles.length === 0 && <p className="p-4">No hay productos con esos filtros.</p>}
     </div>}
   </div>
@@ -96,7 +102,9 @@ function FormularioCategoria({ categoria, guardar, guardando, cancelar }: { cate
   const [nombre, setNombre] = useState(categoria?.nombre ?? '')
   const [orden, setOrden] = useState(categoria?.orden ?? 0)
   const [activo, setActivo] = useState(categoria?.activo ?? true)
-  return <form aria-label="Categoría" className="mb-4 grid gap-3 rounded-xl bg-slate-50 p-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); void guardar(`/catalogo/categorias${categoria ? `/${categoria.id}` : ''}`, { nombre, orden, activo }, !categoria) }}>
+  const [modificado,setModificado]=useState(false)
+  useCambiosSinGuardar(modificado)
+  return <form onChange={()=>setModificado(true)} aria-label="Categoría" className="mb-4 grid gap-3 rounded-xl bg-slate-50 p-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); void guardar(`/catalogo/categorias${categoria ? `/${categoria.id}` : ''}`, { nombre, orden, activo }, !categoria) }}>
     <label>Nombre de categoría<input required maxLength={60} className={campo} value={nombre} onChange={(e) => setNombre(e.target.value)} /></label>
     <label>Orden<input type="number" required min={-32768} max={32767} step={1} className={campo} value={orden} onChange={(e) => setOrden(Number(e.target.value))} /></label>
     <label className="flex min-h-12 items-center gap-2"><input type="checkbox" className="size-5" checked={activo} onChange={(e) => setActivo(e.target.checked)} />Categoría activa</label>
@@ -112,17 +120,27 @@ function FormularioProducto({ producto: p, categorias, guardar, guardando, cance
   const [activo, setActivo] = useState(p?.activo ?? true)
   const [precioCentro, setPrecioCentro] = useState(p?.precio_centro ?? '')
   const [disponible, setDisponible] = useState(p?.disponible ?? true)
+  const [grupo,setGrupo]=useState(p?.grupo_variantes??'')
+  const [complemento,setComplemento]=useState(p?.es_complemento??false)
+  const [foto,setFoto]=useState(p?.foto_datos??null)
+  const [errorFoto,setErrorFoto]=useState('')
+  const [modificado,setModificado]=useState(false)
+  useCambiosSinGuardar(modificado)
   function enviar(e: FormEvent) {
     e.preventDefault()
-    void guardar(`/catalogo/productos${p ? `/${p.id}` : ''}`, { nombre, sku, categoria_id: Number(categoriaId), precio_base: precioBase, activo }, !p)
+    void guardar(`/catalogo/productos${p ? `/${p.id}` : ''}`, { nombre, sku, categoria_id: Number(categoriaId), precio_base: precioBase, activo, grupo_variantes: grupo || null, es_complemento: complemento, foto_datos: foto }, !p)
   }
-  return <section className="rounded-2xl border border-teal-200 bg-white p-5">
+  return <section onChange={()=>setModificado(true)} className="rounded-2xl border border-teal-200 bg-white p-5">
     <h2 className="mb-4 text-xl font-bold">{p ? `Editar ${p.nombre}` : 'Nuevo producto'}</h2>
     <form aria-label="Producto" onSubmit={enviar} className="grid gap-3 sm:grid-cols-2">
       <label>Nombre del producto<input required maxLength={120} className={campo} value={nombre} onChange={(e) => setNombre(e.target.value)} /></label>
       <label>SKU<input required maxLength={30} className={campo} value={sku} onChange={(e) => setSku(e.target.value)} /></label>
       <label>Categoría del producto<select required className={campo} value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}><option value="">Elige una categoría</option>{categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre}{!c.activo && ' (desactivada)'}</option>)}</select></label>
       <label>Precio base<input required type="number" min="0" max="99999999.99" step="0.01" className={campo} value={precioBase} onChange={(e) => setPrecioBase(e.target.value)} /></label>
+      <label>Grupo de variantes o tamaños<input maxLength={120} className={campo} value={grupo} onChange={e=>setGrupo(e.target.value)} placeholder="Ej. Shuko Americano"/></label>
+      <label className="flex min-h-12 items-center gap-2"><input type="checkbox" checked={complemento} onChange={e=>setComplemento(e.target.checked)}/>Es un extra o complemento</label>
+      <label>Foto opcional (PNG, JPEG o WebP, máximo 200 KB)<input type="file" accept="image/png,image/jpeg,image/webp" className={campo} onChange={e=>{const archivo=e.target.files?.[0];if(!archivo)return;if(archivo.size>204800||!['image/png','image/jpeg','image/webp'].includes(archivo.type)){setErrorFoto('Elige una foto PNG, JPEG o WebP de hasta 200 KB.');return}const lector=new FileReader();lector.onload=()=>{setFoto(String(lector.result));setErrorFoto('')};lector.onerror=()=>setErrorFoto('No se pudo leer la foto.');lector.readAsDataURL(archivo)}}/></label>
+      {foto&&<div><img src={foto} alt="Vista previa del producto" className="size-24 rounded-xl object-cover"/><button type="button" className={secundario} onClick={()=>{setFoto(null);setModificado(true)}}>Quitar foto</button></div>}{errorFoto&&<p role="alert">{errorFoto}</p>}
       <label className="flex min-h-12 items-center gap-2"><input type="checkbox" className="size-5" checked={activo} onChange={(e) => setActivo(e.target.checked)} />Producto activo</label>
       <button className={boton} disabled={guardando}>Guardar producto</button>
     </form>

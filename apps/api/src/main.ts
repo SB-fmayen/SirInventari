@@ -1,9 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
 
 async function iniciar(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Fotos pequeñas del catálogo: hasta 200 KB binarios, codificados en base64.
+  app.useBodyParser('json', { limit: '512kb' });
   // Direcciones de la app web que pueden llamar a la API (separadas por coma)
   const origenes = (process.env.CORS_ORIGENES ?? 'http://localhost:5173')
     .split(',')

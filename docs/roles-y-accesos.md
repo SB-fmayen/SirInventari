@@ -26,4 +26,10 @@ El administrador puede trabajar en todos los centros activos. Los otros roles so
 
 ## Solicitud de eliminación
 
-Pendiente de que el usuario indique qué registros debe poder eliminar el administrador. Actualmente se desactivan usuarios/productos/categorías y se anulan líneas con motivo. No se implementó borrado permanente ni se modificaron tablas, funciones o triggers mientras falta definir el alcance. La eliminación solicitada debe contemplar las referencias de pedidos, pagos y auditoría antes de implementarse.
+El usuario aprobó la eliminación controlada: ADMIN puede eliminar usuarios desactivados sin historial, productos sin líneas de venta y categorías sin productos. Se solicita confirmación en la interfaz y se registra la acción. Las relaciones y el historial bloquean el borrado; se conserva la desactivación para esos casos. No se eliminan pedidos/pagos ni cuentas de Firebase.
+
+## Restricciones individuales aprobadas
+
+En Editar usuario → Permisos específicos se pueden restringir acciones dentro del rol. No amplían módulos ni centros autorizados. «Ver» restringe todas las acciones del módulo; «Crear» controla registros nuevos; «Editar» incluye agregar líneas a un pedido, cambios de preparación, cierre de turno y precios; «Anular» controla anulaciones/solicitudes de corrección; «Autorizar» se aplica a resolver solicitudes del módulo en GERENTE. ADMIN conserva sus permisos completos.
+
+Caja tiene cortesías y anulación de pagos con autorización de GERENTE/ADMIN; Cocina permite solicitar retroceso con motivo. Las solicitudes se revisan en Inicio. Cambiar el rol no borra las restricciones individuales: el ADMIN puede revisarlas en el editor.

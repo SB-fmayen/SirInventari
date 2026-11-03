@@ -17,6 +17,7 @@ import { Pedidos } from '@/paginas/Pedidos'
 import { Caja } from '@/paginas/Caja'
 import { Reportes } from '@/paginas/Reportes'
 import { Cocina } from '@/paginas/Cocina'
+import { ProteccionNavegacion } from '@/componentes/ProteccionNavegacion'
 import { SECCIONES, puedeEntrar, seccionesDe } from '@/secciones'
 import { useSesion } from '@/sesion/SesionProvider'
 import { NOMBRE_ROL, type UsuarioSistema } from '@/sesion/tipos'
@@ -51,6 +52,7 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
 
   return (
     <div className="aplicacion flex min-h-svh flex-col bg-slate-50">
+      <ProteccionNavegacion />
       <a href="#contenido" className="saltar-contenido">Ir al contenido</a>
       <header className="barra-aplicacion sticky top-0 z-10 border-b border-slate-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">

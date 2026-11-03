@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router'
+import { createBrowserRouter, RouterProvider } from 'react-router'
 import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.tsx'
@@ -16,12 +16,9 @@ else if ('serviceWorker' in navigator) {
     .catch(() => console.warn('No se pudo actualizar el registro anterior de la app.'))
 }
 
+const router = createBrowserRouter([{ path: '*', element: <SesionProvider><App /></SesionProvider> }])
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <SesionProvider>
-        <App />
-      </SesionProvider>
-    </BrowserRouter>
+    <RouterProvider router={router} />
   </StrictMode>,
 )

@@ -85,7 +85,7 @@ describe('Caja y cobros simultáneos (base aislada)', () => {
     const turno = await base.prisma.turno_caja.findFirstOrThrow({ where: { centro_venta_id: 1, estado: 'ABIERTO' } });
     const [cobro, cierre] = await Promise.all([
       http().post('/caja/pagos').set(headers()).send(efectivo(pedido.id)),
-      http().post(`/turnos/${turno.id}/cierre`).set(headers()).send({ efectivo_contado: 0 }),
+      http().post(`/turnos/${turno.id}/cierre`).set(headers()).send({ efectivo_contado: 0, motivo_diferencia: 'Conteo de prueba concurrente', confirmar_pendientes: true }),
     ]);
     expect([201, 409]).toContain(cobro.status); expect(cierre.status).toBe(201);
     const suma = await base.prisma.pago.aggregate({ where: { turno_id: turno.id, estado: 'APLICADO', metodo_pago: { codigo: 'EFECTIVO' } }, _sum: { monto: true } });

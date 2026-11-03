@@ -1,6 +1,6 @@
 import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { Roles } from '../autenticacion/roles.decorator.js';
-import { CentroActual } from '../autenticacion/usuario-sesion.js';
+import { CentroActual, UsuarioActual, type UsuarioSesion } from '../autenticacion/usuario-sesion.js';
 import { CatalogoService } from './catalogo.service.js';
 import { categoria, entero, producto, productoCentro } from './validacion-catalogo.js';
 
@@ -10,6 +10,7 @@ const idValido = new ParseIntPipe({ exceptionFactory: () => new BadRequestExcept
 @Roles('ADMIN', 'GERENTE')
 export class CatalogoController {
   constructor(private readonly catalogo: CatalogoService) {}
+  @Post('precios') precios(@CentroActual() centro: number, @UsuarioActual() u: UsuarioSesion, @Body() c: unknown) { return this.catalogo.precios(centro,u.id,c); }
 
   @Get('categorias')
   categorias() { return this.catalogo.categorias(); }

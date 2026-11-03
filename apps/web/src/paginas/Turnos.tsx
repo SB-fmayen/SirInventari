@@ -70,6 +70,7 @@ export function Turnos() {
     <div><h1 className="text-3xl font-bold">Turnos de caja</h1><p className="text-slate-600">{centro?.nombre} · Horas de Guatemala</p></div>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error} <button className="underline" onClick={() => void cargar().then(() => setError('')).catch((e: unknown) => setError(mensaje(e)))}>Actualizar</button></p>}
     {aviso && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-emerald-800">{aviso}</p>}
+    {turnos.some(t=>!!t.motivo_diferencia)&&<details className="rounded-xl border bg-white p-4"><summary className="min-h-10 cursor-pointer font-semibold">Motivos de diferencias de turnos</summary><ul className="space-y-2">{turnos.filter(t=>!!t.motivo_diferencia).map(t=><li key={t.id}>{t.fecha_operacion} · {t.nombre_cierre} · Diferencia {dinero(t.diferencia)}: {t.motivo_diferencia}</li>)}</ul></details>}
     {cargando ? <p>Cargando turnos…</p> : abierto ? <section className="rounded-2xl border border-teal-200 bg-white p-5">
       <h2 className="text-2xl font-bold">Turno abierto</h2><p>Abierto por {abierto.nombre_apertura} · {hora(abierto.abierto_en)}</p>
       <dl className="my-4 grid gap-3 sm:grid-cols-3"><div><dt>Fondo inicial</dt><dd className="text-xl font-semibold">{dinero(abierto.fondo_inicial)}</dd></div><div><dt>Ventas en efectivo</dt><dd className="text-xl font-semibold">{dinero(abierto.efectivo_ventas)}</dd></div><div><dt>Efectivo esperado</dt><dd className="text-xl font-semibold">{dinero(abierto.efectivo_esperado)}</dd></div></dl>

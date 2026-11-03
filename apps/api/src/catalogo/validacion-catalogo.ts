@@ -46,11 +46,19 @@ export function categoria(cuerpo: unknown, nuevo: boolean) {
 
 export function producto(cuerpo: unknown, nuevo: boolean) {
   const c = objeto(cuerpo);
+  if (c.foto_datos !== undefined && c.foto_datos !== null) {
+    if (typeof c.foto_datos !== 'string' || c.foto_datos.length > 280000 || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(c.foto_datos)) throw new BadRequestException('La foto debe ser PNG, JPEG o WebP y pesar hasta 200 KB.');
+    const bin = Buffer.from(c.foto_datos.split(',')[1], 'base64');
+    if (bin.length > 204800 || !(bin.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])) || bin.subarray(0,3).equals(Buffer.from([255,216,255])) || bin.subarray(0,4).toString()==='RIFF' && bin.subarray(8,12).toString()==='WEBP')) throw new BadRequestException('El archivo no es una foto válida o supera 200 KB.');
+  }
   const datos = {
     ...(nuevo || c.sku !== undefined ? { sku: texto(c.sku, 'el SKU', 30) } : {}),
     ...(nuevo || c.nombre !== undefined ? { nombre: texto(c.nombre, 'el nombre', 120) } : {}),
     ...(nuevo || c.categoria_id !== undefined ? { categoria_id: entero(c.categoria_id, 'categoría', 1) } : {}),
     ...(nuevo || c.precio_base !== undefined ? { precio_base: precio(c.precio_base) } : {}),
+    ...(c.grupo_variantes !== undefined ? { grupo_variantes: c.grupo_variantes === null || c.grupo_variantes === '' ? null : texto(c.grupo_variantes, 'el grupo de variantes', 120) } : {}),
+    ...(c.es_complemento !== undefined ? { es_complemento: booleano(c.es_complemento) } : {}),
+    ...(c.foto_datos !== undefined ? { foto_datos: c.foto_datos as string | null } : {}),
     ...(c.activo !== undefined ? { activo: booleano(c.activo) } : {}),
   };
   if (!Object.keys(datos).length) throw new BadRequestException('No hay cambios para guardar.');
