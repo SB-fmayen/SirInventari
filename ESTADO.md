@@ -6,6 +6,16 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-02 (hora de Guatemala) · Codex
 
+## PostgreSQL recuperado · Listo para validación con el usuario
+
+- Resuelta la conexión: Docker Desktop estaba detenido e instalado por usuario fuera del PATH (`%LOCALAPPDATA%/Programs/DockerDesktop`). Se inició con su CLI y recuperó automáticamente el contenedor existente `sirinventari-db`, sano en 5432. La instalación nativa de 5433 es otra base: su registro confirma que allí no existe `ventas_app`; no se cambió su contraseña ni su configuración.
+- Conexión real a `sistema_ventas` correcta con `.env` existente. Conserva 3 usuarios, 154 productos y 2 pedidos. No se modificaron tablas, funciones, triggers, contraseñas ni datos de negocio.
+- Verificación: 72 pruebas de integración, 14 unitarias de API y 54 web correctas (140 en total). Integración en bases aisladas. API local `/salud` devuelve `api: ok`, `baseDatos: ok`, fecha 2026-11-02 y `America/Guatemala`. Web responde HTTP 200 en http://localhost:5173.
+- API y web quedan iniciadas en segundo plano (procesos 33892 y 16448 al terminar); logs excluidos de Git en `logs/`. Falta la validación manual del usuario por módulo; no se declara publicación ni login real verificado en este turno.
+- Nuevo arranque repetible `scripts/iniciar-base-local.ps1`: encuentra Docker por usuario/general aunque no esté en PATH, inicia el motor si hace falta y levanta `db` con espera de salud. Su modo `-SoloComprobar` no inicia ni crea contenedores. Ambos modos se comprobaron contra la base existente.
+- Diagnóstico de solo lectura `apps/api/scripts/comprobar-base-local.mjs`, sin imprimir secretos; guía `docs/base-local.md`. Las advertencias históricas de conexión que figuran abajo quedan resueltas por esta recuperación. Los avisos moderados/bajos de dependencias siguen pendientes de R2.
+- Archivos: los dos scripts anteriores, `docs/base-local.md`, `docs/dependencias-seguridad.md` y esta libreta.
+
 ## Solicitud del usuario · PostgreSQL, eliminación, roles y diseño
 
 - Diagnóstico: `.env` apunta a localhost:5432, sin servidor escuchando. El servicio PostgreSQL 16 instalado está en 5433 y rechaza tanto las credenciales de `DATABASE_URL` como las variables `POSTGRES_*` (coinciden entre sí). Se pidió al usuario confirmar instalación/cambio de contraseña y actualizar la conexión directamente en `.env`, sin enviar secretos al chat. No se restablecieron contraseñas ni se reemplazaron datos.
@@ -19,7 +29,7 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 - Retirada herramienta sin uso `@nestjs/mau` de API y fijado gRPC 1.13.6 dentro de Firestore en app. Auditorías sin avisos altos/críticos; quedan 7 moderados en API y 14 moderados/bajos en app. Detalles y límites en `docs/dependencias-seguridad.md`.
 - Pasan 14 pruebas unitarias API y 53 web; build/lint correctos con avisos web previos. Integración pendiente: no hay PostgreSQL en 5432; el servicio encontrado en 5433 rechaza las credenciales locales. No se cambiaron `.env`, contraseñas ni esquema.
-- Necesito del usuario: restablecer la base prevista por `DATABASE_URL` para repetir las 72 pruebas de integración. Publicación y archivo POS siguen pendientes de los puntos indicados abajo. Seguridad R2 todavía no se declara cerrada.
+- Conexión e integración resueltas posteriormente: ver «PostgreSQL recuperado» al inicio. Publicación y archivo POS siguen pendientes de los puntos indicados abajo. Seguridad R2 todavía no se declara cerrada.
 - Archivos: `apps/api/package.json`, `apps/api/package-lock.json`, `apps/web/package.json`, `apps/web/package-lock.json`, `docs/dependencias-seguridad.md` y esta libreta.
 
 ## Tarea 9 · Cocina terminada
