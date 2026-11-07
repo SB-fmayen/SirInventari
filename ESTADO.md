@@ -4,7 +4,17 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-03 (hora de Guatemala) · Codex
+2026-11-07 (hora de Guatemala) · Codex
+
+## Retoma y validación del estado · Despliegue pospuesto
+
+- El usuario pide validar primero el proyecto; el despliegue queda pospuesto por instrucción expresa. No se crearon servicios ni se habilitó publicación.
+- Revisados plan, estado, guías de mejoras/seguridad y últimos commits. Sin cambios de código pendientes; se conservan fuera de Git `REVISION.md` y `Modo relevo Claude Code y Codex.pdf`.
+- Verificación actual: 14 pruebas unitarias API, 59 web y 83 de integración correctas (156 en total). Compilación y lint de ambas aplicaciones correctos; persisten 5 avisos web, tamaño del paquete (612 kB) y aviso de consultas concurrentes de pg. No se repitió la auditoría de dependencias: sus cifras anteriores son históricas.
+- Iniciados Docker Desktop y la base existente: sana, zona America/Guatemala, 3 usuarios, 154 productos y 3 pedidos. Pruebas de integración en bases aisladas; no se modificaron datos comerciales ni esquema. No se levantaron API ni app en este turno.
+- Siguiente: levantar API/app y validar visualmente el flujo Turnos → Pedidos → Cocina → Caja → Reportes, y después Catálogo/Usuarios, siguiendo `docs/mejoras-aprobadas.md` y `docs/pruebas-manuales.md`. Cerrar revisión R2 sobre el código actual y revisar dependencias antes de considerar el piloto aprobado.
+- Alcance futuro aún pendiente: conciliación POS (requiere archivo real), completar autorización de anulaciones y auditoría/RLS, ventas sin internet/sincronización, impresión y conflictos; monitoreo/alta disponibilidad requieren su etapa y aprobación de costos. Las mejoras implementadas no sustituyen esas tareas.
+- Archivo cambiado en esta retoma: `ESTADO.md`.
 
 ## Cierre solicitado por el usuario · Retomar mañana
 
