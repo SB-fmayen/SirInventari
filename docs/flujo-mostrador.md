@@ -27,3 +27,16 @@ Cambio solicitado por el usuario el 2026-11-07. La operación se realiza desde u
 Pruebas de pantalla con API simulada: guardar/cobrar/siguiente venta, categorías/búsqueda sin perder notas, reintento idéntico y bloqueo de navegación interna, error al guardar, turno cerrado y restricciones de acceso. Las pruebas anteriores conservan pago dividido y tarjeta con terminal/autorización. No crean ventas en la base local.
 
 Verificación del 2026-11-07: 67 pruebas web correctas, build y lint correctos (5 avisos previos y aviso de tamaño). API/base sanas y módulo actualizado servido por Vite. La inspección visual no pudo completarse: el control de Chrome se detuvo al no poder verificar su URL. Pendiente revisar con el usuario el tamaño de categorías/productos/resumen y completar una venta funcional identificada como prueba.
+
+## Corrección: revisar, anular e imprimir en láser
+
+Implementada el 2026-11-07:
+
+- En revisión/cobro se permite **Quitar producto**, con motivo. Recalcula total/saldo y conserva la línea anulada; el servidor impide reducir el total por debajo de lo ya cobrado. En un borrador sin guardar sigue disponible Quitar sin trámite de anulación.
+- **Anular pedido** sirve si el cliente ya no lo quiere. Exige motivo, permisos de Pedidos/anular y ausencia de pagos aplicados. Conserva folio, productos e importes originales y registra motivo/autor en auditoría. Sale de pendientes y de Cocina. Reintentar no duplica la anulación; cobro y anulación se coordinan con bloqueo del pedido. La autorización general por gerente de Tarea 15 sigue siendo trabajo futuro; esta acción sigue los permisos actuales de anulación de Pedidos.
+- **Cortesía** significa entregar gratis, con motivo y autorización de gerente/ADMIN. Es distinta de cancelar; la pantalla lo explica antes de ofrecerla. No usarla para retirar una compra que el cliente ya no quiere.
+- Al quedar PAGADO y sin saldo se presenta el ticket con centro, folio, fechas de Guatemala, cliente, productos activos, cantidades, precios, importes, descuentos, total y formas de pago aplicadas. No imprime productos/pagos anulados. Incluye autorización del POS cuando existe. Recibido/vuelto del último pago en efectivo solo se muestran cuando están disponibles en esa sesión; esos datos no se inventan al reimprimir un comprobante histórico.
+- **Imprimir ticket** abre la ventana normal de impresión del navegador. Diseño en blanco y negro para Carta/A4 y láser, márgenes de 12 mm, encabezado de tabla repetido si hay varias páginas; no imprime el menú ni los formularios del sistema. En esa ventana elegir impresora/papel y, si aparecen, desactivar encabezados/pies del navegador para una salida limpia. También permite guardar como PDF.
+- **Continuar sin imprimir** conserva el pago y prepara el siguiente pedido (o vuelve a cobros cuando el usuario solo tiene ese acceso). No hay impresión automática. Se puede volver a imprimir desde Pendientes y comprobantes → historial.
+
+Validación actual: 69 pruebas web, 14 unitarias API y 86 de integración en bases aisladas, todas correctas. Compilación/lint correctos, con avisos anteriores. Pendiente vista previa e impresión física con el usuario; no se ha enviado papel a una impresora ni se han creado ventas de prueba en su base. La impresión térmica/sin internet de Tarea 19 conserva su alcance futuro.

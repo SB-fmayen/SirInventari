@@ -80,6 +80,45 @@ describe('Caja y cobros simultáneos (base aislada)', () => {
     expect(await base.prisma.pago.count({ where: { referencia_pos: 'SIMULTANEO' } })).toBe(1);
   });
 
+  it('anula con motivo sin borrar productos, conserva autor y admite reintentos sin duplicar la anulación', async () => {
+    const p = await crearPedido();
+    await http().post(`/pedidos/${p.id}/anulacion`).set(headers()).send({ motivo: ' ' }).expect(400);
+    await http().post(`/pedidos/${p.id}/anulacion`).set(headers(2, 'caja-admin')).send({ motivo: 'Cliente canceló' }).expect(404);
+    const respuestas = await Promise.all([1, 2].map(() => http().post(`/pedidos/${p.id}/anulacion`).set(headers()).send({ motivo: 'Cliente ya no necesita el pedido' }).expect(201)));
+    expect(respuestas[0].body).toMatchObject({ estado: 'ANULADO', total: p.total });
+    expect(respuestas[0].body.pedido_detalle).toHaveLength(p.pedido_detalle.length);
+    const auditoria = await base.prisma.auditoria.findMany({ where: { tabla: 'pedido', registro_id: p.id, despues: { path: ['motivo_anulacion'], equals: 'Cliente ya no necesita el pedido' } } });
+    expect(auditoria).toHaveLength(1);
+    expect(auditoria[0].usuario_id).toBe(p.creado_por);
+    await http().post('/caja/pagos').set(headers()).send(efectivo(p.id)).expect(409);
+    expect((await http().get('/caja/pendientes').set(headers()).expect(200)).body.some((fila: { id: string }) => fila.id === p.id)).toBe(false);
+  });
+
+  it('rechaza anular pedidos con pago parcial o completo y respeta restricciones individuales', async () => {
+    const parcial = await crearPedido();
+    await http().post('/caja/pagos').set(headers()).send(efectivo(parcial.id, 10)).expect(201);
+    await http().post(`/pedidos/${parcial.id}/anulacion`).set(headers()).send({ motivo: 'Cancelar' }).expect(409);
+    const completo = await crearPedido();
+    await http().post('/caja/pagos').set(headers()).send(efectivo(completo.id)).expect(201);
+    await http().post(`/pedidos/${completo.id}/anulacion`).set(headers()).send({ motivo: 'Cancelar' }).expect(409);
+    const usuario = await base.prisma.usuario.findUniqueOrThrow({ where: { firebase_uid: 'uid-cajero-01' } });
+    await base.prisma.permiso_usuario.create({ data: { usuario_id: usuario.id, modulo: 'pedidos', accion: 'anular', permitido: false } });
+    try { await http().post(`/pedidos/${parcial.id}/anulacion`).set(headers()).send({ motivo: 'Cancelar' }).expect(403); }
+    finally { await base.prisma.permiso_usuario.delete({ where: { usuario_id_modulo_accion: { usuario_id: usuario.id, modulo: 'pedidos', accion: 'anular' } } }); }
+  });
+
+  it('un cobro y una anulación simultáneos nunca dejan un pedido anulado con dinero aplicado', async () => {
+    const p = await crearPedido();
+    const resultados = await Promise.all([
+      http().post('/caja/pagos').set(headers()).send(efectivo(p.id)),
+      http().post(`/pedidos/${p.id}/anulacion`).set(headers()).send({ motivo: 'Cliente cancela' }),
+    ]);
+    expect(resultados.map(r => r.status).sort((a, b) => a - b)).toEqual([201, 409]);
+    const final = await base.prisma.pedido.findUniqueOrThrow({ where: { id: p.id } });
+    const pagos = await base.prisma.pago.count({ where: { pedido_id: p.id, estado: 'APLICADO' } });
+    expect(final.estado === 'ANULADO' ? pagos === 0 : final.estado === 'PAGADO' && pagos === 1).toBe(true);
+  });
+
   it('cierre y cobro simultáneos comparten bloqueo y el cierre cuadra con lo aplicado', async () => {
     const pedido = await crearPedido();
     const turno = await base.prisma.turno_caja.findFirstOrThrow({ where: { centro_venta_id: 1, estado: 'ABIERTO' } });

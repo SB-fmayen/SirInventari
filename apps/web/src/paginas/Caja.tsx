@@ -5,16 +5,18 @@ import { useTiempoReal } from '@/hooks/useTiempoReal'
 import { nombresCocina, type EstadoCocina } from '@/lib/cocina'
 import { AccionControl } from '@/componentes/AccionControl'
 import { useCambiosSinGuardar } from '@/hooks/useCambiosSinGuardar'
+import { TicketVenta } from '@/componentes/TicketVenta'
 
 interface Pedido {
   id: string; folio: number; fecha_operacion: string; estado: string; estado_cocina: EstadoCocina; total: string; pagado: string; saldo: string
   mesa_referencia: string | null; cliente_nombre: string | null
-  pedido_detalle: { id: string; cantidad: string; importe: string; estado: string; producto: { nombre: string } }[]
+  subtotal?: string; descuento?: string; creado_en?: string; tipo_venta?: { nombre: string }; usuario?: { nombre: string }; motivo_cortesia?: string | null
+  pedido_detalle: { id: string; cantidad: string; importe: string; precio_unitario?: string; notas?: string | null; estado: string; producto: { nombre: string } }[]
 }
 interface Metodo { id: number; codigo: string; nombre: string; requiere_terminal: boolean; requiere_referencia: boolean }
 interface Comprobante {
   centro: { nombre: string }; pedido: Pedido
-  pagos: { id: string; monto: string; estado: string; terminal_pos: string | null; referencia_pos: string | null; metodo_pago: { nombre: string } }[]
+  pagos: { id: string; monto: string; estado: string; registrado_en?: string; terminal_pos: string | null; referencia_pos: string | null; metodo_pago: { nombre: string } }[]
 }
 interface Pago { id: string; pedido_id: string; metodo_pago_id: number; monto: string; recibido?: string; terminal_pos?: string; referencia_pos?: string }
 const dinero = (valor: string | number) => `Q ${Number(valor).toFixed(2)}`
@@ -28,10 +30,13 @@ interface OpcionesCaja {
   integrado?: boolean
   alBloquear?: (bloqueado: boolean) => void
   alCambiarPedido?: (pedido: Pedido) => void
+  alTerminar?: () => void
 }
 
-export function Caja({ pedidoId, integrado = false, alBloquear, alCambiarPedido }: OpcionesCaja = {}) {
-  const { api, centro } = useSesion()
+export function Caja({ pedidoId, integrado = false, alBloquear, alCambiarPedido, alTerminar }: OpcionesCaja = {}) {
+  const { api, centro, estado } = useSesion()
+  const usuario = estado?.tipo === 'activa' ? estado.usuario : null
+  const puedeModificar = !!usuario && ['ADMIN', 'GERENTE', 'CAJERO', 'MESERO'].includes(usuario.rol) && (usuario.rol === 'ADMIN' || !usuario.permisos?.some(p => p.modulo === 'pedidos' && ['ver', 'anular'].includes(p.accion) && !p.permitido))
   const [pendientes, setPendientes] = useState<Pedido[]>([])
   const [metodos, setMetodos] = useState<Metodo[]>([])
   const [turnoAbierto, setTurnoAbierto] = useState(false)
@@ -50,10 +55,13 @@ export function Caja({ pedidoId, integrado = false, alBloquear, alCambiarPedido 
   const [aviso, setAviso] = useState('')
   const [fechaHistorial, setFechaHistorial] = useState('')
   const [historial, setHistorial] = useState<Pedido[] | null>(null)
-  useCambiosSinGuardar(intento !== null || !!terminal || !!voucher)
+  const [anulacion, setAnulacion] = useState<{ lineaId?: string; nombre?: string } | null>(null)
+  const [motivoAnulacion, setMotivoAnulacion] = useState('')
+  const [efectivoTicket, setEfectivoTicket] = useState<{ recibido: string; vuelto: string } | null>(null)
+  useCambiosSinGuardar(intento !== null || !!terminal || !!voucher || !!anulacion)
   useEffect(() => {
-    alBloquear?.(guardando || intento !== null || !!terminal || !!voucher)
-  }, [guardando, intento, terminal, voucher, alBloquear])
+    alBloquear?.(guardando || intento !== null || !!terminal || !!voucher || !!anulacion)
+  }, [guardando, intento, terminal, voucher, anulacion, alBloquear])
   useEffect(() => {
     if (!pedidoId) return
     let vigente = true
@@ -91,7 +99,7 @@ export function Caja({ pedidoId, integrado = false, alBloquear, alCambiarPedido 
     setGuardando(true); setError(''); setAviso(''); setVuelto(null)
     try {
       const c = await api<Comprobante>(`/caja/pedidos/${p.id}/comprobante`)
-      setComprobante(c); setMonto(c.pedido.saldo); setRecibido(c.pedido.saldo); setTerminal(''); setVoucher(''); setIntento(null)
+      setComprobante(c); setMonto(c.pedido.saldo); setRecibido(c.pedido.saldo); setTerminal(''); setVoucher(''); setIntento(null); setEfectivoTicket(null)
       alCambiarPedido?.(c.pedido)
     } catch (e) { setError(mensaje(e)) }
     finally { setGuardando(false) }
@@ -107,6 +115,7 @@ export function Caja({ pedidoId, integrado = false, alBloquear, alCambiarPedido 
     try {
       const respuesta = await api<{ vuelto: string; comprobante: Comprobante }>('/caja/pagos', { method: 'POST', body: JSON.stringify(datos) })
       setComprobante(respuesta.comprobante); setVuelto(respuesta.vuelto); setIntento(null)
+      setEfectivoTicket(datos.recibido !== undefined ? { recibido: datos.recibido, vuelto: respuesta.vuelto } : null)
       alCambiarPedido?.(respuesta.comprobante.pedido)
       setMonto(respuesta.comprobante.pedido.saldo); setRecibido(respuesta.comprobante.pedido.saldo); setTerminal(''); setVoucher('')
       setAviso(respuesta.comprobante.pedido.estado === 'PAGADO' ? 'Pago guardado. Pedido pagado.' : 'Pago parcial guardado. Puedes cobrar el saldo con otra forma de pago.')
@@ -119,6 +128,18 @@ export function Caja({ pedidoId, integrado = false, alBloquear, alCambiarPedido 
   const visibles = pendientes.filter((p) => `${p.folio} ${p.fecha_operacion} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')))
   const puedeCobrar = comprobante && !['PAGADO', 'ANULADO'].includes(comprobante.pedido.estado) && Number(comprobante.pedido.saldo) > 0
   const bloqueado = guardando || intento !== null
+  const editable = comprobante && !['PAGADO', 'ANULADO'].includes(comprobante.pedido.estado)
+  async function confirmarAnulacion() {
+    if (!comprobante || !anulacion || bloqueado) return
+    setGuardando(true); setError('')
+    try {
+      const ruta = anulacion.lineaId ? `/pedidos/${comprobante.pedido.id}/lineas/${anulacion.lineaId}/anulacion` : `/pedidos/${comprobante.pedido.id}/anulacion`
+      await api(ruta, { method: 'POST', body: JSON.stringify({ motivo: motivoAnulacion }) })
+      setAnulacion(null); setMotivoAnulacion('')
+      await elegir(comprobante.pedido)
+    } catch (e) { setError(mensaje(e)) }
+    finally { setGuardando(false) }
+  }
 
   return <div className="mx-auto max-w-6xl space-y-5">
     <div className="flex flex-wrap justify-between gap-3"><div>{integrado ? <h2 className="text-2xl font-bold">{pedidoId ? 'Cobrar pedido' : 'Pendientes y comprobantes'}</h2> : <h1 className="text-3xl font-bold">Caja</h1>}<p>{centro?.nombre}</p></div><button className={secundario} disabled={guardando} onClick={() => void actualizar()}>Actualizar Caja</button></div>
@@ -132,9 +153,12 @@ export function Caja({ pedidoId, integrado = false, alBloquear, alCambiarPedido 
       <h2 className="text-2xl font-bold">Pedido {comprobante.pedido.folio} · {comprobante.pedido.fecha_operacion.split('-').reverse().join('/')}</h2>
       <p>{comprobante.pedido.mesa_referencia || comprobante.pedido.cliente_nombre}</p>
       {comprobante.pedido.estado_cocina && <p className="font-semibold text-teal-800">Cocina: {nombresCocina[comprobante.pedido.estado_cocina]}</p>}
-      <ul>{comprobante.pedido.pedido_detalle.filter((l) => l.estado === 'ACTIVA').map((l) => <li className="flex justify-between gap-3 py-2" key={l.id}><span>{l.cantidad} × {l.producto.nombre}</span><span>{dinero(l.importe)}</span></li>)}</ul>
+      <ul>{comprobante.pedido.pedido_detalle.filter((l) => l.estado === 'ACTIVA').map((l) => <li className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 py-2" key={l.id}><span>{l.cantidad} × {l.producto.nombre}</span><span>{dinero(l.importe)}</span>{editable && puedeModificar && <button className={secundario} disabled={bloqueado || !!anulacion} aria-label={`Quitar ${l.producto.nombre}`} onClick={() => { setAnulacion({ lineaId: l.id, nombre: l.producto.nombre }); setMotivoAnulacion('') }}>Quitar producto</button>}</li>)}</ul>
       <p className="text-xl font-bold">Total: {dinero(comprobante.pedido.total)} · Pagado: {dinero(comprobante.pedido.pagado)} · Saldo: {dinero(comprobante.pedido.saldo)}</p>
-      {puedeCobrar && <form aria-label="Cobrar pedido" className="grid gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); void cobrar() }}>
+      {editable && puedeModificar && <div><button className="min-h-12 rounded-xl border border-red-200 bg-red-50 px-4 font-semibold text-red-800 disabled:opacity-50" disabled={bloqueado || !!anulacion || Number(comprobante.pedido.pagado) > 0} onClick={() => { setAnulacion({}); setMotivoAnulacion('') }}>Anular pedido</button>{Number(comprobante.pedido.pagado) > 0 && <p className="mt-2 text-sm text-slate-600">Este pedido tiene pagos. Primero deben anularse antes de cancelar el pedido.</p>}</div>}
+      {comprobante.pedido.estado === 'ANULADO' && <p role="status" className="rounded-xl bg-red-50 p-4 text-red-800">Pedido anulado. Se conserva en el historial y ya no admite cobros.</p>}
+      {anulacion && <form aria-label="Confirmar cambio del pedido" className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-4" onSubmit={e => { e.preventDefault(); void confirmarAnulacion() }}><h3 className="font-bold">{anulacion.lineaId ? `Quitar ${anulacion.nombre}` : 'Anular el pedido completo'}</h3><p className="text-sm">{anulacion.lineaId ? 'Se recalculará el total. El producto quedará anulado en el historial.' : 'Usa esta opción si el cliente ya no quiere el pedido. Se conserva el historial con el motivo.'}</p><label className="block">Motivo del cambio<input className={campo} required maxLength={200} value={motivoAnulacion} disabled={bloqueado} onChange={e => setMotivoAnulacion(e.target.value)} /></label><div className="flex gap-2"><button className={boton} disabled={bloqueado}>Confirmar {anulacion.lineaId ? 'retiro' : 'anulación'}</button><button type="button" className={secundario} disabled={bloqueado} onClick={() => { setAnulacion(null); setMotivoAnulacion('') }}>Conservar pedido</button></div></form>}
+      {puedeCobrar && !anulacion && <form aria-label="Cobrar pedido" className="grid gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); void cobrar() }}>
         <div className="rounded-xl bg-teal-50 p-4 text-teal-950 sm:col-span-2"><strong>Vas a cobrar el pedido {comprobante.pedido.folio} · {comprobante.pedido.mesa_referencia || comprobante.pedido.cliente_nombre}</strong><p>Total {dinero(comprobante.pedido.total)} · Pagado {dinero(comprobante.pedido.pagado)} · Saldo {dinero(comprobante.pedido.saldo)}</p></div>
         <label>Forma de pago<select required className={campo} disabled={bloqueado} value={metodoId} onChange={(e) => { setMetodoId(e.target.value); setTerminal(''); setVoucher('') }}>{metodos.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}</select></label>
         <label>Monto a cobrar<input className={campo} required type="number" min="0.01" max={comprobante.pedido.saldo} step="0.01" disabled={bloqueado} value={monto} onChange={(e) => setMonto(e.target.value)} /></label>
@@ -144,7 +168,8 @@ export function Caja({ pedidoId, integrado = false, alBloquear, alCambiarPedido 
         {metodo?.requiere_referencia && <label>Número de autorización o referencia<input required className={campo} maxLength={40} disabled={bloqueado} value={voucher} onChange={(e) => setVoucher(e.target.value)} /></label>}
         <button className={boton} disabled={guardando || (!turnoAbierto && !intento) || !metodo}>{intento ? 'Reintentar el mismo pago' : 'Registrar pago'}</button>
       </form>}
-      {!['PAGADO','ANULADO'].includes(comprobante.pedido.estado) && <AccionControl tipo="CORTESIA" pedidoId={comprobante.pedido.id} etiqueta={Number(comprobante.pedido.total)===0?'Finalizar pedido gratuito':'Solicitar cortesía completa'} alGuardar={()=>elegir(comprobante.pedido)} />}
+      {editable && !bloqueado && !anulacion && comprobante.pedido.pedido_detalle.some(l => l.estado === 'ACTIVA') && <div className="space-y-2"><p className="text-sm text-slate-600"><strong>Cortesía = pedido gratis.</strong> Solo para una atención autorizada por gerente o administrador. Si el cliente ya no lo quiere, usa Anular pedido.</p><AccionControl tipo="CORTESIA" pedidoId={comprobante.pedido.id} etiqueta={Number(comprobante.pedido.total)===0?'Finalizar pedido gratuito':'Solicitar cortesía completa'} alGuardar={()=>elegir(comprobante.pedido)} /></div>}
+      {comprobante.pedido.estado === 'PAGADO' && Number(comprobante.pedido.saldo) === 0 && <section className="space-y-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4" aria-label="Ticket y opciones de impresión"><div><h3 className="text-xl font-bold">Venta completada</h3><p>El pago ya está guardado. Puedes imprimir el ticket o continuar sin papel.</p></div><div className="flex flex-wrap gap-3"><button type="button" className={boton} disabled={bloqueado} onClick={() => window.print()}>Imprimir ticket</button><button type="button" className={secundario} disabled={bloqueado} onClick={() => { if (alTerminar) alTerminar(); else { setComprobante(null); setEfectivoTicket(null) } }}>Continuar sin imprimir</button></div><p className="text-sm text-slate-600">Formato para impresora láser, papel Carta o A4. En la ventana de impresión puedes elegir la impresora o guardar como PDF.</p><TicketVenta datos={comprobante} efectivo={efectivoTicket} /></section>}
       <section aria-label="Comprobante" className="rounded-xl border border-slate-200 p-4"><h3 className="text-xl font-bold">Comprobante · Pedido {comprobante.pedido.folio}</h3><p>{comprobante.centro.nombre} · {comprobante.pedido.fecha_operacion.split('-').reverse().join('/')}</p><p>Total: {dinero(comprobante.pedido.total)}</p><ul>{comprobante.pagos.map((p) => <li className="py-2" key={p.id}>{p.metodo_pago.nombre}: {dinero(p.monto)}{p.estado === 'ANULADO' && ' (anulado)'}{p.referencia_pos && ` · Autorización ${p.referencia_pos}`}{p.terminal_pos && ` · Terminal ${p.terminal_pos}`}{p.estado==='APLICADO'&&<AccionControl tipo="ANULAR_PAGO" pedidoId={comprobante.pedido.id} referencia={p.id} etiqueta={`Anular pago de ${dinero(p.monto)}`} alGuardar={()=>elegir(comprobante.pedido)} />}</li>)}</ul><p>Saldo: {dinero(comprobante.pedido.saldo)}</p></section>
     </section>}
     {!pedidoId && <><label className="block">Buscar pendientes por folio, fecha, mesa o cliente<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>

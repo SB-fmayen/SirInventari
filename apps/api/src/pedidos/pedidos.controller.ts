@@ -30,4 +30,9 @@ export class PedidosController {
     if (!motivo) throw new BadRequestException('Escribe el motivo de la anulación.');
     return this.pedidos.anularLinea(centroId, usuario.id, uuid(id), uuid(lineaId), motivo);
   }
+  @Post(':id/anulacion') anularPedido(@CentroActual() centroId: number, @UsuarioActual() usuario: UsuarioSesion, @Param('id') id: string, @Body() cuerpo: unknown) {
+    const motivo = texto(objeto(cuerpo).motivo, 200);
+    if (!motivo) throw new BadRequestException('Escribe por qué el cliente ya no necesita el pedido.');
+    return this.pedidos.anularPedido(centroId, usuario.id, uuid(id), motivo);
+  }
 }

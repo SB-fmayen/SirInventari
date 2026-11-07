@@ -181,4 +181,20 @@ export class PedidosService {
     }));
   }
 
+  anularPedido(centroId: number, usuarioId: number, id: string, motivo: string) {
+    return this.avisar(centroId, this.prisma.$transaction(async tx => {
+      const estado = await this.bloquear(tx, centroId, id);
+      if (estado === 'ANULADO') return this.detalleEn(tx, centroId, id);
+      if (estado === 'PAGADO' || await tx.pago.count({ where: { pedido_id: id, estado: 'APLICADO' } })) {
+        throw new ConflictException('El pedido tiene pagos. Primero solicita su anulación y realiza la devolución correspondiente antes de anular el pedido.');
+      }
+      await tx.$queryRaw`SELECT set_config('app.usuario_id', ${String(usuarioId)}, true)`;
+      await tx.pedido.update({ where: { id }, data: { estado: 'ANULADO', actualizado_en: new Date(), version: { increment: 1 } } });
+      // Conserva productos e importes originales. El motivo completo queda en la auditoría existente.
+      await tx.auditoria.create({ data: { tabla: 'pedido', registro_id: id, accion: 'UPDATE', usuario_id: usuarioId,
+        antes: { estado }, despues: { estado: 'ANULADO', motivo_anulacion: motivo } } });
+      return this.detalleEn(tx, centroId, id);
+    }));
+  }
+
 }

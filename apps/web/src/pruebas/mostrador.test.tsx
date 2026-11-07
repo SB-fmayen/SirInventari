@@ -46,6 +46,55 @@ async function cobrar() {
 }
 
 describe('Venta de mostrador en una sola pantalla', () => {
+  it('permite quitar productos en revisión, recalcula y después anula el pedido con motivo', async () => {
+    await cobrar()
+    const anterior = sesion.api.getMockImplementation()!
+    let actual = comprobante
+    sesion.api.mockImplementation(async (ruta: string, opciones?: RequestInit) => {
+      if (ruta === '/pedidos/pedido-1/lineas/linea-1/anulacion') {
+        actual = { ...actual, pedido: { ...actual.pedido, total: '0.00', saldo: '0.00', pedido_detalle: actual.pedido.pedido_detalle.map(l => ({ ...l, estado: 'ANULADA' })) } }
+        return actual.pedido
+      }
+      if (ruta === '/pedidos/pedido-1/anulacion') { actual = { ...actual, pedido: { ...actual.pedido, estado: 'ANULADO' } }; return actual.pedido }
+      if (ruta === '/caja/pedidos/pedido-1/comprobante') return actual
+      return anterior(ruta, opciones)
+    })
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar Shuko - Americano - Grande' }))
+    expect(screen.queryByRole('button', { name: 'Registrar pago' })).not.toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Motivo del cambio'), 'Cliente cambió de opinión')
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar retiro' }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Quitar Shuko - Americano - Grande' })).not.toBeInTheDocument())
+    expect(screen.getByText('Total: Q 0.00 · Pagado: Q 0.00 · Saldo: Q 0.00')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Anular pedido' }))
+    await userEvent.type(screen.getByLabelText('Motivo del cambio'), 'Cliente cancela la compra')
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar anulación' }))
+    expect(await screen.findByText(/Pedido anulado. Se conserva/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Imprimir ticket' })).not.toBeInTheDocument()
+    const envio = sesion.api.mock.calls.find(([ruta]) => ruta === '/pedidos/pedido-1/anulacion')
+    expect(JSON.parse(envio![1].body)).toEqual({ motivo: 'Cliente cancela la compra' })
+  })
+
+  it('solo imprime por elección después del pago y permite continuar sin imprimir', async () => {
+    const imprimir = vi.spyOn(window, 'print').mockImplementation(() => {})
+    await cobrar()
+    expect(screen.queryByRole('button', { name: 'Imprimir ticket' })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar pago' }))
+    const opciones = await screen.findByRole('region', { name: 'Ticket y opciones de impresión' })
+    expect(imprimir).not.toHaveBeenCalled()
+    const ticket = within(opciones).getByRole('article', { name: 'Ticket de venta' })
+    expect(ticket).toHaveTextContent('Mostrador')
+    expect(ticket).toHaveTextContent('0007')
+    expect(ticket).toHaveTextContent('Shuko - Americano - Grande')
+    expect(ticket).toHaveTextContent('Vuelto de ese pagoQ 10.00')
+    await userEvent.click(screen.getByRole('button', { name: 'Imprimir ticket' }))
+    expect(imprimir).toHaveBeenCalledOnce()
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar sin imprimir' }))
+    expect(screen.getByRole('form', { name: 'Nuevo pedido' })).toBeInTheDocument()
+    expect(document.querySelector('.impresion-ticket')).not.toBeInTheDocument()
+    expect(sesion.api.mock.calls.filter(([ruta]) => ruta === '/caja/pagos')).toHaveLength(1)
+    imprimir.mockRestore()
+  })
+
   it('guarda para llevar, cobra y permite iniciar la siguiente venta sin cambiar de módulo', async () => {
     await cobrar()
     const envio = sesion.api.mock.calls.find(([ruta, opciones]) => ruta === '/pedidos' && opciones?.method === 'POST')

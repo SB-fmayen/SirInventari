@@ -58,7 +58,7 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   const [aviso, setAviso] = useState('')
   const [anulando, setAnulando] = useState<string | null>(null)
   const [motivo, setMotivo] = useState('')
-  useCambiosSinGuardar(!!borrador)
+  useCambiosSinGuardar(!!borrador || !!anulando)
   useEffect(() => {
     if (borrador && !agregando) {
       try { localStorage.setItem(claveBorrador, JSON.stringify(borrador)) } catch { queueMicrotask(()=>setAviso('No se pudo conservar el borrador en este dispositivo. No salgas antes de guardar.')) }
@@ -125,9 +125,10 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
     if (!seleccionado || !anulando) return
     setGuardando(true); setError(''); setAviso('')
     try {
-      const p = await api<Pedido>(`/pedidos/${seleccionado.id}/lineas/${anulando}/anulacion`, { method: 'POST', body: JSON.stringify({ motivo }) })
+      const ruta = anulando === 'PEDIDO' ? `/pedidos/${seleccionado.id}/anulacion` : `/pedidos/${seleccionado.id}/lineas/${anulando}/anulacion`
+      const p = await api<Pedido>(ruta, { method: 'POST', body: JSON.stringify({ motivo }) })
       setSeleccionado(p); setPedidos((lista) => lista.map((actual) => actual.id === p.id ? p : actual)); setAnulando(null); setMotivo('')
-      setAviso('Producto anulado con su motivo.')
+      setAviso(anulando === 'PEDIDO' ? 'Pedido anulado con su motivo.' : 'Producto anulado con su motivo.')
     } catch (e) { setError(mensaje(e)) }
     finally { setGuardando(false) }
   }
@@ -169,17 +170,18 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
     {seleccionado && !borrador && !cobro && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-2xl font-bold">Pedido {seleccionado.folio}</h2><p>{seleccionado.tipo_venta.nombre} · {seleccionado.mesa_referencia || seleccionado.cliente_nombre} · {estados[seleccionado.estado]}</p><p>Tomado por {seleccionado.usuario.nombre} a las {hora(seleccionado.creado_en)}</p></div>{editable && <button className={boton} disabled={guardando} onClick={() => comenzar(true)}>Agregar productos</button>}</div>
       <ul className="space-y-3">{seleccionado.pedido_detalle.map((l) => <li className="rounded-xl bg-slate-50 p-3" key={l.id}>
-        <div className="flex flex-wrap items-center justify-between gap-2"><strong>{l.cantidad} × {l.producto.nombre} · {dinero(l.importe)}</strong>{l.estado === 'ACTIVA' && editable && <button className={secundario} disabled={guardando} aria-label={`Anular ${l.producto.nombre}`} onClick={() => { setAnulando(l.id); setMotivo('') }}>Anular producto</button>}</div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><strong>{l.cantidad} × {l.producto.nombre} · {dinero(l.importe)}</strong>{l.estado === 'ACTIVA' && editable && <button className={secundario} disabled={guardando} aria-label={`Anular ${l.producto.nombre}`} onClick={() => { setAnulando(l.id); setMotivo('') }}>Quitar producto</button>}</div>
         {l.notas && <p>Notas: {l.notas}</p>}<p className="text-sm text-slate-600">Agregado por {l.usuario_pedido_detalle_agregado_porTousuario.nombre} a las {hora(l.agregado_en)}</p>{l.estado === 'ANULADA' && <p className="text-red-700">Anulado: {l.motivo_anulacion}</p>}
       </li>)}</ul>
       {anulando && <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); void anular() }}><label>Motivo de la anulación<input className={campo} required maxLength={200} disabled={guardando} value={motivo} onChange={(e) => setMotivo(e.target.value)} /></label><button className={boton} disabled={guardando}>Confirmar anulación</button><button type="button" className={secundario} disabled={guardando} onClick={() => setAnulando(null)}>Cancelar anulación</button></form>}
       {seleccionado.estado_cocina && <p className="font-semibold text-teal-800">Cocina: {nombresCocina[seleccionado.estado_cocina]}</p>}
       <p className="text-xl font-bold">Total: {dinero(seleccionado.total)} · Pagado: {dinero(seleccionado.pagado)} · Saldo: {dinero(seleccionado.saldo)}</p>
-      {puedeCobrar && <button className={boton} disabled={guardando} onClick={() => setCobro({ id: seleccionado.id })}>{editable ? 'Cobrar este pedido' : 'Ver comprobante'}</button>}
+      <div className="flex flex-wrap gap-3">{puedeCobrar && <button className={boton} disabled={guardando || !!anulando} onClick={() => setCobro({ id: seleccionado.id })}>{editable ? 'Cobrar este pedido' : 'Ver comprobante'}</button>}{editable && <button className="min-h-12 rounded-xl border border-red-200 bg-red-50 px-4 font-semibold text-red-800 disabled:opacity-50" disabled={guardando || !!anulando || Number(seleccionado.pagado) > 0} onClick={() => { setAnulando('PEDIDO'); setMotivo('') }}>Anular pedido</button>}</div>
+      {editable && Number(seleccionado.pagado) > 0 && <p>Primero deben anularse los pagos antes de cancelar el pedido.</p>}
     </section>}
     {cobro && puedeCobrar && <section className="space-y-4" aria-label="Cobro en mostrador">
       {puedeTomarPedidos && <button className={secundario} disabled={cobroBloqueado} onClick={() => { setCobro(null); void actualizar() }}>{cobro.id ? 'Volver al pedido' : 'Ver pedidos guardados'}</button>}
-      <Caja key={cobro.id ?? 'pendientes'} pedidoId={cobro.id} integrado alBloquear={setCobroBloqueado} alCambiarPedido={p => {
+      <Caja key={cobro.id ?? 'pendientes'} pedidoId={cobro.id} integrado alBloquear={setCobroBloqueado} alTerminar={puedeTomarPedidos ? () => comenzar(false) : undefined} alCambiarPedido={p => {
         setPedidos(lista => lista.map(actual => actual.id === p.id ? { ...actual, estado: p.estado, total: p.total, pagado: p.pagado, saldo: p.saldo } : actual))
         setSeleccionado(actual => actual?.id === p.id ? { ...actual, estado: p.estado, total: p.total, pagado: p.pagado, saldo: p.saldo } : actual)
       }} />

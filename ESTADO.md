@@ -6,6 +6,16 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-07 (hora de Guatemala) · Codex
 
+## Corrección de revisión y ticket láser
+
+- Implementado lo pedido: quitar productos también en la revisión integrada de Caja y anular pedido completo con motivo. No borra ventas ni líneas; recalcula al quitar y conserva importes originales al anular. Endpoint `POST /pedidos/:id/anulacion` con bloqueo del pedido, restricción por centro/rol/permiso anular, rechazo de pagos aplicados y auditoría de motivo/autor. Reintentos seguros; no hay cambios de esquema, triggers ni funciones.
+- Cortesía explicada en pantalla como pedido gratis autorizado por gerente/ADMIN, distinta de anulación. Autorización general de todas las anulaciones de Tarea 15 sigue pendiente; la cancelación sin pagos usa los permisos actuales de Pedidos/anular.
+- Ticket nuevo al completar el pago: diseño en blanco/negro para láser Carta/A4, productos y pagos activos, precios/importes, descuentos, folio, centro, fecha/hora Guatemala, total/saldo y referencias POS. Imprimir abre diálogo del navegador únicamente al pulsarlo; Continuar sin imprimir conserva pago y sigue el flujo. Historial permite reimpresión; no se inventa efectivo recibido/vuelto histórico. La impresión térmica/sin internet sigue pendiente de Tarea 19.
+- Verificación: 69 web + 14 unitarias API + 86 integración = 169 pruebas correctas; compilaciones y lint correctos con avisos anteriores. Nuevas pruebas cubren motivos/auditoría, pagos parciales/completos que bloquean anulación, centro/permisos, carrera cobro-anulación, quitar/recalcular, ticket opcional y continuar sin duplicar el pago. Integración en bases aisladas.
+- API en modo watch quedó sin poder reiniciar durante el build de comprobación. Se detuvo solo su watcher verificado (24348) y se inició el compilado actual, PID 19144, con logs en `logs/api-ticket*.log`. `/salud` confirma API/base correctas; Vite sirve el ticket actualizado. API/app quedan disponibles. Sin ventas de prueba en desarrollo y sin despliegue.
+- Pendiente validar visualmente y físicamente el ticket con el usuario: no se afirma impresión real ni revisión visual completada. Guía actualizada en `docs/flujo-mostrador.md`.
+- Archivos: `apps/api/src/pedidos/pedidos.controller.ts`, `pedidos.service.ts`, `apps/api/test/caja.e2e-spec.ts`; `apps/web/src/paginas/Pedidos.tsx`, `Caja.tsx`, nuevo `componentes/TicketVenta.tsx`, `index.css`, `pruebas/mostrador.test.tsx`; `docs/flujo-mostrador.md` y `ESTADO.md`.
+
 ## Flujo de mostrador · Ventas unifica Pedidos y Caja
 
 - A solicitud expresa del usuario, operación enfocada en una PC de mostrador. Menú único Ventas, con categorías visibles, búsqueda por nombre/código sin tildes, tamaños/precios explícitos y resumen lateral con importes, cantidades y notas. Se retiran los filtros superpuestos de familias/extras y la vista de mesas de la operación principal.
