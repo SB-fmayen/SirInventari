@@ -23,7 +23,14 @@ const secundario = 'min-h-12 rounded-xl bg-slate-100 px-4 font-semibold text-sla
 const campo = 'min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-base'
 const mensaje = (e: unknown) => e instanceof ErrorApi ? e.message : 'No se pudo consultar Caja. Intenta de nuevo.'
 
-export function Caja() {
+interface OpcionesCaja {
+  pedidoId?: string
+  integrado?: boolean
+  alBloquear?: (bloqueado: boolean) => void
+  alCambiarPedido?: (pedido: Pedido) => void
+}
+
+export function Caja({ pedidoId, integrado = false, alBloquear, alCambiarPedido }: OpcionesCaja = {}) {
   const { api, centro } = useSesion()
   const [pendientes, setPendientes] = useState<Pedido[]>([])
   const [metodos, setMetodos] = useState<Metodo[]>([])
@@ -38,12 +45,24 @@ export function Caja() {
   const [vuelto, setVuelto] = useState<string | null>(null)
   const [intento, setIntento] = useState<Pago | null>(null)
   const [cargando, setCargando] = useState(true)
-  const [guardando, setGuardando] = useState(false)
+  const [guardando, setGuardando] = useState(!!pedidoId)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
   const [fechaHistorial, setFechaHistorial] = useState('')
   const [historial, setHistorial] = useState<Pedido[] | null>(null)
   useCambiosSinGuardar(intento !== null || !!terminal || !!voucher)
+  useEffect(() => {
+    alBloquear?.(guardando || intento !== null || !!terminal || !!voucher)
+  }, [guardando, intento, terminal, voucher, alBloquear])
+  useEffect(() => {
+    if (!pedidoId) return
+    let vigente = true
+    api<Comprobante>(`/caja/pedidos/${pedidoId}/comprobante`)
+      .then(c => { if (vigente) { setComprobante(c); setMonto(c.pedido.saldo); setRecibido(c.pedido.saldo) } })
+      .catch((e: unknown) => { if (vigente) setError(mensaje(e)) })
+      .finally(() => { if (vigente) setGuardando(false) })
+    return () => { vigente = false }
+  }, [api, pedidoId])
 
   const consultar = useCallback(async () => {
     const [ps, ms, ts] = await Promise.all([api<Pedido[]>('/caja/pendientes'), api<Metodo[]>('/caja/metodos'), api<{ estado: string }[]>('/turnos')])
@@ -73,6 +92,7 @@ export function Caja() {
     try {
       const c = await api<Comprobante>(`/caja/pedidos/${p.id}/comprobante`)
       setComprobante(c); setMonto(c.pedido.saldo); setRecibido(c.pedido.saldo); setTerminal(''); setVoucher(''); setIntento(null)
+      alCambiarPedido?.(c.pedido)
     } catch (e) { setError(mensaje(e)) }
     finally { setGuardando(false) }
   }
@@ -87,6 +107,7 @@ export function Caja() {
     try {
       const respuesta = await api<{ vuelto: string; comprobante: Comprobante }>('/caja/pagos', { method: 'POST', body: JSON.stringify(datos) })
       setComprobante(respuesta.comprobante); setVuelto(respuesta.vuelto); setIntento(null)
+      alCambiarPedido?.(respuesta.comprobante.pedido)
       setMonto(respuesta.comprobante.pedido.saldo); setRecibido(respuesta.comprobante.pedido.saldo); setTerminal(''); setVoucher('')
       setAviso(respuesta.comprobante.pedido.estado === 'PAGADO' ? 'Pago guardado. Pedido pagado.' : 'Pago parcial guardado. Puedes cobrar el saldo con otra forma de pago.')
       await actualizar()
@@ -100,13 +121,13 @@ export function Caja() {
   const bloqueado = guardando || intento !== null
 
   return <div className="mx-auto max-w-6xl space-y-5">
-    <div className="flex flex-wrap justify-between gap-3"><div><h1 className="text-3xl font-bold">Caja</h1><p>{centro?.nombre}</p></div><button className={secundario} disabled={guardando} onClick={() => void actualizar()}>Actualizar Caja</button></div>
+    <div className="flex flex-wrap justify-between gap-3"><div>{integrado ? <h2 className="text-2xl font-bold">{pedidoId ? 'Cobrar pedido' : 'Pendientes y comprobantes'}</h2> : <h1 className="text-3xl font-bold">Caja</h1>}<p>{centro?.nombre}</p></div><button className={secundario} disabled={guardando} onClick={() => void actualizar()}>Actualizar Caja</button></div>
     <p className={conectado ? 'text-teal-800' : 'text-amber-800'}>{conectado ? 'Cambios en tiempo real conectados.' : 'Sin conexión en tiempo real. Reconectando… Puedes actualizar Caja.'}</p>
     {!cargando && !turnoAbierto && <p className="rounded-xl bg-amber-50 p-4 text-amber-900">Abre un turno de caja en este centro antes de cobrar.</p>}
     {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}
     {aviso && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-emerald-800">{aviso}{vuelto !== null && ` Vuelto: ${dinero(vuelto)}.`}</p>}
     {intento && !guardando && <p className="rounded-xl bg-amber-50 p-4 text-amber-900">No se confirmó el resultado del cobro. Reintenta el mismo pago para verificarlo sin duplicarlo. Conserva esta pantalla abierta.</p>}
-    <details className="rounded-xl border bg-white p-4"><summary className="min-h-10 cursor-pointer font-semibold">Consultar comprobantes anteriores</summary><form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={e=>{e.preventDefault();void api<Pedido[]>(`/caja/historial?fecha=${encodeURIComponent(fechaHistorial)}`).then(setHistorial).catch((e:unknown)=>setError(mensaje(e)))}}><label>Fecha del comprobante<input required className={campo} type="date" value={fechaHistorial} onChange={e=>setFechaHistorial(e.target.value)} /></label><button className={secundario} disabled={bloqueado}>Consultar comprobantes</button></form><ul className="mt-3">{historial?.filter(p=>`${p.folio} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es'))).map(p=><li key={p.id}><button className={`${secundario} my-1`} disabled={bloqueado} onClick={()=>void elegir(p)}>Comprobante {p.folio} · {p.fecha_operacion} · {p.estado} · {dinero(p.total)}</button></li>)}</ul>{historial?.length===0&&<p>No hay comprobantes en esa fecha.</p>}</details>
+    {!pedidoId && <details className="rounded-xl border bg-white p-4"><summary className="min-h-10 cursor-pointer font-semibold">Consultar comprobantes anteriores</summary><form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={e=>{e.preventDefault();void api<Pedido[]>(`/caja/historial?fecha=${encodeURIComponent(fechaHistorial)}`).then(setHistorial).catch((e:unknown)=>setError(mensaje(e)))}}><label>Fecha del comprobante<input required className={campo} type="date" value={fechaHistorial} onChange={e=>setFechaHistorial(e.target.value)} /></label><button className={secundario} disabled={bloqueado}>Consultar comprobantes</button></form><ul className="mt-3">{historial?.filter(p=>`${p.folio} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es'))).map(p=><li key={p.id}><button className={`${secundario} my-1`} disabled={bloqueado} onClick={()=>void elegir(p)}>Comprobante {p.folio} · {p.fecha_operacion} · {p.estado} · {dinero(p.total)}</button></li>)}</ul>{historial?.length===0&&<p>No hay comprobantes en esa fecha.</p>}</details>}
     {comprobante && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
       <h2 className="text-2xl font-bold">Pedido {comprobante.pedido.folio} · {comprobante.pedido.fecha_operacion.split('-').reverse().join('/')}</h2>
       <p>{comprobante.pedido.mesa_referencia || comprobante.pedido.cliente_nombre}</p>
@@ -126,8 +147,8 @@ export function Caja() {
       {!['PAGADO','ANULADO'].includes(comprobante.pedido.estado) && <AccionControl tipo="CORTESIA" pedidoId={comprobante.pedido.id} etiqueta={Number(comprobante.pedido.total)===0?'Finalizar pedido gratuito':'Solicitar cortesía completa'} alGuardar={()=>elegir(comprobante.pedido)} />}
       <section aria-label="Comprobante" className="rounded-xl border border-slate-200 p-4"><h3 className="text-xl font-bold">Comprobante · Pedido {comprobante.pedido.folio}</h3><p>{comprobante.centro.nombre} · {comprobante.pedido.fecha_operacion.split('-').reverse().join('/')}</p><p>Total: {dinero(comprobante.pedido.total)}</p><ul>{comprobante.pagos.map((p) => <li className="py-2" key={p.id}>{p.metodo_pago.nombre}: {dinero(p.monto)}{p.estado === 'ANULADO' && ' (anulado)'}{p.referencia_pos && ` · Autorización ${p.referencia_pos}`}{p.terminal_pos && ` · Terminal ${p.terminal_pos}`}{p.estado==='APLICADO'&&<AccionControl tipo="ANULAR_PAGO" pedidoId={comprobante.pedido.id} referencia={p.id} etiqueta={`Anular pago de ${dinero(p.monto)}`} alGuardar={()=>elegir(comprobante.pedido)} />}</li>)}</ul><p>Saldo: {dinero(comprobante.pedido.saldo)}</p></section>
     </section>}
-    <label className="block">Buscar pendientes por folio, fecha, mesa o cliente<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
+    {!pedidoId && <><label className="block">Buscar pendientes por folio, fecha, mesa o cliente<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
     {cargando ? <p>Cargando Caja…</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibles.map((p) => <button className="min-h-28 rounded-2xl border border-slate-200 bg-white p-4 text-left disabled:opacity-50" disabled={bloqueado} key={p.id} aria-label={`Cobrar pedido ${p.folio}`} onClick={() => void elegir(p)}><span className="block text-xl font-bold">Pedido {p.folio} · Saldo {dinero(p.saldo)}</span><span className="block">{p.fecha_operacion.split('-').reverse().join('/')} · {p.mesa_referencia || p.cliente_nombre}</span>{p.estado_cocina && <span className="mt-2 inline-block rounded-lg bg-teal-50 px-2 py-1 font-semibold text-teal-800">Cocina: {nombresCocina[p.estado_cocina]}</span>}</button>)}</div>}
-    {!cargando && !visibles.length && <p>No hay pedidos pendientes con esos filtros.</p>}
+    {!cargando && !visibles.length && <p>No hay pedidos pendientes con esos filtros.</p>}</>}
   </div>
 }

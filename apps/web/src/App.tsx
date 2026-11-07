@@ -14,7 +14,6 @@ import { Usuarios } from '@/paginas/Usuarios'
 import { Catalogo } from '@/paginas/Catalogo'
 import { Turnos } from '@/paginas/Turnos'
 import { Pedidos } from '@/paginas/Pedidos'
-import { Caja } from '@/paginas/Caja'
 import { Reportes } from '@/paginas/Reportes'
 import { Cocina } from '@/paginas/Cocina'
 import { ProteccionNavegacion } from '@/componentes/ProteccionNavegacion'
@@ -49,6 +48,7 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
   const { salir, centro, cambiarCentro } = useSesion()
   const { estado, fechaOperacion, revisarAhora } = useSaludApi()
   const misSecciones = seccionesDe(usuario.rol).filter(s => !usuario.permisos?.some(p => p.modulo === s.ruta.slice(1) && p.accion === 'ver' && !p.permitido))
+  const seccionesMenu = misSecciones.filter(s => s.ruta !== '/caja' || !misSecciones.some(p => p.ruta === '/pedidos')).map(s => s.ruta === '/caja' ? { ...s, nombre: 'Ventas', descripcion: 'Cobrar pedidos y consultar comprobantes' } : s)
 
   return (
     <div className="aplicacion flex min-h-svh flex-col bg-slate-50">
@@ -94,7 +94,7 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
         </div>
         <nav aria-label="Menú principal" className="menu-aplicacion flex gap-2 overflow-x-auto px-4 pb-3">
           <EnlaceMenu ruta="/" nombre="Inicio" icono={House} fin />
-          {misSecciones.map((s) => (
+          {seccionesMenu.map((s) => (
             <EnlaceMenu key={s.ruta} ruta={s.ruta} nombre={s.nombre} icono={s.icono} />
           ))}
         </nav>
@@ -102,12 +102,12 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
 
       <main id="contenido" tabIndex={-1} className="contenido-aplicacion flex-1 p-4 sm:p-6">
         <Routes>
-          <Route path="/" element={<Inicio secciones={misSecciones} />} />
+          <Route path="/" element={<Inicio secciones={seccionesMenu} />} />
           {SECCIONES.map((s) => (
             <Route
               key={s.ruta}
               path={s.ruta}
-              element={!puedeEntrar(usuario.rol, s) || !misSecciones.includes(s) ? <SinPermiso /> : <div key={`${centro?.id}-${s.ruta}`}>{s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : s.ruta === '/pedidos' ? <Pedidos /> : s.ruta === '/caja' ? <Caja /> : s.ruta === '/reportes' ? <Reportes /> : s.ruta === '/cocina' ? <Cocina /> : <EnConstruccion seccion={s} />}</div>}
+              element={!puedeEntrar(usuario.rol, s) || !misSecciones.includes(s) ? <SinPermiso /> : <div key={`${centro?.id}-${s.ruta}`}>{s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : s.ruta === '/pedidos' ? <Pedidos /> : s.ruta === '/caja' ? <Pedidos iniciarCobros /> : s.ruta === '/reportes' ? <Reportes /> : s.ruta === '/cocina' ? <Cocina /> : <EnConstruccion seccion={s} />}</div>}
             />
           ))}
           <Route path="*" element={<NoEncontrada />} />

@@ -17,8 +17,8 @@ export interface Seccion {
 export const SECCIONES: Seccion[] = [
   {
     ruta: '/pedidos',
-    nombre: 'Pedidos',
-    descripcion: 'Tomar pedidos y agregar productos',
+    nombre: 'Ventas',
+    descripcion: 'Tomar pedidos y cobrar desde el mostrador',
     icono: ClipboardList,
     color: 'bg-teal-600',
     tarea: 'Tarea 8',

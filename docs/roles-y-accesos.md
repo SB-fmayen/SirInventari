@@ -2,11 +2,13 @@
 
 Verificado contra `apps/web/src/secciones.ts` y los controladores de la API el 2026-11-02. La misma tabla se puede consultar en **Usuarios → Ver accesos de cada rol**.
 
+Actualización del 2026-11-07: el menú reúne Pedidos y Caja en **Ventas** para una PC de mostrador. La tabla distingue las acciones de tomar pedidos y cobrar; los roles y controles de la API se conservan. Ver `docs/flujo-mostrador.md`.
+
 | Módulo | Administrador | Gerente | Cajero | Mesero | Cocina |
 |---|---|---|---|---|---|
-| Pedidos | Sí | Sí | Sí | Sí | — |
+| Ventas: pedidos | Sí | Sí | Sí | Sí | — |
 | Cocina | Sí | Sí | — | — | Sí |
-| Caja | Sí | Sí | Sí | — | — |
+| Ventas: cobros | Sí | Sí | Sí | — | — |
 | Turnos | Sí | Sí | Sí | — | — |
 | Catálogo | Sí | Sí | — | — | — |
 | Reportes | Sí | Sí | — | — | — |

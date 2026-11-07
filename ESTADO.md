@@ -6,6 +6,16 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-07 (hora de Guatemala) · Codex
 
+## Flujo de mostrador · Ventas unifica Pedidos y Caja
+
+- A solicitud expresa del usuario, operación enfocada en una PC de mostrador. Menú único Ventas, con categorías visibles, búsqueda por nombre/código sin tildes, tamaños/precios explícitos y resumen lateral con importes, cantidades y notas. Se retiran los filtros superpuestos de familias/extras y la vista de mesas de la operación principal.
+- Nuevo pedido inicia Para llevar; Mesa se conserva para históricos/borradores y compatibilidad con catálogos antiguos. Nombre opcional con referencia Cliente de mostrador. Guardar y cobrar abre directamente el cobro del pedido confirmado dentro de Ventas; se conserva guardar pendiente, comprobante y siguiente venta. Pendientes/historial están en la misma pantalla; `/caja` es un acceso compatible, sin entrada separada en el menú.
+- Conservados roles, restricciones individuales y permisos de API. MESERO no accede a cobros. Usuario con acceso solo a Caja conserva Ventas sin consultar Pedidos. Resultado incierto bloquea cambiar de pedido y reintenta el mismo UUID; errores de guardado conservan borrador y no abren cobros.
+- Verificado: 67 pruebas web correctas (8 nuevas del flujo), compilación/lint correctos, 5 avisos web previos y tamaño de paquete. No se repitieron las pruebas API ya verificadas en esta fecha: API/SQL no cambian. API/base sanas en `/salud`; Vite entrega HTTP 200 del módulo actualizado. No se crearon ventas de prueba en la base local.
+- Inspección visual pendiente: control de Chrome detenido por no poder verificar la URL con suficiente confianza; no se afirma revisión visual completada. API/app siguen iniciadas para probar con el usuario. Despliegue continúa pospuesto.
+- Archivos: `apps/web/src/App.tsx`, `secciones.ts`, `index.css`, `paginas/Pedidos.tsx`, `paginas/Caja.tsx`, `paginas/Inicio.tsx`, `componentes/PermisosRoles.tsx`, `pruebas/app.test.tsx`, nueva `pruebas/mostrador.test.tsx`; `docs/flujo-mostrador.md`, `docs/roles-y-accesos.md`, `docs/plan.md` y `ESTADO.md`.
+- Siguiente: validar Ventas con el usuario siguiendo `docs/flujo-mostrador.md`, corregir sus observaciones y continuar con los demás módulos. Este cambio no cierra R2 ni las fases futuras.
+
 ## Retoma y validación del estado · Despliegue pospuesto
 
 - Arranque funcional solicitado el 2026-11-07: base, API en http://localhost:3000 y app en http://localhost:5173 iniciadas. `/salud` confirma API/base correctas y fecha de Guatemala; app devuelve HTTP 200, sin errores en los logs de arranque. API/app en segundo plano con logs privados en `logs/*-funcional*.log`. Pendiente probar pantallas con la sesión real del usuario; no se declara esa validación hecha. Sin cambios de código ni despliegue.

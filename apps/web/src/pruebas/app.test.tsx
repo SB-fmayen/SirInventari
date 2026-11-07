@@ -209,11 +209,11 @@ describe('Login (Tarea 4)', () => {
 })
 
 describe('App con sesión (Tarea 3)', () => {
-  it('muestra el menú con las 6 secciones en español', async () => {
+  it('muestra Ventas unificada y los demás módulos en español', async () => {
     simularApi({ salud: 'sin-red' })
     abrir()
     const menu = await screen.findByRole('navigation', { name: 'Menú principal' })
-    for (const nombre of ['Pedidos', 'Cocina', 'Caja', 'Turnos', 'Catálogo', 'Reportes']) {
+    for (const nombre of ['Ventas', 'Cocina', 'Turnos', 'Catálogo', 'Reportes']) {
       expect(menu).toHaveTextContent(nombre)
     }
   })
@@ -240,8 +240,8 @@ describe('App con sesión (Tarea 3)', () => {
   it('cada sección muestra su pantalla', async () => {
     simularApi({ salud: 'sin-red' })
     abrir('/caja')
-    expect(await screen.findByRole('heading', { name: 'Caja' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Caja' })).toHaveAttribute('aria-current', 'page')
+    expect(await screen.findByRole('heading', { name: 'Ventas' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Caja' })).not.toBeInTheDocument(); expect(screen.getByRole('heading', { name: 'Pendientes y comprobantes' })).toBeInTheDocument()
   })
 
   it('una dirección que no existe muestra "Página no encontrada"', async () => {
@@ -574,11 +574,11 @@ describe('Permisos por rol y centro (Tarea 5)', () => {
     expect(screen.getByLabelText('Nombre')).toHaveValue('')
   })
 
-  it('un MESERO solo ve Pedidos', async () => {
+  it('un MESERO solo ve Ventas, sin acceso a cobros', async () => {
     simularApi({ salud: 'sin-red', sesion: conRol('MESERO') })
     abrir()
     const menu = await textoMenu()
-    expect(menu).toContain('Pedidos')
+    expect(menu).toContain('Ventas')
     for (const otra of ['Cocina', 'Caja', 'Turnos', 'Catálogo', 'Reportes', 'Usuarios']) {
       expect(menu).not.toContain(otra)
     }
@@ -591,7 +591,7 @@ describe('Permisos por rol y centro (Tarea 5)', () => {
     expect(screen.queryByRole('heading', { name: 'Caja' })).not.toBeInTheDocument()
   })
 
-  it('COCINA solo ve Cocina y CAJERO ve Pedidos, Caja y Turnos', async () => {
+  it('COCINA solo ve Cocina y CAJERO ve Ventas y Turnos', async () => {
     simularApi({ salud: 'sin-red', sesion: conRol('COCINA') })
     const { unmount } = abrir()
     expect((await textoMenu()).replace('Inicio', '')).toBe('Cocina')
@@ -599,14 +599,14 @@ describe('Permisos por rol y centro (Tarea 5)', () => {
 
     simularApi({ salud: 'sin-red', sesion: conRol('CAJERO') })
     abrir()
-    expect((await textoMenu()).replace('Inicio', '')).toBe('PedidosCajaTurnos')
+    expect((await textoMenu()).replace('Inicio', '')).toBe('VentasTurnos')
   })
 
   it('el GERENTE ve todo menos Usuarios', async () => {
     simularApi({ salud: 'sin-red', sesion: conRol('GERENTE') })
     abrir('/usuarios')
     const menu = await textoMenu()
-    for (const s of ['Pedidos', 'Cocina', 'Caja', 'Turnos', 'Catálogo', 'Reportes']) expect(menu).toContain(s)
+    for (const s of ['Ventas', 'Cocina', 'Turnos', 'Catálogo', 'Reportes']) expect(menu).toContain(s)
     expect(menu).not.toContain('Usuarios')
     expect(screen.getByRole('heading', { name: 'No tienes permiso' })).toBeInTheDocument()
   })

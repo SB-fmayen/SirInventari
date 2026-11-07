@@ -12,9 +12,9 @@ export function PermisosRoles() {
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Acceso de los cinco roles a cada módulo</caption>
         <thead><tr><th scope="col" className="p-3">Módulo</th>{roles.map((r) => <th scope="col" className="p-3" key={r}>{NOMBRE_ROL[r]}</th>)}</tr></thead>
-        <tbody>{SECCIONES.map((s) => <tr className="border-t border-slate-100" key={s.ruta}><th scope="row" className="p-3 font-medium">{s.nombre}</th>{roles.map((r) => <td className={`p-3 ${s.roles.includes(r) ? 'font-semibold text-teal-800' : 'text-slate-500'}`} key={r}>{s.roles.includes(r) ? 'Sí' : 'Sin acceso'}</td>)}</tr>)}</tbody>
+        <tbody>{SECCIONES.map((s) => <tr className="border-t border-slate-100" key={s.ruta}><th scope="row" className="p-3 font-medium">{s.ruta === '/pedidos' ? 'Ventas: pedidos' : s.ruta === '/caja' ? 'Ventas: cobros' : s.nombre}</th>{roles.map((r) => <td className={`p-3 ${s.roles.includes(r) ? 'font-semibold text-teal-800' : 'text-slate-500'}`} key={r}>{s.roles.includes(r) ? 'Sí' : 'Sin acceso'}</td>)}</tr>)}</tbody>
       </table>
     </div>
-    <p className="mt-4 text-sm text-slate-600">Pedidos permite tomar pedidos, agregar productos y anular líneas con motivo. Caja registra cobros y comprobantes; Turnos permite abrir, cerrar y consultar turnos. Cocina cambia la preparación sin modificar los cobros. Catálogo permite editar y desactivar productos y categorías. Reportes permite consultar ventas, historial y descargar CSV. Solo el administrador gestiona usuarios, roles y centros asignados.</p>
+    <p className="mt-4 text-sm text-slate-600">Ventas reúne pedidos y cobros en una pantalla de mostrador. El mesero puede tomar pedidos; administrador, gerente y cajero también pueden cobrar. Turnos permite abrir, cerrar y consultar turnos. Cocina cambia la preparación sin modificar los cobros. Catálogo permite editar y desactivar productos y categorías. Reportes permite consultar ventas, historial y descargar CSV. Solo el administrador gestiona usuarios, roles y centros asignados.</p>
   </details>
 }
