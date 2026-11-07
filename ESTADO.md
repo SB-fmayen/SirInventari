@@ -8,6 +8,7 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Retoma y validación del estado · Despliegue pospuesto
 
+- Arranque funcional solicitado el 2026-11-07: base, API en http://localhost:3000 y app en http://localhost:5173 iniciadas. `/salud` confirma API/base correctas y fecha de Guatemala; app devuelve HTTP 200, sin errores en los logs de arranque. API/app en segundo plano con logs privados en `logs/*-funcional*.log`. Pendiente probar pantallas con la sesión real del usuario; no se declara esa validación hecha. Sin cambios de código ni despliegue.
 - El usuario pide validar primero el proyecto; el despliegue queda pospuesto por instrucción expresa. No se crearon servicios ni se habilitó publicación.
 - Revisados plan, estado, guías de mejoras/seguridad y últimos commits. Sin cambios de código pendientes; se conservan fuera de Git `REVISION.md` y `Modo relevo Claude Code y Codex.pdf`.
 - Verificación actual: 14 pruebas unitarias API, 59 web y 83 de integración correctas (156 en total). Compilación y lint de ambas aplicaciones correctos; persisten 5 avisos web, tamaño del paquete (612 kB) y aviso de consultas concurrentes de pg. No se repitió la auditoría de dependencias: sus cifras anteriores son históricas.
