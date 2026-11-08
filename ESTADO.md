@@ -6,6 +6,13 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-08 (hora de Guatemala) · Codex
 
+## Retoma local · 2026-11-08
+
+- A solicitud del usuario: revisados estado, plan y últimos commits; resumen del trabajo del 7 de noviembre preparado.
+- Iniciados Docker Desktop y contenedor existente `sirinventari-db` (sano), API compilada (PID 33456) y Vite (PID 38560), en segundo plano. App disponible en http://localhost:5173 y API en http://localhost:3000.
+- Verificado: `/salud` responde API/base correctas, fecha 2026-11-08 y America/Guatemala; web HTTP 200 con título SirInventari; logs de error de arranque vacíos. Comprobación de base de solo lectura: 3 usuarios, 154 productos y 5 pedidos. No se modificaron datos comerciales ni código.
+- Pendiente validar con el usuario Ventas, Catálogo y recibo físico de 80 mm. Despliegue sigue pospuesto. No se repitieron pruebas automáticas por tratarse solo de un arranque. Logs privados en `logs/*-retoma-20261108-124738*.log`.
+- Archivo cambiado: `ESTADO.md`. Se conservan los dos archivos locales sin seguimiento.
 ## Cierre solicitado · Retomar mañana
 
 - Apagados API compilada (19144), Vite de SirInventari (28924) y su lanzador npm (25836), contenedor `sirinventari-db` y Docker Desktop. Los tres procesos ya no están activos; puertos 3000, 5432 y 5555 cerrados. Se conservan volumen, ventas, catálogo, usuarios, borradores y respaldos.
