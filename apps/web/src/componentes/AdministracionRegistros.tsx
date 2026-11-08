@@ -9,11 +9,15 @@ export function EliminarRegistro({
   id,
   nombre,
   alGuardar,
+  etiqueta,
+  deshabilitado = false,
 }: {
   recurso: string
   id: number
   nombre: string
   alGuardar: () => Promise<void>
+  etiqueta?: string
+  deshabilitado?: boolean
 }) {
   const { api, estado } = useSesion()
   const [error, setError] = useState('')
@@ -23,12 +27,13 @@ export function EliminarRegistro({
     <span className="inline-block">
       <button
         type="button"
-        disabled={ocupado}
+        disabled={ocupado || deshabilitado}
+        title={`Eliminar ${nombre}`}
         className="min-h-12 rounded-xl border border-red-200 px-3 text-red-800"
         onClick={() => {
           if (
             !window.confirm(
-              `¿Eliminar ${nombre} de SirInventari? Solo se permite si no tiene historial. La cuenta de Firebase se conserva.`,
+              `¿Eliminar ${nombre} de SirInventari? Solo se permite si no tiene historial.${recurso === 'usuarios' ? ' La cuenta de Firebase se conserva.' : ''}`,
             )
           )
             return
@@ -41,7 +46,7 @@ export function EliminarRegistro({
             .finally(() => setOcupado(false))
         }}
       >
-        Eliminar {nombre}
+        {etiqueta ?? `Eliminar ${nombre}`}
       </button>
       {error && (
         <span role="alert" className="block text-sm text-red-800">

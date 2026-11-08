@@ -170,6 +170,15 @@
 .cantidad-venta { display: flex; align-items: end; gap: .5rem; }
 .cantidad-venta label { width: 6rem; font-size: .8rem; color: #52646b; }
 .cantidad-venta input { text-align: center; }
+.editor-catalogo { position: fixed; inset: 0; width: min(48rem, calc(100vw - 2rem)); max-height: calc(100svh - 2rem); margin: auto; padding: 0; border: 1px solid #cbd5e1; border-radius: 1.25rem; background: white; color: #172b35; overflow-y: auto; box-shadow: 0 24px 80px #12313940; }
+.editor-catalogo::backdrop { background: #102b38a6; }
+.cabecera-editor-catalogo { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; background: white; }
+.editor-catalogo :is(input, select, button, summary):focus-visible { outline: 3px solid #0f766e; outline-offset: 2px; }
+.acciones-catalogo { display: grid; grid-template-columns: repeat(2, max-content); gap: .5rem; }
+.acciones-catalogo button { min-height: 2.5rem; width: 100%; padding: .5rem .75rem; font-size: .8rem; }
+.etiqueta-catalogo { display: inline-block; align-self: start; border-radius: .5rem; padding: .35rem .6rem; font-size: .75rem; font-weight: 600; }
+.etiqueta-catalogo.disponible { background: #e4f5ef; color: #115e59; }
+.etiqueta-catalogo.inactivo { background: #f1f5f9; color: #52646b; }
 .impresion-ticket { display: none; }
 .ticket-venta { width: 80mm; max-width: 100%; box-sizing: border-box; margin: 0 auto; padding: 3mm; background: #fff; color: #111; border: 1px solid #d5d5d5; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
 .ticket-cabecera { display: flex; flex-direction: column; gap: .5rem; border-bottom: 1px dashed #111; padding-bottom: .6rem; text-align: center; }

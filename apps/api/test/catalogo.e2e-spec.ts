@@ -58,6 +58,19 @@ describe('Catálogo por centro (e2e)', () => {
     expect((await http().get(ruta).set(headers(2))).body[0].precio).toBe('12.5');
   });
 
+  it('edita nombre, SKU, categoría y precio de un producto y persiste los cambios al consultar', async () => {
+    const nuevaCategoria = await http().post('/catalogo/categorias').set(headers()).send({ nombre: `Nueva ${randomUUID()}`, orden: 7 }).expect(201);
+    const creado = await http().post('/catalogo/productos').set(headers()).send({ sku: `ED-${randomUUID().slice(0, 10)}`, nombre: 'Antes de editar', categoria_id: categoriaId, precio_base: '10.00' }).expect(201);
+    const nuevoSku = `ED-${randomUUID().slice(0, 10)}`;
+    await http().patch(`/catalogo/productos/${creado.body.id}`).set(headers()).send({ nombre: 'Producto editado', sku: nuevoSku, categoria_id: nuevaCategoria.body.id, precio_base: '22.50', activo: true, grupo_variantes: null, es_complemento: false, foto_datos: null }).expect(200);
+    const filas = await http().get(`/catalogo/productos?buscar=${nuevoSku}`).set(headers()).expect(200);
+    expect(filas.body).toHaveLength(1);
+    expect(filas.body[0]).toMatchObject({ id: creado.body.id, nombre: 'Producto editado', sku: nuevoSku, categoria_id: nuevaCategoria.body.id, precio: '22.5', activo: true });
+    await http().patch(`/catalogo/categorias/${nuevaCategoria.body.id}`).set(headers()).send({ nombre: `Editada ${randomUUID()}`, orden: 9 }).expect(200);
+    const categorias = await http().get('/catalogo/categorias').set(headers()).expect(200);
+    expect(categorias.body.find((c: { id: number }) => c.id === nuevaCategoria.body.id).orden).toBe(9);
+  });
+
   it('desactiva sin borrar y una categoría inactiva impide vender sus productos', async () => {
     const ruta = `/catalogo/productos?categoria_id=${categoriaId}`;
     await http().patch(`/catalogo/categorias/${categoriaId}`).set(headers()).send({ activo: false }).expect(200);

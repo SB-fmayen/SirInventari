@@ -6,6 +6,15 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-07 (hora de Guatemala) · Codex
 
+## Catálogo ordenado y edición visible
+
+- A solicitud del usuario: Productos y Categorías en secciones independientes, tabla con precio de venta destacado, filtros y contador, acciones compactas, estados claros y precios por lote al final. Los botones del catálogo dicen solo Eliminar; la confirmación conserva el nombre y el bloqueo de historial. Usuarios conserva su etiqueta anterior.
+- Añadidos Desactivar/Activar para productos y categorías. Confirmación explica el alcance global; Agotado/Disponible sigue afectando solo al centro. Se conservan ADMIN/GERENTE para editar y solo ADMIN para eliminar; no se amplían permisos.
+- Detectados problemas de flujo: formularios de edición aparecían arriba de la lista y podían quedar fuera de vista; guardar datos generales o precio del centro cerraba todo y descartaba cambios del otro formulario. Ahora se abre un diálogo centrado con desplazamiento propio, errores visibles, campos bloqueados al guardar y confirmación de salida. Guardar una sección conserva el editor y cambios pendientes de la otra; cada sección limpia solo su propio estado de cambios. Foto/variantes/complementos quedan en un desplegable opcional.
+- Validación: 75 pruebas web correctas, incluidas 6 nuevas de Catálogo; 5 pruebas de integración de Catálogo correctas en base aislada, con nueva prueba de persistencia real de nombre/SKU/categoría/precio y edición de categoría. Build web y lint web/API correctos; se conservan 5 avisos web y tamaño de paquete. Una ejecución paralela tuvo timeout de 5 s en una prueba previa de Mostrador; la suite completa pasó con `--maxWorkers=1`, sin cambiar la prueba ni ampliar el límite.
+- API/base sanas y Vite entrega el Catálogo actualizado (HTTP 200). Sin cambios en API de negocio, esquema, datos comerciales ni despliegue. Pendiente validación visual/operativa del usuario en su sesión real. Guía en `docs/catalogo.md`.
+- Archivos: `apps/web/src/paginas/Catalogo.tsx`, `componentes/AdministracionRegistros.tsx`, `index.css`, nueva `pruebas/catalogo.test.tsx`, `apps/api/test/catalogo.e2e-spec.ts`, nuevo `docs/catalogo.md` y `ESTADO.md`.
+
 ## Ticket corregido a recibo compacto
 
 - Nombre comercial añadido por solicitud del usuario: **Shukos y pizza la iguana** en el encabezado, conservando el centro de venta debajo. Aplica a vista previa e impresión. Compilación web correcta. Archivos de este ajuste: `apps/web/src/componentes/TicketVenta.tsx` y `ESTADO.md`.
