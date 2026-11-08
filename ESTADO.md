@@ -8,6 +8,7 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Ticket corregido a recibo compacto
 
+- Nombre comercial añadido por solicitud del usuario: **Shukos y pizza la iguana** en el encabezado, conservando el centro de venta debajo. Aplica a vista previa e impresión. Compilación web correcta. Archivos de este ajuste: `apps/web/src/componentes/TicketVenta.tsx` y `ESTADO.md`.
 - El usuario aclaró que quiere formato tipo recibo. Reemplazado el diseño de hoja completa por recibo de 80 mm de ancho, tanto en pantalla como al imprimir. Encabezado centrado, datos en una columna, productos con precio unitario debajo e importe al lado; tipografía y espacios compactos. Se conserva la impresión opcional y el contenido de los cobros.
 - Se retiró la indicación Carta/A4 de la pantalla. La impresión conserva ancho de recibo; papel físico y escala dependen del diálogo/controlador de la impresora. No se configura ni se cambia la impresora del usuario.
 - Verificado: build web y 69 pruebas web correctas. Sin cambios API/base ni cobros de prueba. Falta validación visual e impresión física con el usuario; no se afirma haberlas realizado.
