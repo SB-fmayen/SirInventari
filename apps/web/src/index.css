@@ -180,6 +180,10 @@
 .etiqueta-catalogo.disponible { background: #e4f5ef; color: #115e59; }
 .etiqueta-catalogo.inactivo { background: #f1f5f9; color: #52646b; }
 .impresion-ticket { display: none; }
+.configuracion-recibo { margin-bottom: 1rem; }
+.configuracion-recibo label { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-weight: 600; }
+.configuracion-recibo select { max-width: 100%; padding: .5rem; border: 1px solid #bbb; border-radius: .375rem; background: white; color: #111; }
+.configuracion-recibo p { margin-top: .5rem; font-size: .875rem; color: #555; }
 .ticket-venta { width: 80mm; max-width: 100%; box-sizing: border-box; margin: 0 auto; padding: 3mm; background: #fff; color: #111; border: 1px solid #d5d5d5; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
 .ticket-cabecera { display: flex; flex-direction: column; gap: .5rem; border-bottom: 1px dashed #111; padding-bottom: .6rem; text-align: center; }
 .ticket-marca { font-size: 17px; font-weight: 800; }

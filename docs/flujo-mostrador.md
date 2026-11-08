@@ -40,3 +40,7 @@ Implementada el 2026-11-07:
 - **Continuar sin imprimir** conserva el pago y prepara el siguiente pedido (o vuelve a cobros cuando el usuario solo tiene ese acceso). No hay impresión automática. Se puede volver a imprimir desde Pendientes y comprobantes → historial.
 
 Validación actual: 69 pruebas web, 14 unitarias API y 86 de integración en bases aisladas, todas correctas. Compilación/lint correctos, con avisos anteriores. Pendiente vista previa e impresión física con el usuario; no se ha enviado papel a una impresora ni se han creado ventas de prueba en su base. La impresión térmica/sin internet de Tarea 19 conserva su alcance futuro.
+
+## Configuración general de impresión · 2026-11-08
+
+En el comprobante, elegir Formato del recibo: Automático, 58 mm, 80 mm, Carta o A4. La preferencia se guarda por navegador cuando el almacenamiento está disponible. Automático conserva el recibo compacto y se limita al ancho disponible; Carta/A4 conservan el recibo de 80 mm sobre una hoja. Para rollos, seleccionar también el tamaño correcto en el controlador. El navegador no instala ni configura automáticamente la impresora. Usar escala 100 % y desactivar encabezados/pies. Vista previa y copia impresa usan el mismo ancho. La impresión sigue siendo opcional desde el diálogo del navegador.

@@ -6,6 +6,12 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-08 (hora de Guatemala) · Codex
 
+## Configuración general del recibo · 2026-11-08
+
+- Selector en el comprobante: Automático, rollo 58/80 mm, Carta y A4. Vista previa e impresión comparten ancho; preferencia local por navegador con alternativa temporal si no permite almacenamiento. Se conserva diálogo normal e impresión opcional. Impresora/papel físico se seleccionan en el controlador; no se garantiza compatibilidad física sin probar el equipo.
+- Verificado: 75 pruebas web correctas, build y lint correctos con 5 avisos previos y aviso de tamaño. Pendiente validación visual e impresión física del usuario. Sin cambios API/base ni datos comerciales.
+- Archivos: apps/web/src/componentes/TicketVenta.tsx, apps/web/src/index.css, docs/flujo-mostrador.md y ESTADO.md.
+
 ## Retoma local · 2026-11-08
 
 - A solicitud del usuario: revisados estado, plan y últimos commits; resumen del trabajo del 7 de noviembre preparado.
