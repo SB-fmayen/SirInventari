@@ -4,7 +4,14 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-07 (hora de Guatemala) · Codex
+2026-11-08 (hora de Guatemala) · Codex
+
+## Cierre solicitado · Retomar mañana
+
+- Apagados API compilada (19144), Vite de SirInventari (28924) y su lanzador npm (25836), contenedor `sirinventari-db` y Docker Desktop. Los tres procesos ya no están activos; puertos 3000, 5432 y 5555 cerrados. Se conservan volumen, ventas, catálogo, usuarios, borradores y respaldos.
+- El puerto 5173 conserva una vista previa ajena al proyecto (PID 20688, `vite preview`); comprobación HTTP identifica su título como «Cuentas por pagar». No se detuvo esa aplicación. No se tocó PostgreSQL nativo ajeno en 5433.
+- Todo el trabajo del proyecto estaba guardado en `d2871dc` y commits anteriores. Este cierre cambia solo `ESTADO.md`; se conservan sin seguimiento `REVISION.md` y `Modo relevo Claude Code y Codex.pdf`.
+- Para retomar: iniciar la base con `scripts/iniciar-base-local.ps1`, levantar API y app; comprobar primero si 5173 sigue ocupado por la aplicación ajena antes de iniciar Vite (usa strictPort). Después validar el Catálogo reorganizado con el usuario, guía `docs/catalogo.md`, y continuar los demás módulos. Recibo de 80 mm con nombre Shukos y pizza la iguana pendiente de validación física. Despliegue continúa pospuesto.
 
 ## Catálogo ordenado y edición visible
 
