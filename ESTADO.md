@@ -6,6 +6,13 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-07 (hora de Guatemala) · Codex
 
+## Ticket corregido a recibo compacto
+
+- El usuario aclaró que quiere formato tipo recibo. Reemplazado el diseño de hoja completa por recibo de 80 mm de ancho, tanto en pantalla como al imprimir. Encabezado centrado, datos en una columna, productos con precio unitario debajo e importe al lado; tipografía y espacios compactos. Se conserva la impresión opcional y el contenido de los cobros.
+- Se retiró la indicación Carta/A4 de la pantalla. La impresión conserva ancho de recibo; papel físico y escala dependen del diálogo/controlador de la impresora. No se configura ni se cambia la impresora del usuario.
+- Verificado: build web y 69 pruebas web correctas. Sin cambios API/base ni cobros de prueba. Falta validación visual e impresión física con el usuario; no se afirma haberlas realizado.
+- Archivos: `apps/web/src/componentes/TicketVenta.tsx`, `apps/web/src/index.css`, `apps/web/src/paginas/Caja.tsx`, `docs/flujo-mostrador.md` y `ESTADO.md`.
+
 ## Corrección de revisión y ticket láser
 
 - Implementado lo pedido: quitar productos también en la revisión integrada de Caja y anular pedido completo con motivo. No borra ventas ni líneas; recalcula al quitar y conserva importes originales al anular. Endpoint `POST /pedidos/:id/anulacion` con bloqueo del pedido, restricción por centro/rol/permiso anular, rechazo de pagos aplicados y auditoría de motivo/autor. Reintentos seguros; no hay cambios de esquema, triggers ni funciones.
