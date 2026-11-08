@@ -6,6 +6,13 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-08 (hora de Guatemala) · Codex
 
+## Solicitud de clientes y papelera · Propuesta pendiente · 2026-11-08
+
+- Usuario solicita clientes (nombre/dirección/teléfono), búsqueda junto al teléfono en Ventas, historial de pedidos/detalles en ventana flotante, edición/eliminación, historial de cambios por campo con usuario/fecha y papelera de clientes/pedidos; eliminar solo ADMIN/GERENTE.
+- Revisados esquema, flujo y últimos commits. No existe tabla de clientes ni datos de teléfono/dirección del pedido. Propuesta concreta en docs/clientes-y-papelera.md: cliente por centro, copia histórica de entrega en pedido, auditoría por campos, retiro reversible con motivo y restauración sin alterar pagos/reportes. Papelera inicial para clientes/pedidos; sin vaciado permanente. Los pendientes deben anularse antes de retirar; los cobrados deben estar entregados.
+- Según AGENTS.md regla 3, se solicita aprobación del cambio de base antes de modificar tablas/triggers/funciones. No se modificó SQL, Prisma, API, app ni datos comerciales. Se preparó alcance implementable y verificable; falta aprobación explícita para empezar implementación dependiente. Acceso ADMIN real de la sesión anterior aún no confirmado.
+- Archivos: docs/clientes-y-papelera.md, docs/plan.md y ESTADO.md. Verificación documental con git diff --check; no corresponde repetir pruebas de código.
+
 ## Diagnóstico de acceso ADMIN · 2026-11-08
 
 - Usuario reporta 401. Lectura de base confirma ADMIN id 18 activo y con UID; proyectos Firebase web/API coinciden. No se tocaron credenciales, permisos ni datos.

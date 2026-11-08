@@ -7,6 +7,8 @@ Actualización del usuario (2026-11-07): primero validar y corregir localmente; 
 
 Tarea 0 · Preparación: carpetas apps/web, apps/api, db y docs; db/01_esquema_v0.2.sql y db/02_datos_iniciales.sql copiados de Notion sin cambios; docs/especificacion.md con el resumen de la página; AGENTS.md con el proyecto, el stack y las reglas; CLAUDE.md con la línea @AGENTS.md. Listo cuando: existen esos archivos y carpetas.
 
+Actualización solicitada (2026-11-08): Clientes, datos de entrega en Ventas y Papelera. Alcance, permisos, cambios de base y criterios de aceptación en docs/clientes-y-papelera.md. Propuesta pendiente de aprobación de base por regla 3 de AGENTS.md; no implementada todavía. Se intercala por solicitud expresa del usuario antes de continuar el plan general.
+
 ## FASE 1 · Sistema básico para el centro piloto
 
 Tarea 1 · Base de datos local: PostgreSQL 16 con Docker Compose, zona horaria America/Guatemala; al iniciar ejecuta los scripts de db/; credenciales en .env y .env.example sin contraseña; pruebas de los 7 casos de la especificación en db/pruebas/casos.sql. Necesita del usuario: Docker Desktop instalado. Listo cuando: los 7 casos dan el resultado esperado.
