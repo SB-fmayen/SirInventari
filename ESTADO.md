@@ -6,6 +6,12 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-08 (hora de Guatemala) · Codex
 
+## Diagnóstico de acceso ADMIN · 2026-11-08
+
+- Usuario reporta 401. Lectura de base confirma ADMIN id 18 activo y con UID; proyectos Firebase web/API coinciden. No se tocaron credenciales, permisos ni datos.
+- Detectado bloqueo de red del entorno restringido: consulta Node a certificados públicos de Firebase falla EACCES y la misma consulta fuera del entorno devuelve HTTP 200. API se había iniciado dentro de ese entorno. Reiniciada fuera con autorización del usuario, PID 25348; salud API/base correcta y log de error vacío. Stop-Process falló; se verificó nuevamente el PID/comando original y se detuvo con Process.Kill antes del arranque final. Intento intermedio dio EADDRINUSE sin afectar datos.
+- Pendiente reintento real del usuario para confirmar resolución del 401; aún falta URL de solicitud rechazada. No se afirma login real validado. Logs actuales: logs/api-acceso-red*.log. Solo cambia ESTADO.md; no se requieren pruebas de código.
+
 ## Configuración general del recibo · 2026-11-08
 
 - Selector en el comprobante: Automático, rollo 58/80 mm, Carta y A4. Vista previa e impresión comparten ancho; preferencia local por navegador con alternativa temporal si no permite almacenamiento. Se conserva diálogo normal e impresión opcional. Impresora/papel físico se seleccionan en el controlador; no se garantiza compatibilidad física sin probar el equipo.
