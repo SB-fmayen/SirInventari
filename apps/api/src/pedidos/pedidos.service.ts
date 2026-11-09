@@ -1,3 +1,5 @@
+import { ClientesService } from '../clientes/clientes.service.js';
+import type { UsuarioSesion } from '../autenticacion/usuario-sesion.js';
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -29,7 +31,7 @@ const seleccionarCocina = {
 
 @Injectable()
 export class PedidosService {
-  constructor(private readonly prisma: PrismaService, private readonly tiempoReal: TiempoRealGateway) {}
+  constructor(private readonly prisma: PrismaService, private readonly tiempoReal: TiempoRealGateway, private readonly clientes: ClientesService) {}
 
   private async avisar<T extends { id: string }>(centroId: number, operacion: Promise<T>): Promise<T> {
     const resultado = await operacion;
@@ -61,7 +63,7 @@ export class PedidosService {
   async cocina(centroId: number) {
     const [hoy] = await this.prisma.$queryRaw<{ fecha: Date }[]>`SELECT ventas.fecha_guatemala() AS fecha`;
     const filas = await this.prisma.pedido.findMany({ where: {
-      centro_venta_id: centroId, estado: { not: 'ANULADO' }, pedido_detalle: { some: { estado: 'ACTIVA' } },
+      centro_venta_id: centroId, eliminado_en: null, estado: { not: 'ANULADO' }, pedido_detalle: { some: { estado: 'ACTIVA' } },
       OR: [{ estado_cocina: { not: 'ENTREGADO' } }, { fecha_operacion: hoy.fecha }],
     }, select: seleccionarCocina, orderBy: [{ creado_en: 'asc' }, { folio: 'asc' }] });
     return filas.map(p => this.respuestaCocina(p));
@@ -87,7 +89,7 @@ export class PedidosService {
   }
 
   async pendientes(centroId: number) {
-    const filas = await this.prisma.pedido.findMany({ where: { centro_venta_id: centroId, estado: { notIn: ['PAGADO', 'ANULADO'] } }, include: incluir, orderBy: [{ creado_en: 'asc' }, { folio: 'asc' }] });
+    const filas = await this.prisma.pedido.findMany({ where: { centro_venta_id: centroId, eliminado_en: null, estado: { notIn: ['PAGADO', 'ANULADO'] } }, include: incluir, orderBy: [{ creado_en: 'asc' }, { folio: 'asc' }] });
     return filas.map((p) => this.respuesta(p)).filter((p) => Number(p.saldo) >= 0);
   }
 
@@ -95,11 +97,12 @@ export class PedidosService {
     if (fecha && (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !Number.isFinite(new Date(`${fecha}T00:00:00Z`).getTime()) || new Date(`${fecha}T00:00:00Z`).toISOString().slice(0,10) !== fecha)) throw new BadRequestException('La fecha no es válida.');
     const [dia] = await this.prisma.$queryRaw<{ fecha: Date }[]>`SELECT ventas.fecha_guatemala() AS fecha`;
     const filas = await this.prisma.pedido.findMany({
-      where: { centro_venta_id: centroId,
+      where: { centro_venta_id: centroId, eliminado_en: null,
         AND: [anteriores ? { OR: [{fecha_operacion:dia.fecha},{estado:{notIn:['PAGADO','ANULADO']}}] } : {fecha_operacion:fecha ? new Date(`${fecha}T00:00:00Z`) : dia.fecha}],
         ...(buscar ? { OR: [
           { mesa_referencia: { contains: buscar, mode: 'insensitive' as const } },
           { cliente_nombre: { contains: buscar, mode: 'insensitive' as const } },
+          { cliente_telefono: { contains: buscar } },
           ...(/^\d{1,9}$/.test(buscar) ? [{ folio: Number(buscar) }] : []),
         ] } : {}),
       }, include: incluir, orderBy: [{ creado_en: 'desc' }, { folio: 'desc' }],
@@ -108,8 +111,9 @@ export class PedidosService {
   }
 
   private async bloquear(tx: Conexion, centroId: number, id: string) {
-    const filas = await tx.$queryRaw<{ estado: string }[]>`SELECT estado FROM ventas.pedido WHERE id = ${id}::uuid AND centro_venta_id = ${centroId} FOR UPDATE`;
+    const filas = await tx.$queryRaw<{ estado: string; eliminado_en: Date | null }[]>`SELECT estado, eliminado_en FROM ventas.pedido WHERE id = ${id}::uuid AND centro_venta_id = ${centroId} FOR UPDATE`;
     if (!filas.length) throw new NotFoundException('No se encontró el pedido en este centro de venta.');
+    if (filas[0].eliminado_en) throw new ConflictException('El pedido está en la papelera. Restaura su visibilidad antes de realizar otras acciones.');
     return filas[0].estado;
   }
 
@@ -137,13 +141,15 @@ export class PedidosService {
       data: { estado_cocina: 'PENDIENTE', actualizado_en: new Date(), version: { increment: 1 } } });
   }
 
-  async crear(centroId: number, usuarioId: number, datos: ReturnType<typeof nuevoPedido>) {
+  async crear(centroId: number, usuario: UsuarioSesion, datos: ReturnType<typeof nuevoPedido>) {
+    const usuarioId = usuario.id;
     return this.avisar(centroId, this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT set_config('app.usuario_id',${String(usuarioId)},true)`;
       // Coordina reenvíos simultáneos del mismo UUID incluso antes de que exista la fila.
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${datos.id}))::text`;
       const existente = await tx.pedido.findUnique({ where: { id: datos.id } });
       if (existente) {
-        if (existente.centro_venta_id !== centroId || existente.creado_por !== usuarioId || existente.tipo_venta_id !== datos.tipo_venta_id || existente.mesa_referencia !== datos.mesa_referencia || existente.cliente_nombre !== datos.cliente_nombre) {
+        if (existente.centro_venta_id !== centroId || existente.creado_por !== usuarioId || existente.tipo_venta_id !== datos.tipo_venta_id || existente.mesa_referencia !== datos.mesa_referencia || existente.cliente_nombre !== datos.cliente_nombre || existente.cliente_telefono !== datos.cliente_telefono || existente.cliente_direccion !== datos.cliente_direccion || (datos.cliente_id !== null && existente.cliente_id !== datos.cliente_id)) {
           throw new ConflictException('Ese identificador de pedido ya se usó con otros datos.');
         }
         const estado = await this.bloquear(tx, centroId, datos.id);
@@ -153,9 +159,11 @@ export class PedidosService {
         if (!tipo) throw new BadRequestException('El tipo de venta no existe.');
         if (tipo.codigo === 'MESA' && !datos.mesa_referencia) throw new BadRequestException('Indica la mesa del pedido.');
         if (tipo.codigo !== 'MESA' && !datos.cliente_nombre) throw new BadRequestException('Indica el nombre del cliente.');
+        if (tipo.codigo === 'DOMICILIO' && (!datos.cliente_telefono || !datos.cliente_direccion)) throw new BadRequestException('Para domicilio escribe el teléfono y la dirección del cliente.');
+        const clienteId = await this.clientes.vincular(tx, centroId, usuario, datos);
         const [folio] = await tx.$queryRaw<{ numero: number }[]>`SELECT ventas.siguiente_folio(${centroId}::smallint, ventas.fecha_guatemala()) AS numero`;
         const creado = await tx.pedido.create({ data: { id: datos.id, centro_venta_id: centroId, creado_por: usuarioId, tipo_venta_id: datos.tipo_venta_id,
-          mesa_referencia: datos.mesa_referencia, cliente_nombre: datos.cliente_nombre, folio: folio.numero } });
+          mesa_referencia: datos.mesa_referencia, cliente_nombre: datos.cliente_nombre, cliente_id: clienteId, cliente_telefono: datos.cliente_telefono, cliente_direccion: datos.cliente_direccion, folio: folio.numero } });
         await this.agregarEn(tx, centroId, usuarioId, datos.id, datos.lineas, 'ABIERTO', creado.creado_en);
       }
       return this.detalleEn(tx, centroId, datos.id);

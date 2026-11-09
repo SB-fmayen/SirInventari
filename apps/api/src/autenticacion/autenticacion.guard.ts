@@ -61,7 +61,7 @@ export class AutenticacionGuard implements CanActivate {
     }
     if (usuario.rol !== 'ADMIN') {
       const modulo = req.path.split('/')[1];
-      const accion = req.method === 'GET' ? 'ver' : req.method === 'DELETE' || req.path.endsWith('/anulacion') ? 'anular' : req.method === 'PATCH' || /\/(estado|cierre|precios|lineas)$/.test(req.path) ? 'editar' : 'crear';
+      const accion = req.method === 'GET' ? 'ver' : req.method === 'DELETE' || (/\/(anulacion|eliminacion)$/.test(req.path)) ? 'anular' : req.method === 'PATCH' || /\/(estado|cierre|precios|lineas|restauracion)$/.test(req.path) ? 'editar' : 'crear';
       if (usuario.permisos?.some(p => p.modulo === modulo && (p.accion === 'ver' || p.accion === accion) && !p.permitido)) throw new ForbiddenException('Tu administrador restringió esta acción para tu usuario.');
     }
 

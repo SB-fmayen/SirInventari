@@ -20,7 +20,7 @@ export class PedidosController {
   }
   @Get(':id') detalle(@CentroActual() centroId: number, @Param('id') id: string) { return this.pedidos.detalle(centroId, uuid(id)); }
   @Post() crear(@CentroActual() centroId: number, @UsuarioActual() usuario: UsuarioSesion, @Body() cuerpo: unknown) {
-    return this.pedidos.crear(centroId, usuario.id, nuevoPedido(cuerpo));
+    return this.pedidos.crear(centroId, usuario, nuevoPedido(cuerpo));
   }
   @Post(':id/lineas') agregar(@CentroActual() centroId: number, @UsuarioActual() usuario: UsuarioSesion, @Param('id') id: string, @Body() cuerpo: unknown) {
     return this.pedidos.agregar(centroId, usuario.id, uuid(id), lineas(cuerpo));

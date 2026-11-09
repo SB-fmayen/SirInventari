@@ -43,6 +43,7 @@ model centro_venta {
   telefono               String?                  @db.VarChar(20)
   activo                 Boolean                  @default(true)
   creado_en              DateTime                 @default(now()) @db.Timestamptz(6)
+  cliente                cliente[]
   dispositivo            dispositivo[]
   folio_contador         folio_contador[]
   pedido                 pedido[]
@@ -128,42 +129,52 @@ model pago {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model pedido {
-  id                                   String                   @id @db.Uuid
-  centro_venta_id                      Int                      @db.SmallInt
-  fecha_operacion                      DateTime                 @default(dbgenerated("fecha_guatemala()")) @db.Date
-  folio                                Int
-  tipo_venta_id                        Int                      @db.SmallInt
-  turno_id                             Int?
-  mesa_referencia                      String?                  @db.VarChar(30)
-  cliente_nombre                       String?                  @db.VarChar(100)
-  estado                               estado_pedido            @default(ABIERTO)
-  subtotal                             Decimal                  @default(0) @db.Decimal(12, 2)
-  descuento                            Decimal                  @default(0) @db.Decimal(12, 2)
-  total                                Decimal                  @default(0) @db.Decimal(12, 2)
-  creado_por                           Int
-  creado_en                            DateTime                 @default(now()) @db.Timestamptz(6)
-  actualizado_en                       DateTime                 @default(now()) @db.Timestamptz(6)
-  version                              Int                      @default(1)
-  dispositivo_id                       Int?
-  origen                               origen_registro          @default(EN_LINEA)
-  folio_offline                        String?                  @unique @db.VarChar(20)
-  sincronizado_en                      DateTime                 @default(now()) @db.Timestamptz(6)
-  estado_cocina                        String                   @default("PENDIENTE") @db.VarChar(20)
-  motivo_cortesia                      String?                  @db.VarChar(300)
-  cortesia_por                         Int?
-  cortesia_en                          DateTime?                @db.Timestamptz(6)
-  pago                                 pago[]
-  centro_venta                         centro_venta             @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuario_pedido_cortesia_porTousuario usuario?                 @relation("pedido_cortesia_porTousuario", fields: [cortesia_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuario                              usuario                  @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  dispositivo                          dispositivo?             @relation(fields: [dispositivo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tipo_venta                           tipo_venta               @relation(fields: [tipo_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  turno_caja                           turno_caja?              @relation(fields: [turno_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  pedido_detalle                       pedido_detalle[]
-  solicitud_autorizacion               solicitud_autorizacion[]
+  id                                    String                   @id @db.Uuid
+  centro_venta_id                       Int                      @db.SmallInt
+  fecha_operacion                       DateTime                 @default(dbgenerated("fecha_guatemala()")) @db.Date
+  folio                                 Int
+  tipo_venta_id                         Int                      @db.SmallInt
+  turno_id                              Int?
+  mesa_referencia                       String?                  @db.VarChar(30)
+  cliente_nombre                        String?                  @db.VarChar(100)
+  estado                                estado_pedido            @default(ABIERTO)
+  subtotal                              Decimal                  @default(0) @db.Decimal(12, 2)
+  descuento                             Decimal                  @default(0) @db.Decimal(12, 2)
+  total                                 Decimal                  @default(0) @db.Decimal(12, 2)
+  creado_por                            Int
+  creado_en                             DateTime                 @default(now()) @db.Timestamptz(6)
+  actualizado_en                        DateTime                 @default(now()) @db.Timestamptz(6)
+  version                               Int                      @default(1)
+  dispositivo_id                        Int?
+  origen                                origen_registro          @default(EN_LINEA)
+  folio_offline                         String?                  @unique @db.VarChar(20)
+  sincronizado_en                       DateTime                 @default(now()) @db.Timestamptz(6)
+  estado_cocina                         String                   @default("PENDIENTE") @db.VarChar(20)
+  motivo_cortesia                       String?                  @db.VarChar(300)
+  cortesia_por                          Int?
+  cortesia_en                           DateTime?                @db.Timestamptz(6)
+  cliente_id                            String?                  @db.Uuid
+  cliente_telefono                      String?                  @db.VarChar(30)
+  cliente_direccion                     String?                  @db.VarChar(300)
+  eliminado_por                         Int?
+  eliminado_en                          DateTime?                @db.Timestamptz(6)
+  motivo_eliminacion                    String?                  @db.VarChar(300)
+  pago                                  pago[]
+  cliente                               cliente?                 @relation(fields: [cliente_id, centro_venta_id], references: [id, centro_venta_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pedido_cliente")
+  centro_venta                          centro_venta             @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario_pedido_cortesia_porTousuario  usuario?                 @relation("pedido_cortesia_porTousuario", fields: [cortesia_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario                               usuario                  @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dispositivo                           dispositivo?             @relation(fields: [dispositivo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario_pedido_eliminado_porTousuario usuario?                 @relation("pedido_eliminado_porTousuario", fields: [eliminado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tipo_venta                            tipo_venta               @relation(fields: [tipo_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  turno_caja                            turno_caja?              @relation(fields: [turno_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pedido_detalle                        pedido_detalle[]
+  solicitud_autorizacion                solicitud_autorizacion[]
 
   @@unique([centro_venta_id, fecha_operacion, folio])
   @@index([centro_venta_id, fecha_operacion, estado], map: "ix_pedido_centro_fecha")
+  @@index([cliente_id, creado_en], map: "ix_pedido_cliente")
+  @@index([centro_venta_id, eliminado_en], map: "ix_pedido_papelera", where: raw("(eliminado_en IS NOT NULL)"))
   @@schema("ventas")
 }
 
@@ -304,11 +315,16 @@ model usuario {
   rol                                                                   rol_usuario
   activo                                                                Boolean                  @default(true)
   creado_en                                                             DateTime                 @default(now()) @db.Timestamptz(6)
+  cliente_cliente_actualizado_porTousuario                              cliente[]                @relation("cliente_actualizado_porTousuario")
+  cliente_cliente_creado_porTousuario                                   cliente[]                @relation("cliente_creado_porTousuario")
+  cliente_cliente_eliminado_porTousuario                                cliente[]                @relation("cliente_eliminado_porTousuario")
+  cliente_cambio                                                        cliente_cambio[]
   movimiento_caja                                                       movimiento_caja[]
   pago_pago_anulado_porTousuario                                        pago[]                   @relation("pago_anulado_porTousuario")
   pago_pago_registrado_porTousuario                                     pago[]                   @relation("pago_registrado_porTousuario")
   pedido_pedido_cortesia_porTousuario                                   pedido[]                 @relation("pedido_cortesia_porTousuario")
   pedido                                                                pedido[]
+  pedido_pedido_eliminado_porTousuario                                  pedido[]                 @relation("pedido_eliminado_porTousuario")
   pedido_detalle_pedido_detalle_agregado_porTousuario                   pedido_detalle[]         @relation("pedido_detalle_agregado_porTousuario")
   pedido_detalle_pedido_detalle_anulado_porTousuario                    pedido_detalle[]         @relation("pedido_detalle_anulado_porTousuario")
   permiso_usuario                                                       permiso_usuario[]
@@ -381,6 +397,52 @@ model solicitud_autorizacion {
   usuario_solicitud_autorizacion_solicitado_porTousuario usuario      @relation("solicitud_autorizacion_solicitado_porTousuario", fields: [solicitado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([centro_venta_id, estado], map: "ix_solicitud_centro")
+  @@schema("ventas")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cliente {
+  id                                       String           @id @db.Uuid
+  centro_venta_id                          Int              @db.SmallInt
+  nombre                                   String           @db.VarChar(100)
+  telefono                                 String           @db.VarChar(30)
+  telefono_normalizado                     String           @db.VarChar(30)
+  direccion                                String?          @db.VarChar(300)
+  creado_por                               Int
+  creado_en                                DateTime         @default(now()) @db.Timestamptz(6)
+  actualizado_por                          Int
+  actualizado_en                           DateTime         @default(now()) @db.Timestamptz(6)
+  version                                  Int              @default(1)
+  eliminado_por                            Int?
+  eliminado_en                             DateTime?        @db.Timestamptz(6)
+  motivo_eliminacion                       String?          @db.VarChar(300)
+  usuario_cliente_actualizado_porTousuario usuario          @relation("cliente_actualizado_porTousuario", fields: [actualizado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  centro_venta                             centro_venta     @relation(fields: [centro_venta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario_cliente_creado_porTousuario      usuario          @relation("cliente_creado_porTousuario", fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario_cliente_eliminado_porTousuario   usuario?         @relation("cliente_eliminado_porTousuario", fields: [eliminado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cliente_cambio                           cliente_cambio[]
+  pedido                                   pedido[]
+
+  @@unique([centro_venta_id, telefono_normalizado])
+  @@unique([id, centro_venta_id])
+  @@schema("ventas")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cliente_cambio {
+  id              BigInt   @id @default(autoincrement())
+  cliente_id      String   @db.Uuid
+  centro_venta_id Int      @db.SmallInt
+  operacion       String   @db.VarChar(20)
+  campo           String   @db.VarChar(30)
+  valor_anterior  String?
+  valor_nuevo     String?
+  usuario_id      Int
+  fecha           DateTime @default(now()) @db.Timestamptz(6)
+  cliente         cliente  @relation(fields: [cliente_id, centro_venta_id], references: [id, centro_venta_id], onDelete: NoAction, onUpdate: NoAction)
+  usuario         usuario  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([cliente_id, fecha, id], map: "ix_cliente_cambio")
   @@schema("ventas")
 }
 

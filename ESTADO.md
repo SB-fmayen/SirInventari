@@ -6,7 +6,14 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-08 (hora de Guatemala) · Codex
 
-## Solicitud de clientes y papelera · Propuesta pendiente · 2026-11-08
+## Clientes y papelera · Base/API implementadas · 2026-11-08
+
+- Usuario aprobó expresamente todo el alcance, incluidos cambios SQL. Respaldo privado `logs/respaldo-clientes-*.dump` creado y comprobado con pg_restore antes de aplicar SQL 07. Se conservan 3 usuarios, 154 productos y 5 pedidos comerciales. Nuevas tablas cliente/cliente_cambio, copia histórica de contacto en pedido y marcas reversibles de papelera; fuente SQL y Prisma actualizados.
+- API implementada: CRUD de clientes con UUID, teléfono normalizado único por centro, auditoría por campo mediante trigger, control de versiones y creación/vínculo atómico desde pedido. Historial comercial y de cambios paginados; búsquedas por nombre/teléfono. Papelera lista/retira/restaura clientes y pedidos con motivo, rol ADMIN/GERENTE y restricciones individuales. No se ocultan pendientes de cobro ni pedidos sin entregar; se conservan pagos/reportes y se marca el retiro en reportes.
+- Primer bloque comprobado: 6 pruebas nuevas de integración correctas (duplicados concurrentes, reintentos, permisos/centros, historial inmutable, copia histórica, rollback y retiro/restauración sin alterar ventas); ejecución general previa de integración 93 correctas, 14 unitarias API, build y lint API correctos. La marca adicional en reportes y validación cruzada de permisos se verificaron después con las 6 pruebas nuevas. Continúa la implementación/prueba de pantallas. API local aún requiere reinicio final para servir el compilado nuevo.
+- Sin despliegue. Pruebas en bases temporales; no se crearon clientes ni ventas de prueba en la base comercial. Guía y aprobación en docs/clientes-y-papelera.md. Los archivos locales REVISION.md y PDF de relevo se conservan sin seguimiento.
+
+## Solicitud de clientes y papelera · Propuesta aprobada · 2026-11-08
 
 - Usuario solicita clientes (nombre/dirección/teléfono), búsqueda junto al teléfono en Ventas, historial de pedidos/detalles en ventana flotante, edición/eliminación, historial de cambios por campo con usuario/fecha y papelera de clientes/pedidos; eliminar solo ADMIN/GERENTE.
 - Revisados esquema, flujo y últimos commits. No existe tabla de clientes ni datos de teléfono/dirección del pedido. Propuesta concreta en docs/clientes-y-papelera.md: cliente por centro, copia histórica de entrega en pedido, auditoría por campos, retiro reversible con motivo y restauración sin alterar pagos/reportes. Papelera inicial para clientes/pedidos; sin vaciado permanente. Los pendientes deben anularse antes de retirar; los cobrados deben estar entregados.

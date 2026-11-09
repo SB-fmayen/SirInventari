@@ -165,6 +165,7 @@ export class ReportesService {
         fecha_operacion: p.fecha_operacion.toISOString().slice(0, 10),
         total: p.total.toFixed(2),
         tipo: p.tipo_venta.nombre,
+        en_papelera: p.eliminado_en !== null,
       })),
     };
   }

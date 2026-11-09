@@ -34,5 +34,5 @@ export function lineas(cuerpo: unknown) {
 }
 export function nuevoPedido(cuerpo: unknown) {
   const c = objeto(cuerpo);
-  return { id: uuid(c.id), tipo_venta_id: entero(c.tipo_venta_id), mesa_referencia: texto(c.mesa_referencia, 30), cliente_nombre: texto(c.cliente_nombre, 100), lineas: lineas(c) };
+  return { id: uuid(c.id), tipo_venta_id: entero(c.tipo_venta_id), mesa_referencia: texto(c.mesa_referencia, 30), cliente_nombre: texto(c.cliente_nombre, 100), cliente_id: c.cliente_id ? uuid(c.cliente_id) : null, cliente_telefono: texto(c.cliente_telefono, 30), cliente_direccion: texto(c.cliente_direccion, 300), cliente_version: c.cliente_version === undefined || c.cliente_version === null ? null : entero(c.cliente_version), actualizar_cliente: c.actualizar_cliente === true, lineas: lineas(c) };
 }

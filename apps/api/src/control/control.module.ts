@@ -39,6 +39,8 @@ const modulos = [
   'catalogo',
   'reportes',
   'usuarios',
+  'clientes',
+  'papelera',
 ];
 const acciones = ['ver', 'crear', 'editar', 'anular', 'autorizar'];
 
@@ -79,6 +81,7 @@ export class ControlService {
         centro_venta_id: centro,
         estado: { not: 'ANULADO' },
         estado_cocina: 'LISTO',
+        eliminado_en: null,
       },
     });
     const turno =
@@ -285,6 +288,7 @@ export class ControlService {
           throw new ConflictException(
             'El pedido cambió. Rechaza esta solicitud y crea una nueva después de revisarlo.',
           );
+        if (p.eliminado_en) throw new ConflictException('El pedido está en la papelera. Restaura su visibilidad antes de realizar otras acciones.');
         if (p.estado === 'ANULADO')
           throw new ConflictException('El pedido ya está anulado.');
         await tx.$queryRaw`SELECT set_config('app.usuario_id',${String(u.id)},true)`;

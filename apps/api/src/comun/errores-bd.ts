@@ -15,6 +15,7 @@ interface CausaPostgres {
 
 /** Mensajes para los índices únicos del esquema (db/01_esquema_v0.3.sql). */
 const MENSAJES_UNICOS: Record<string, string> = {
+  cliente_centro_venta_id_telefono_normalizado_key: 'Ya existe un cliente con ese teléfono en este centro. Búscalo antes de continuar.',
   uq_pago_voucher: 'El número de autorización del voucher ya se usó en otro pago.',
   uq_turno_abierto: 'Ya hay un turno de caja abierto en este centro de venta.',
   pedido_folio_offline_key: 'Ese folio provisional ya existe en otro pedido.',
