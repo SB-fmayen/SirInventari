@@ -46,6 +46,20 @@ async function cobrar() {
 }
 
 describe('Venta de mostrador en una sola pantalla', () => {
+  it('permite comer en mesa conservando productos y datos de cliente', async () => {
+    await nuevo()
+    fireEvent.change(screen.getByLabelText('Nombre del cliente (opcional)'), { target: { value: 'Ana' } })
+    fireEvent.change(screen.getByRole('textbox', { name: /Teléfono del cliente/ }), { target: { value: '55551234' } })
+    await userEvent.selectOptions(screen.getByLabelText('Tipo de venta'), '1')
+    expect(screen.getByLabelText('Mesa')).toBeRequired()
+    expect(screen.getByLabelText('Nombre del cliente (opcional)')).toHaveValue('Ana')
+    expect(screen.getByLabelText('Cantidad 1')).toHaveValue(1)
+    fireEvent.change(screen.getByLabelText('Mesa'), { target: { value: 'Mesa 4' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }))
+    await waitFor(() => expect(sesion.api.mock.calls.find(([ruta, opciones]) => ruta === '/pedidos' && opciones?.method === 'POST')).toBeTruthy())
+    const envio = sesion.api.mock.calls.find(([ruta, opciones]) => ruta === '/pedidos' && opciones?.method === 'POST')!
+    expect(JSON.parse(String(envio[1].body))).toMatchObject({ tipo_venta_id: 1, mesa_referencia: 'Mesa 4', cliente_nombre: 'Ana', cliente_telefono: '55551234', lineas: [{ producto_id: 1, cantidad: '1' }] })
+  })
   it('busca por teléfono, selecciona un cliente y envía su vínculo y datos con la venta', async () => {
     const anterior = sesion.api.getMockImplementation()!
     const cliente = { id: '73f98958-7be3-4db8-bdf9-cb91d52acf25', nombre: 'Ana Cliente', telefono: '55551234', direccion: 'Zona 1', version: 3, eliminado_en: null }
@@ -156,7 +170,7 @@ describe('Venta de mostrador en una sola pantalla', () => {
 
   it('filtra por categoría y busca sin tildes sin perder cantidades ni notas', async () => {
     await nuevo()
-    expect(screen.queryByRole('option', { name: 'Mesa' })).not.toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Comer en mesa' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Cantidad 1'), { target: { value: '2' } })
     await userEvent.type(screen.getByLabelText('Notas 1'), 'Sin cebolla')
     await userEvent.click(within(screen.getByLabelText('Categorías')).getByRole('button', { name: /Bebidas/ }))

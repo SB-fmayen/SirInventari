@@ -6,6 +6,12 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-08 (hora de Guatemala) · Codex
 
+## Comer en mesa habilitado · 2026-11-08
+
+- Por solicitud del usuario, Ventas muestra Comer en mesa en el selector de tipos. Reutiliza el tipo MESA existente (id 1, Consumo en mesa), comprobado mediante consulta de solo lectura. Mesa es obligatoria; nombre/teléfono/dirección y productos se conservan al cambiar de tipo. Para llevar sigue siendo la opción inicial.
+- Verificado: 14 pruebas de Mostrador correctas, incluida selección de mesa y envío de sus datos sin perder productos/contacto. Build web correcto con aviso de tamaño previo. Sin cambios en API, esquema, tipos registrados ni pedidos comerciales. Vista real pendiente del usuario.
+- Archivos: apps/web/src/paginas/Pedidos.tsx, apps/web/src/pruebas/mostrador.test.tsx, docs/flujo-mostrador.md y ESTADO.md.
+
 ## Clientes y papelera · Implementación local terminada · 2026-11-08
 
 - Terminadas pantallas Clientes y Papelera, datos de contacto/búsqueda junto al teléfono en Ventas, vínculo y actualización explícita de ficha, recibo con contacto, búsqueda de pedidos por fecha y teléfono, y marca En papelera en Reportes/CSV. Clientes permite agregar/editar/detalles y retirar; los detalles e historiales abren ventanas flotantes con protección de cambios. ADMIN/GERENTE eliminan/restauran; CAJERO consulta/edita clientes sin eliminar ni leer sus cambios. MESERO busca/registra desde Ventas sin historial comercial; COCINA no accede. Las restricciones individuales se verifican también en operaciones cruzadas de API.

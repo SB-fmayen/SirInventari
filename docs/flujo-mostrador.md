@@ -5,7 +5,7 @@ Cambio solicitado por el usuario el 2026-11-07. La operación se realiza desde u
 ## Operación
 
 1. Abrir el turno en Turnos y entrar en Ventas → Nuevo pedido.
-2. La opción inicial es Para llevar. No se ofrece Mesa para ventas nuevas cuando hay tipos de mostrador configurados. Los pedidos históricos y borradores anteriores se conservan.
+2. La opción inicial es Para llevar. Desde el 2026-11-08, por solicitud del usuario, también se ofrece **Comer en mesa**: elegirlo y escribir la referencia de mesa (obligatoria). Se conservan productos, nombre, teléfono y dirección al cambiar el tipo de venta. Usa el tipo MESA existente; no crea tipos duplicados ni cambia los pedidos históricos.
 3. Elegir una categoría visible o buscar por nombre/código. La búsqueda admite escribir sin tildes y busca en todas las categorías. Cada producto/tamaño conserva su precio propio; extras se encuentran en su categoría o con la búsqueda.
 4. Agregar productos y revisar el resumen al lado: cantidades enteras, importes por línea, notas y total. Cada clic agrega una línea para permitir preparaciones distintas del mismo producto. Las cantidades se ajustan con +/−. Cambiar categoría o búsqueda conserva el pedido.
 5. El nombre es opcional; si se deja vacío en una venta sin mesa se registra «Cliente de mostrador». El folio distingue los pedidos.
