@@ -73,6 +73,8 @@ export function PermisosUsuario({ id, rol }: { id: number; rol: Rol }) {
     turnos: ['ver', 'crear', 'editar'],
     catalogo: ['ver', 'crear', 'editar', 'anular'],
     reportes: ['ver'],
+    clientes: ['ver', 'crear', 'editar', 'anular'],
+    papelera: ['ver', 'editar', 'anular'],
   }
   return (
     <details className="my-4 rounded-xl border p-4">

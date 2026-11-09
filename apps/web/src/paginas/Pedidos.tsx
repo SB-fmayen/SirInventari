@@ -1,3 +1,5 @@
+import { permisoClientes } from '@/lib/clientes'
+import { BuscarCliente, MovimientoPapelera } from '@/componentes/ClientesCompartidos'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ErrorApi } from '@/lib/api'
 import { useSesion } from '@/sesion/SesionProvider'
@@ -16,13 +18,14 @@ interface Linea {
   producto: { nombre: string }; usuario_pedido_detalle_agregado_porTousuario: { nombre: string }
 }
 interface Pedido {
+  cliente_telefono?: string | null; cliente_direccion?: string | null; version: number; eliminado_en?: string | null
   id: string; folio: number; tipo_venta_id: number; mesa_referencia: string | null; cliente_nombre: string | null
   estado: string; estado_cocina: EstadoCocina; total: string; pagado: string; saldo: string; creado_en: string
   tipo_venta: { nombre: string }; usuario: { nombre: string }; pedido_detalle: Linea[]
   fecha_operacion?: string
 }
 interface BorradorLinea { id: string; producto_id: number; cantidad: string; notas: string }
-interface Borrador { id: string; tipo_venta_id: string; mesa_referencia: string; cliente_nombre: string; lineas: BorradorLinea[] }
+interface Borrador { id: string; tipo_venta_id: string; mesa_referencia: string; cliente_nombre: string; cliente_telefono?: string; cliente_direccion?: string; cliente_id?: string | null; cliente_version?: number | null; actualizar_cliente?: boolean; lineas: BorradorLinea[] }
 const boton = 'min-h-12 rounded-xl bg-teal-700 px-4 font-semibold text-white disabled:opacity-50'
 const secundario = 'min-h-12 rounded-xl bg-slate-100 px-4 font-semibold text-slate-700 disabled:opacity-50'
 const campo = 'min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-base'
@@ -47,6 +50,10 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   const [borrador, setBorrador] = useState<Borrador | null>(null)
   const [agregando, setAgregando] = useState(false)
   const [buscar, setBuscar] = useState('')
+  const [fechaPedidos, setFechaPedidos] = useState('')
+  const [buscandoCliente, setBuscandoCliente] = useState(false)
+  const [eliminarPedido, setEliminarPedido] = useState<Pedido | null>(null)
+  const puedeEliminar = !!usuario && ['ADMIN','GERENTE'].includes(usuario.rol) && permisoClientes(usuario,'pedidos','anular') && permisoClientes(usuario,'papelera','anular')
   const [filtroPedido, setFiltroPedido] = useState('TODOS')
   const [verAnteriores, setVerAnteriores] = useState(false)
   const inicioRapido=useRef(false)
@@ -66,9 +73,9 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   }, [borrador, agregando, claveBorrador])
   const cargar = useCallback(async () => {
     if (!puedeTomarPedidos) return { ps: [], menu: [], ts: [] }
-    const [ps, menu, ts] = await Promise.all([api<Pedido[]>(verAnteriores ? '/pedidos?anteriores=1' : '/pedidos'), api<Producto[]>('/pedidos/catalogo'), api<TipoVenta[]>('/pedidos/tipos')])
+    const [ps, menu, ts] = await Promise.all([api<Pedido[]>(fechaPedidos ? `/pedidos?fecha=${fechaPedidos}` : verAnteriores ? '/pedidos?anteriores=1' : '/pedidos'), api<Producto[]>('/pedidos/catalogo'), api<TipoVenta[]>('/pedidos/tipos')])
     return { ps, menu, ts }
-  }, [api, verAnteriores, puedeTomarPedidos])
+  }, [api, verAnteriores, puedeTomarPedidos, fechaPedidos])
   useEffect(() => {
     let vigente = true
     cargar().then(({ ps, menu, ts }) => { if (vigente) { setPedidos(ps); setProductos(menu); setTipos(ts) } })
@@ -87,7 +94,7 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
     try {
       const { ps, menu, ts } = await cargar()
       setPedidos(ps); setProductos(menu); setTipos(ts); setError('')
-      setSeleccionado((actual) => actual ? ps.find((p) => p.id === actual.id) ?? actual : null)
+      setSeleccionado((actual) => actual ? ps.find((p) => p.id === actual.id) ?? null : null)
     } catch (e) { setError(mensaje(e)) }
   }
   const conectado = useTiempoReal(actualizar)
@@ -104,6 +111,7 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   async function guardar(cobrarDespues = false) {
     if (!borrador) return
     if (!borrador.lineas.length) { setError('Agrega al menos un producto.'); return }
+    if (!agregando && borrador.cliente_telefono?.trim() && !borrador.cliente_nombre.trim()) { setError('Escribe el nombre del cliente para registrar su teléfono.'); return }
     if (borrador.lineas.some((l) => !Number.isSafeInteger(Number(l.cantidad)) || Number(l.cantidad) < 1 || Number(l.cantidad) > 999999)) {
       setError('La cantidad de cada producto debe ser un número entero de 1 a 999999 unidades.')
       return
@@ -136,7 +144,7 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   const normalizar = (texto: string) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim()
   const coincideProducto = (p:Producto) => (!filtro || p.categoria.id===Number(filtro)) && normalizar(`${p.nombre} ${p.sku}`).includes(normalizar(buscarProducto))
   const corresponde = (p: Pedido, filtro: string) => filtro === 'TODOS' || filtro === 'PENDIENTES' && !['PAGADO','ANULADO'].includes(p.estado) || filtro === p.estado || filtro === p.estado_cocina
-  const visible = pedidos.filter((p) => corresponde(p, filtroPedido) && `${p.folio} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')))
+  const visible = pedidos.filter((p) => corresponde(p, filtroPedido) && `${p.folio} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''} ${p.cliente_telefono ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')))
   const editable = seleccionado && !['PAGADO', 'ANULADO'].includes(seleccionado.estado)
   const tipo = tipos.find((t) => t.id === Number(borrador?.tipo_venta_id))
   const tiposMostrador = tipos.some(t => t.codigo !== 'MESA') ? tipos.filter(t => t.codigo !== 'MESA' || t.id === Number(borrador?.tipo_venta_id)) : tipos
@@ -152,6 +160,9 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
       <h2 className="text-2xl font-bold">{agregando ? `Agregar al pedido ${seleccionado?.folio}` : 'Nuevo pedido'}</h2>
       {!agregando && <div className="grid gap-3 sm:grid-cols-2"><label>Tipo de venta<select required disabled={guardando} className={campo} value={borrador.tipo_venta_id} onChange={(e) => setBorrador({ ...borrador, tipo_venta_id: e.target.value })}>{tiposMostrador.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}</select></label>
         {tipo?.codigo === 'MESA' ? <label>Mesa<input required maxLength={30} disabled={guardando} className={campo} value={borrador.mesa_referencia} onChange={(e) => setBorrador({ ...borrador, mesa_referencia: e.target.value })} /></label> : <label>Nombre del cliente (opcional)<input placeholder="Cliente de mostrador" maxLength={100} disabled={guardando} className={campo} value={borrador.cliente_nombre} onChange={(e) => setBorrador({ ...borrador, cliente_nombre: e.target.value })} /></label>}
+        <label>Teléfono del cliente<div className="flex gap-2"><input type="tel" maxLength={30} disabled={guardando} className={campo} value={borrador.cliente_telefono ?? ''} onChange={e => setBorrador({ ...borrador, cliente_telefono: e.target.value, actualizar_cliente: false })} />{permisoClientes(usuario,'clientes') && <button type="button" className={secundario} disabled={guardando} onClick={() => setBuscandoCliente(true)}>Buscar cliente</button>}</div></label>
+        <label>Dirección del cliente<textarea maxLength={300} disabled={guardando} className={campo} value={borrador.cliente_direccion ?? ''} onChange={e => setBorrador({ ...borrador, cliente_direccion: e.target.value, actualizar_cliente: false })} /></label>
+        {borrador.cliente_id ? <div className="sm:col-span-2 space-y-2"><p>Cliente seleccionado. El pedido conservará una copia de estos datos.</p>{permisoClientes(usuario,'clientes','editar') && <label className="flex gap-2"><input type="checkbox" disabled={guardando} checked={borrador.actualizar_cliente ?? false} onChange={e => setBorrador({ ...borrador, actualizar_cliente: e.target.checked })} />Confirmo actualizar la ficha del cliente con los datos de esta venta</label>}<button type="button" className={secundario} disabled={guardando} onClick={() => setBorrador({ ...borrador, cliente_id: null, cliente_version: null, actualizar_cliente: false })}>Quitar vínculo con cliente</button></div> : <p className="text-sm sm:col-span-2">Si escribes teléfono y nombre, el cliente nuevo se guardará con el pedido. Si ya existe, búscalo y selecciónalo. Para domicilio se requiere teléfono y dirección.</p>}
       </div>}
       <div className="toma-pedido"><div className="space-y-4">
       <label className="block font-semibold">Buscar producto<input type="search" className={campo} value={buscarProducto} onChange={(e) => { setBuscarProducto(e.target.value); setFiltro('') }} placeholder="Nombre o código del producto" /></label>
@@ -164,11 +175,11 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
       {!borrador.lineas.length && <p className="rounded-xl border border-dashed border-slate-300 p-5 text-slate-600">Toca un producto del menú para agregarlo. Aquí puedes ajustar cantidades y notas.</p>}
       <ul className="space-y-3">{borrador.lineas.map((l, indice) => <li className="linea-venta grid gap-3 rounded-xl border border-slate-200 bg-white p-3" key={l.id}><strong className="flex justify-between gap-3"><span>{productos.find((p) => p.id === l.producto_id)?.nombre}</span><span className="whitespace-nowrap">Q {totalLineas([{ cantidad: l.cantidad, precio: productos.find(p => p.id === l.producto_id)?.precio ?? '0' }])}</span></strong><div className="cantidad-venta"><label>Cantidad {indice + 1}<input className={campo} required type="number" min="1" max="999999" step="1" value={l.cantidad} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { cantidad: e.target.value })} /></label><div className="mt-1 flex gap-2"><button type="button" aria-label={`Disminuir cantidad ${indice+1}`} className={secundario} disabled={guardando || Number(l.cantidad)<=1} onClick={() => cambiarLinea(l.id,{cantidad:String(Math.max(1,Number(l.cantidad)-1))})}>−</button><button type="button" aria-label={`Aumentar cantidad ${indice+1}`} className={secundario} disabled={guardando || Number(l.cantidad)>=999999} onClick={() => cambiarLinea(l.id,{cantidad:String(Math.min(999999,Number(l.cantidad)+1))})}>+</button></div></div><div><label>Notas {indice + 1}<input className={campo} maxLength={200} value={l.notas} disabled={guardando} onChange={(e) => cambiarLinea(l.id, { notas: e.target.value })} /></label><select aria-label={`Nota frecuente ${indice+1}`} className={campo} value="" disabled={guardando} onChange={e => cambiarLinea(l.id,{notas:[l.notas,e.target.value].filter(Boolean).join('; ').slice(0,200)})}><option value="">Agregar nota frecuente</option>{['Sin cebolla','Sin picante','Bien cocido','Para compartir'].map(n => <option key={n}>{n}</option>)}</select></div><button type="button" className={secundario} disabled={guardando} aria-label={`Quitar línea ${indice + 1}`} onClick={() => setBorrador({ ...borrador, lineas: borrador.lineas.filter((actual) => actual.id !== l.id) })}>Quitar</button></li>)}</ul>
       <p className="font-semibold">Total de los productos nuevos: Q {totalLineas(borrador.lineas.map((l) => ({ cantidad: l.cantidad, precio: productos.find((p) => p.id === l.producto_id)?.precio ?? '0' })))}</p>
-      <div className="flex flex-wrap gap-2">{puedeCobrar && <button className={`${boton} w-full`} type="submit" value="cobrar" disabled={guardando || !borrador.lineas.length}>{guardando ? 'Guardando…' : 'Guardar y cobrar'}</button>}<button className={puedeCobrar ? secundario : boton} disabled={guardando}>Guardar pedido</button><button type="button" className={secundario} disabled={guardando} onClick={() => { if (borrador.lineas.length && !window.confirm('¿Descartar los productos sin guardar?')) return; if (!agregando) { localStorage.removeItem(claveBorrador); setRecuperable(null) } setBorrador(null) }}>Cancelar</button></div>
+      <div className="flex flex-wrap gap-2">{puedeCobrar && <button className={`${boton} w-full`} type="submit" value="cobrar" disabled={guardando || !borrador.lineas.length}>{guardando ? 'Guardando…' : 'Guardar y cobrar'}</button>}<button className={puedeCobrar ? secundario : boton} disabled={guardando}>Guardar pedido</button><button type="button" className={secundario} disabled={guardando} onClick={() => { if (borrador.lineas.length && !window.confirm('¿Descartar los productos sin guardará')) return; if (!agregando) { localStorage.removeItem(claveBorrador); setRecuperable(null) } setBorrador(null) }}>Cancelar</button></div>
       </div></div>
     </form>}
     {seleccionado && !borrador && !cobro && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
-      <div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-2xl font-bold">Pedido {seleccionado.folio}</h2><p>{seleccionado.tipo_venta.nombre} · {seleccionado.mesa_referencia || seleccionado.cliente_nombre} · {estados[seleccionado.estado]}</p><p>Tomado por {seleccionado.usuario.nombre} a las {hora(seleccionado.creado_en)}</p></div>{editable && <button className={boton} disabled={guardando} onClick={() => comenzar(true)}>Agregar productos</button>}</div>
+      <div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-2xl font-bold">Pedido {seleccionado.folio}</h2><p>{seleccionado.tipo_venta.nombre} · {seleccionado.mesa_referencia || seleccionado.cliente_nombre} · {estados[seleccionado.estado]}</p><p>{seleccionado.cliente_telefono && `Teléfono: ${seleccionado.cliente_telefono}`}</p><p>{seleccionado.cliente_direccion && `Dirección: ${seleccionado.cliente_direccion}`}</p><p>Tomado por {seleccionado.usuario.nombre} a las {hora(seleccionado.creado_en)}</p></div>{editable && <button className={boton} disabled={guardando} onClick={() => comenzar(true)}>Agregar productos</button>}</div>
       <ul className="space-y-3">{seleccionado.pedido_detalle.map((l) => <li className="rounded-xl bg-slate-50 p-3" key={l.id}>
         <div className="flex flex-wrap items-center justify-between gap-2"><strong>{l.cantidad} × {l.producto.nombre} · {dinero(l.importe)}</strong>{l.estado === 'ACTIVA' && editable && <button className={secundario} disabled={guardando} aria-label={`Anular ${l.producto.nombre}`} onClick={() => { setAnulando(l.id); setMotivo('') }}>Quitar producto</button>}</div>
         {l.notas && <p>Notas: {l.notas}</p>}<p className="text-sm text-slate-600">Agregado por {l.usuario_pedido_detalle_agregado_porTousuario.nombre} a las {hora(l.agregado_en)}</p>{l.estado === 'ANULADA' && <p className="text-red-700">Anulado: {l.motivo_anulacion}</p>}
@@ -176,7 +187,7 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
       {anulando && <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); void anular() }}><label>Motivo de la anulación<input className={campo} required maxLength={200} disabled={guardando} value={motivo} onChange={(e) => setMotivo(e.target.value)} /></label><button className={boton} disabled={guardando}>Confirmar anulación</button><button type="button" className={secundario} disabled={guardando} onClick={() => setAnulando(null)}>Cancelar anulación</button></form>}
       {seleccionado.estado_cocina && <p className="font-semibold text-teal-800">Cocina: {nombresCocina[seleccionado.estado_cocina]}</p>}
       <p className="text-xl font-bold">Total: {dinero(seleccionado.total)} · Pagado: {dinero(seleccionado.pagado)} · Saldo: {dinero(seleccionado.saldo)}</p>
-      <div className="flex flex-wrap gap-3">{puedeCobrar && <button className={boton} disabled={guardando || !!anulando} onClick={() => setCobro({ id: seleccionado.id })}>{editable ? 'Cobrar este pedido' : 'Ver comprobante'}</button>}{editable && <button className="min-h-12 rounded-xl border border-red-200 bg-red-50 px-4 font-semibold text-red-800 disabled:opacity-50" disabled={guardando || !!anulando || Number(seleccionado.pagado) > 0} onClick={() => { setAnulando('PEDIDO'); setMotivo('') }}>Anular pedido</button>}</div>
+      <div className="flex flex-wrap gap-3">{puedeEliminar && <button className={secundario} disabled={guardando || !!anulando} onClick={() => setEliminarPedido(seleccionado)}>Eliminar pedido</button>}{puedeCobrar && <button className={boton} disabled={guardando || !!anulando} onClick={() => setCobro({ id: seleccionado.id })}>{editable ? 'Cobrar este pedido' : 'Ver comprobante'}</button>}{editable && <button className="min-h-12 rounded-xl border border-red-200 bg-red-50 px-4 font-semibold text-red-800 disabled:opacity-50" disabled={guardando || !!anulando || Number(seleccionado.pagado) > 0} onClick={() => { setAnulando('PEDIDO'); setMotivo('') }}>Anular pedido</button>}</div>
       {editable && Number(seleccionado.pagado) > 0 && <p>Primero deben anularse los pagos antes de cancelar el pedido.</p>}
     </section>}
     {cobro && puedeCobrar && <section className="space-y-4" aria-label="Cobro en mostrador">
@@ -188,10 +199,12 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
     </section>}
     {!borrador && !cobro && <section className="space-y-4" aria-label="Pedidos guardados"><h2 className="text-xl font-bold">Pedidos guardados</h2>
     <div className="flex flex-wrap gap-2">{[['TODOS','Todos'],['PENDIENTES','Pendientes de cobro'],['PAGADO','Pagados'],['ANULADO','Anulados']].map(([codigo,nombre]) => <button type="button" key={codigo} className={filtroPedido === codigo ? boton : secundario} aria-pressed={filtroPedido === codigo} onClick={() => setFiltroPedido(codigo)}>{nombre} ({pedidos.filter(p => corresponde(p,codigo)).length})</button>)}</div>
-    <label className="inline-flex min-h-12 items-center gap-2"><input type="checkbox" checked={verAnteriores} onChange={e => setVerAnteriores(e.target.checked)} />Incluir abiertos de días anteriores</label>
-    <label className="block">Buscar por folio, mesa o cliente<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
+    <label className="block">Fecha de pedidos<input type="date" className={campo} value={fechaPedidos} onChange={e => { setFechaPedidos(e.target.value); setVerAnteriores(false); setSeleccionado(null) }} /></label><label className="inline-flex min-h-12 items-center gap-2"><input type="checkbox" disabled={!!fechaPedidos} checked={verAnteriores} onChange={e => setVerAnteriores(e.target.checked)} />Incluir abiertos de días anteriores</label>
+    <label className="block">Buscar por folio, mesa, cliente o teléfono<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
     {cargando ? <p>Cargando pedidos…</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visible.map((p) => <button disabled={guardando || !!borrador} className="min-h-32 rounded-2xl border border-slate-200 bg-white p-4 text-left disabled:opacity-50" key={p.id} onClick={() => { setSeleccionado(p); setAnulando(null); setError('') }} aria-label={`Ver pedido ${p.folio}`}><span className="block text-2xl font-bold">Pedido {p.folio} · {dinero(p.total)}</span><span className="block">{p.fecha_operacion && `${p.fecha_operacion.split('-').reverse().join('/')} · `}{estados[p.estado]} · {hora(p.creado_en)}</span><span className="block">{p.mesa_referencia || p.cliente_nombre}</span>{p.estado_cocina && <span className="mt-2 inline-block rounded-lg bg-teal-50 px-2 py-1 font-semibold text-teal-800">Cocina: {nombresCocina[p.estado_cocina]}</span>}</button>)}</div>}
-    {!cargando && !visible.length && <p>No hay pedidos con esos filtros para hoy.</p>}
+    {!cargando && !visible.length && <p>No hay pedidos con esos filtros para la fecha elegida.</p>}
     </section>}
+    {buscandoCliente && borrador && <BuscarCliente inicial={borrador.cliente_telefono ?? ''} cerrar={() => setBuscandoCliente(false)} elegir={c => { setBorrador({ ...borrador, cliente_id: c.id, cliente_version: c.version, cliente_nombre: c.nombre, cliente_telefono: c.telefono, cliente_direccion: c.direccion ?? '', actualizar_cliente: false }); setBuscandoCliente(false) }} />}
+    {eliminarPedido && <MovimientoPapelera tipo="pedidos" registro={{ id: eliminarPedido.id, version: eliminarPedido.version, nombre: `Pedido ${eliminarPedido.folio} · ${eliminarPedido.fecha_operacion ?? ''}` }} cerrar={() => setEliminarPedido(null)} terminar={() => { setEliminarPedido(null); setSeleccionado(null); setAviso('Pedido enviado a la papelera.'); void actualizar() }} />}
   </div>
 }

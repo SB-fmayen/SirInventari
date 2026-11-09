@@ -591,7 +591,7 @@ describe('Permisos por rol y centro (Tarea 5)', () => {
     expect(screen.queryByRole('heading', { name: 'Caja' })).not.toBeInTheDocument()
   })
 
-  it('COCINA solo ve Cocina y CAJERO ve Ventas y Turnos', async () => {
+  it('COCINA solo ve Cocina y CAJERO ve Ventas, Turnos y Clientes', async () => {
     simularApi({ salud: 'sin-red', sesion: conRol('COCINA') })
     const { unmount } = abrir()
     expect((await textoMenu()).replace('Inicio', '')).toBe('Cocina')
@@ -599,7 +599,7 @@ describe('Permisos por rol y centro (Tarea 5)', () => {
 
     simularApi({ salud: 'sin-red', sesion: conRol('CAJERO') })
     abrir()
-    expect((await textoMenu()).replace('Inicio', '')).toBe('VentasTurnos')
+    expect((await textoMenu()).replace('Inicio', '')).toBe('VentasTurnosClientes')
   })
 
   it('el GERENTE ve todo menos Usuarios', async () => {

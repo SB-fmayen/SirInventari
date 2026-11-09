@@ -1,3 +1,5 @@
+import { Clientes } from '@/paginas/Clientes'
+import { Papelera } from '@/paginas/Papelera'
 import { House, LoaderCircle, LogOut, Store } from 'lucide-react'
 import { Link, NavLink, Route, Routes } from 'react-router'
 import { IndicadorApi } from '@/componentes/IndicadorApi'
@@ -107,7 +109,7 @@ function Principal({ usuario }: { usuario: UsuarioSistema }) {
             <Route
               key={s.ruta}
               path={s.ruta}
-              element={!puedeEntrar(usuario.rol, s) || !misSecciones.includes(s) ? <SinPermiso /> : <div key={`${centro?.id}-${s.ruta}`}>{s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : s.ruta === '/pedidos' ? <Pedidos /> : s.ruta === '/caja' ? <Pedidos iniciarCobros /> : s.ruta === '/reportes' ? <Reportes /> : s.ruta === '/cocina' ? <Cocina /> : <EnConstruccion seccion={s} />}</div>}
+              element={!puedeEntrar(usuario.rol, s) || !misSecciones.includes(s) ? <SinPermiso /> : <div key={`${centro?.id}-${s.ruta}`}>{s.ruta === '/clientes' ? <Clientes /> : s.ruta === '/papelera' ? <Papelera /> : s.ruta === '/usuarios' ? <Usuarios usuario={usuario} /> : s.ruta === '/catalogo' ? <Catalogo /> : s.ruta === '/turnos' ? <Turnos /> : s.ruta === '/pedidos' ? <Pedidos /> : s.ruta === '/caja' ? <Pedidos iniciarCobros /> : s.ruta === '/reportes' ? <Reportes /> : s.ruta === '/cocina' ? <Cocina /> : <EnConstruccion seccion={s} />}</div>}
             />
           ))}
           <Route path="*" element={<NoEncontrada />} />

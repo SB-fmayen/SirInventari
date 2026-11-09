@@ -46,6 +46,51 @@ async function cobrar() {
 }
 
 describe('Venta de mostrador en una sola pantalla', () => {
+  it('busca por teléfono, selecciona un cliente y envía su vínculo y datos con la venta', async () => {
+    const anterior = sesion.api.getMockImplementation()!
+    const cliente = { id: '73f98958-7be3-4db8-bdf9-cb91d52acf25', nombre: 'Ana Cliente', telefono: '55551234', direccion: 'Zona 1', version: 3, eliminado_en: null }
+    sesion.api.mockImplementation(async (ruta: string, opciones?: RequestInit) => ruta.startsWith('/clientes?') ? { registros: [cliente], total: 1, pagina: 0 } : anterior(ruta,opciones))
+    await nuevo()
+    fireEvent.change(screen.getByRole('textbox', { name: /Teléfono del cliente/ }), { target: { value: '55551234' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Buscar cliente' }))
+    expect(await screen.findByRole('dialog', { name: 'Buscar cliente' })).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('button', { name: 'Seleccionar Ana Cliente' }))
+    expect(screen.getByLabelText('Nombre del cliente (opcional)')).toHaveValue('Ana Cliente')
+    expect(screen.getByLabelText('Dirección del cliente')).toHaveValue('Zona 1')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }))
+    await waitFor(() => expect(sesion.api.mock.calls.find(([ruta,opciones]) => ruta === '/pedidos' && opciones?.method === 'POST')).toBeTruthy())
+    const llamada = sesion.api.mock.calls.find(([ruta,opciones]) => ruta === '/pedidos' && opciones?.method === 'POST')!
+    expect(JSON.parse(String(llamada[1].body))).toMatchObject({ cliente_id: cliente.id, cliente_version: 3, cliente_telefono: '55551234', cliente_direccion: 'Zona 1', actualizar_cliente: false })
+  })
+  it('no registra como cliente anónimo un teléfono sin nombre y conserva los datos en el borrador', async () => {
+    await nuevo()
+    fireEvent.change(screen.getByRole('textbox', { name: /Teléfono del cliente/ }), { target: { value: '55551234' } })
+    fireEvent.change(screen.getByLabelText('Dirección del cliente'), { target: { value: 'Zona 1' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Escribe el nombre del cliente')
+    expect(sesion.api.mock.calls.some(([ruta,opciones]) => ruta === '/pedidos' && opciones?.method === 'POST')).toBe(false)
+    expect(JSON.parse(localStorage.getItem('sirinventari.borrador.1.1')!)).toMatchObject({ cliente_telefono: '55551234', cliente_direccion: 'Zona 1' })
+  })
+  it('permite a un gerente enviar un pedido a la papelera con motivo y filtrar por fecha', async () => {
+    sesion.rol = 'GERENTE'
+    const anterior = sesion.api.getMockImplementation()!
+    sesion.api.mockImplementation(async (ruta: string, opciones?: RequestInit) => {
+      if (ruta === '/pedidos') return [{ ...pedido, estado: 'ANULADO', version: 2 }]
+      if (ruta === '/pedidos?fecha=2026-11-07') return [{ ...pedido, estado: 'ANULADO', version: 2 }]
+      if (ruta === '/papelera/pedidos/pedido-1/eliminacion') return { id: pedido.id }
+      return anterior(ruta,opciones)
+    })
+    render(<Pedidos />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver pedido 7' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Eliminar pedido' }))
+    const ventana = screen.getByRole('dialog', { name: 'Enviar a la papelera' })
+    fireEvent.change(within(ventana).getByLabelText('Motivo de eliminación'), { target: { value: 'Pedido de prueba' } })
+    await userEvent.click(within(ventana).getByRole('button', { name: 'Confirmar envío a papelera' }))
+    await screen.findByText('Pedido enviado a la papelera.')
+    expect(sesion.api).toHaveBeenCalledWith('/papelera/pedidos/pedido-1/eliminacion', expect.objectContaining({ body: JSON.stringify({ version: 2, motivo: 'Pedido de prueba' }), method: 'POST' }))
+    fireEvent.change(screen.getByLabelText('Fecha de pedidos'), { target: { value: '2026-11-07' } })
+    await waitFor(() => expect(sesion.api).toHaveBeenCalledWith('/pedidos?fecha=2026-11-07'))
+  })
   it('permite quitar productos en revisión, recalcula y después anula el pedido con motivo', async () => {
     await cobrar()
     const anterior = sesion.api.getMockImplementation()!

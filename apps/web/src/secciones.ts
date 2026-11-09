@@ -1,4 +1,4 @@
-import { ChartColumn, ChefHat, ClipboardList, Clock, CreditCard, Package, Users } from 'lucide-react'
+import { ChartColumn, ChefHat, ClipboardList, Clock, CreditCard, Package, Users, ContactRound, Trash2 } from 'lucide-react'
 import type { Rol } from '@/sesion/tipos'
 
 /** Secciones del menú principal y qué roles pueden entrar a cada una. */
@@ -69,6 +69,8 @@ export const SECCIONES: Seccion[] = [
     tarea: 'Tarea 11',
     roles: ['ADMIN', 'GERENTE'],
   },
+  { ruta: '/clientes', nombre: 'Clientes', descripcion: 'Datos de contacto e historial de pedidos', icono: ContactRound, color: 'bg-cyan-700', tarea: 'Clientes', roles: ['ADMIN', 'GERENTE', 'CAJERO'] },
+  { ruta: '/papelera', nombre: 'Papelera', descripcion: 'Consultar y restaurar clientes y pedidos', icono: Trash2, color: 'bg-slate-600', tarea: 'Papelera', roles: ['ADMIN', 'GERENTE'] },
   {
     ruta: '/usuarios',
     nombre: 'Usuarios',

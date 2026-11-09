@@ -10,7 +10,7 @@ interface Reporte {
   desde: string; hasta: string
   resumen: { total_pedidos: number; total_vendido: string; ticket_promedio: string; descuentos: string }
   por_tipo: Fila[]; por_hora: Fila[]; por_producto: Fila[]; por_pago: Fila[]
-  pedidos: { id: string; folio: number; fecha_operacion: string; total: string; tipo: string }[]
+  pedidos: { id: string; folio: number; fecha_operacion: string; total: string; tipo: string; en_papelera?: boolean }[]
 }
 interface Historial { folio: number; eventos: { fecha: string; usuario: string; descripcion: string }[] }
 const dinero = (valor: string) => `Q ${Number(valor).toFixed(2)}`
@@ -54,7 +54,7 @@ export function Reportes() {
     for (const [titulo, datos] of [['Tipo de venta', reporte.por_tipo], ['Hora de Guatemala', reporte.por_hora], ['Producto', reporte.por_producto], ['Forma de pago', reporte.por_pago]] as const) {
       for (const f of datos) filas.push([centro?.nombre ?? '', reporte.desde, reporte.hasta, titulo, f.nombre, f.cantidad, f.total])
     }
-    for (const p of reporte.pedidos) filas.push([centro?.nombre ?? '', p.fecha_operacion, p.fecha_operacion, 'Pedido', `Folio ${p.folio} · ${p.tipo}`, 1, p.total])
+    for (const p of reporte.pedidos) filas.push([centro?.nombre ?? '', p.fecha_operacion, p.fecha_operacion, 'Pedido', `Folio ${p.folio} · ${p.tipo}${p.en_papelera ? ' (en papelera)' : ''}`, 1, p.total])
     const url = URL.createObjectURL(new Blob(['\uFEFF', convertirCsv(filas)], { type: 'text/csv;charset=utf-8' }))
     const enlace = document.createElement('a'); enlace.href = url
     enlace.download = `ventas-${centro?.codigo.replaceAll(/[^a-zA-Z0-9_-]/g, '_')}-${reporte.desde}-${reporte.hasta}.csv`
@@ -76,7 +76,7 @@ export function Reportes() {
       <p>Mostrando del {reporte.desde.split('-').reverse().join('/')} al {reporte.hasta.split('-').reverse().join('/')}.</p>
       <dl className="grid gap-3 sm:grid-cols-4">{[['Pedidos cobrados', String(reporte.resumen.total_pedidos)], ['Total vendido', dinero(reporte.resumen.total_vendido)], ['Ticket promedio', dinero(reporte.resumen.ticket_promedio)], ['Descuentos incluidos', dinero(reporte.resumen.descuentos)]].map(([nombre, valor]) => <div className="rounded-2xl border border-slate-200 bg-white p-4" key={nombre}><dt>{nombre}</dt><dd className="text-2xl font-bold">{valor}</dd></div>)}</dl>
       <div className="grid gap-5 lg:grid-cols-2"><Tabla titulo="Ventas por tipo" filas={reporte.por_tipo} cantidad="Pedidos" /><Tabla titulo="Ventas por hora" filas={reporte.por_hora} cantidad="Pedidos" /><Tabla titulo="Ventas por producto" filas={reporte.por_producto} cantidad="Unidades" /><Tabla titulo="Formas de pago" filas={reporte.por_pago} cantidad="Pagos" /></div>
-      <section><h2 className="mb-3 text-2xl font-bold">Pedidos cobrados e historial</h2><ul className="space-y-2">{reporte.pedidos.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"><span>Pedido {p.folio} · {p.fecha_operacion.split('-').reverse().join('/')} · {p.tipo} · {dinero(p.total)}</span><button className={boton} disabled={cargando} aria-label={`Ver historial del pedido ${p.folio}`} onClick={() => void verHistorial(p.id)}>Ver historial</button></li>)}</ul>{!reporte.pedidos.length && <p>No hay pedidos pagados en este rango.</p>}</section>
+      <section><h2 className="mb-3 text-2xl font-bold">Pedidos cobrados e historial</h2><ul className="space-y-2">{reporte.pedidos.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"><span>Pedido {p.folio} · {p.fecha_operacion.split('-').reverse().join('/')} · {p.tipo} · {dinero(p.total)}{p.en_papelera && <strong className="ml-2 text-amber-800">En papelera</strong>}</span><button className={boton} disabled={cargando} aria-label={`Ver historial del pedido ${p.folio}`} onClick={() => void verHistorial(p.id)}>Ver historial</button></li>)}</ul>{!reporte.pedidos.length && <p>No hay pedidos pagados en este rango.</p>}</section>
     </>}
     <ControlVentas desde={desde} hasta={hasta}/>
     {historial && <section className="rounded-2xl border border-teal-200 bg-white p-5"><h2 className="mb-3 text-2xl font-bold">Historial del pedido {historial.folio}</h2><ol className="space-y-3">{historial.eventos.map((e, i) => <li key={i}><p className="font-semibold">{e.usuario} · {new Date(e.fecha).toLocaleString('es-GT', { timeZone: 'America/Guatemala' })}</p><p>{e.descripcion}</p></li>)}</ol></section>}
