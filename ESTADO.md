@@ -4,7 +4,14 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-08 (hora de Guatemala) · Codex
+2026-11-09 (hora de Guatemala) · Codex
+
+## Cierre solicitado · Retomar en la siguiente sesión
+
+- Apagados API compilada (PID 5240), Vite de SirInventari (38560), contenedor existente sirinventari-db y Docker Desktop. Comprobado: procesos detenidos y puertos 3000, 5173, 5555 y 5432 cerrados. No se borraron contenedores, volúmenes, ventas, clientes, catálogo, usuarios, borradores ni respaldos; no se tocó PostgreSQL nativo ajeno en 5433.
+- Trabajo de clientes/papelera y Comer en mesa sin numeración guardado hasta 5f7000a. Última verificación general: 190 pruebas correctas; ajuste posterior de mesa comprobado con 14 web y 6 de integración, builds correctos. Solo este cierre cambia ESTADO.md. Se conservan REVISION.md y PDF de relevo sin seguimiento.
+- Para retomar: iniciar base con scripts/iniciar-base-local.ps1, comprobar que 5173 esté libre y levantar Vite; iniciar API compilada con acceso de red fuera del entorno restringido para que Firebase pueda validar certificados. Revisar logs y /salud. No volver a aplicar SQL 07: ya está aplicado y hay respaldo privado previo en logs/.
+- Siguiente: probar con el usuario Clientes, datos de contacto/buscador de Ventas, cambios por campo, Papelera y Comer en mesa sin número. Guías docs/clientes-y-papelera.md y docs/flujo-mostrador.md. Impresión física pendiente; despliegue continúa pospuesto. El usuario confirmó «listo» tras los ajustes; no se afirma validación visual automatizada ni impresión real.
 
 ## Comer en mesa sin numeración · 2026-11-08
 
