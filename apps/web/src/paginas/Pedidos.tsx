@@ -119,7 +119,7 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
     setGuardando(true); setError(''); setAviso('')
     try {
       const p = await api<Pedido>(agregando ? `/pedidos/${borrador.id}/lineas` : '/pedidos', {
-        method: 'POST', body: JSON.stringify(agregando ? { lineas: borrador.lineas } : { ...borrador, cliente_nombre: borrador.cliente_nombre.trim() || (tipos.find(t => t.id === Number(borrador.tipo_venta_id))?.codigo === 'MESA' ? '' : 'Cliente de mostrador'), tipo_venta_id: Number(borrador.tipo_venta_id) }),
+        method: 'POST', body: JSON.stringify(agregando ? { lineas: borrador.lineas } : { ...borrador, mesa_referencia: '', cliente_nombre: borrador.cliente_nombre.trim() || 'Cliente de mostrador', tipo_venta_id: Number(borrador.tipo_venta_id) }),
       })
       if (!agregando) { localStorage.removeItem(claveBorrador); setRecuperable(null) }
       setSeleccionado(p); setBorrador(null)
@@ -146,7 +146,6 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   const corresponde = (p: Pedido, filtro: string) => filtro === 'TODOS' || filtro === 'PENDIENTES' && !['PAGADO','ANULADO'].includes(p.estado) || filtro === p.estado || filtro === p.estado_cocina
   const visible = pedidos.filter((p) => corresponde(p, filtroPedido) && `${p.folio} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''} ${p.cliente_telefono ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')))
   const editable = seleccionado && !['PAGADO', 'ANULADO'].includes(seleccionado.estado)
-  const tipo = tipos.find((t) => t.id === Number(borrador?.tipo_venta_id))
 
   return <div className="ventas-mostrador mx-auto max-w-7xl space-y-5">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-semibold text-teal-800">Mostrador · {centro?.nombre}</p><h1 className="text-3xl font-bold">Ventas</h1><p className="text-slate-600">Elige productos, revisa el pedido y cobra aquí mismo.</p></div><div className="flex flex-wrap gap-2"><button className={boton} disabled={guardando || cobroBloqueado || cargando || !!borrador || !tipos.length} onClick={() => comenzar(false)}>Nuevo pedido</button>{puedeCobrar && <button className={secundario} disabled={guardando || cobroBloqueado || !!borrador} onClick={() => { setCobro({}); setSeleccionado(null); setAviso('') }}>Pendientes y comprobantes</button>}<button className={secundario} disabled={guardando || cobroBloqueado} onClick={() => void actualizar()}>Actualizar</button></div></div>
@@ -158,7 +157,6 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
     {borrador && <form aria-label={agregando ? 'Agregar productos' : 'Nuevo pedido'} className="space-y-4 rounded-2xl border border-teal-200 bg-white p-5" onSubmit={(e) => { e.preventDefault(); void guardar((e.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'cobrar') }}>
       <h2 className="text-2xl font-bold">{agregando ? `Agregar al pedido ${seleccionado?.folio}` : 'Nuevo pedido'}</h2>
       {!agregando && <div className="grid gap-3 sm:grid-cols-2"><label>Tipo de venta<select required disabled={guardando} className={campo} value={borrador.tipo_venta_id} onChange={(e) => setBorrador({ ...borrador, tipo_venta_id: e.target.value })}>{tipos.map((t) => <option key={t.id} value={t.id}>{t.codigo === 'MESA' ? 'Comer en mesa' : t.nombre}</option>)}</select></label>
-        {tipo?.codigo === 'MESA' && <label>Mesa<input required placeholder="Ejemplo: Mesa 4" maxLength={30} disabled={guardando} className={campo} value={borrador.mesa_referencia} onChange={(e) => setBorrador({ ...borrador, mesa_referencia: e.target.value })} /></label>}
         <label>Nombre del cliente (opcional)<input placeholder="Cliente de mostrador" maxLength={100} disabled={guardando} className={campo} value={borrador.cliente_nombre} onChange={(e) => setBorrador({ ...borrador, cliente_nombre: e.target.value })} /></label>
         <label>Teléfono del cliente<div className="flex gap-2"><input type="tel" maxLength={30} disabled={guardando} className={campo} value={borrador.cliente_telefono ?? ''} onChange={e => setBorrador({ ...borrador, cliente_telefono: e.target.value, actualizar_cliente: false })} />{permisoClientes(usuario,'clientes') && <button type="button" className={secundario} disabled={guardando} onClick={() => setBuscandoCliente(true)}>Buscar cliente</button>}</div></label>
         <label>Dirección del cliente<textarea maxLength={300} disabled={guardando} className={campo} value={borrador.cliente_direccion ?? ''} onChange={e => setBorrador({ ...borrador, cliente_direccion: e.target.value, actualizar_cliente: false })} /></label>

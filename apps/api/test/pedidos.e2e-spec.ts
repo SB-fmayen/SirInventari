@@ -77,6 +77,15 @@ describe('Pedidos con folio y líneas (e2e)', () => {
     expect(anulacion.body.pedido_detalle.find((l: { id: string }) => l.id === lineaAgregada)).toMatchObject({ estado: 'ANULADA', anulado_por: usuarioId, motivo_anulacion: 'Cliente cambió de opinión' });
   });
 
+  it('guarda consumo en mesa sin número de mesa ni cliente identificado y permite reintentar', async () => {
+    const cuerpo = { ...datos(randomUUID()), mesa_referencia: '' };
+    const creado = await http().post('/pedidos').set(headers()).send(cuerpo).expect(201);
+    expect(creado.body).toMatchObject({ tipo_venta_id: 1, mesa_referencia: null, cliente_nombre: null, total: '37.5' });
+    const repetido = await http().post('/pedidos').set(headers()).send(cuerpo).expect(201);
+    expect(repetido.body.id).toBe(creado.body.id);
+    expect(repetido.body.folio).toBe(creado.body.folio);
+  });
+
   it('no agrega productos a pedidos pagados o anulados ni acepta productos no disponibles', async () => {
     for (const estado of ['PAGADO', 'ANULADO'] as const) {
       await prisma.pedido.update({ where: { id: ids[0] }, data: { estado } });

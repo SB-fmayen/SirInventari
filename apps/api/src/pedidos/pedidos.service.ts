@@ -157,7 +157,6 @@ export class PedidosService {
       } else {
         const tipo = await tx.tipo_venta.findUnique({ where: { id: datos.tipo_venta_id } });
         if (!tipo) throw new BadRequestException('El tipo de venta no existe.');
-        if (tipo.codigo === 'MESA' && !datos.mesa_referencia) throw new BadRequestException('Indica la mesa del pedido.');
         if (tipo.codigo !== 'MESA' && !datos.cliente_nombre) throw new BadRequestException('Indica el nombre del cliente.');
         if (tipo.codigo === 'DOMICILIO' && (!datos.cliente_telefono || !datos.cliente_direccion)) throw new BadRequestException('Para domicilio escribe el teléfono y la dirección del cliente.');
         const clienteId = await this.clientes.vincular(tx, centroId, usuario, datos);

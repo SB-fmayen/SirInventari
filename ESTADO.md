@@ -6,6 +6,12 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-08 (hora de Guatemala) · Codex
 
+## Comer en mesa sin numeración · 2026-11-08
+
+- El usuario aclara que no hay mesas numeradas. Quitado el campo Mesa de pedidos nuevos y la validación obligatoria de referencia en API. Se mantiene Comer en mesa y los datos opcionales del cliente; sin nombre se usa Cliente de mostrador. Las referencias históricas se conservan y los borradores antiguos se envían sin numeración al crear pedidos nuevos.
+- Verificado: 14 pruebas de Mostrador y 6 de integración de Pedidos correctas (incluye creación/reintento MESA sin referencia). Compilaciones web/API correctas, con aviso de tamaño web previo. Sin cambios de esquema ni datos comerciales. API reiniciada PID 5240, logs privados api-sin-numero-mesa*.log; comprobación de salud al cerrar.
+- Archivos: apps/web/src/paginas/Pedidos.tsx, apps/web/src/pruebas/mostrador.test.tsx, apps/api/src/pedidos/pedidos.service.ts, apps/api/test/pedidos.e2e-spec.ts, docs/flujo-mostrador.md y ESTADO.md.
+
 ## Comer en mesa habilitado · 2026-11-08
 
 - Por solicitud del usuario, Ventas muestra Comer en mesa en el selector de tipos. Reutiliza el tipo MESA existente (id 1, Consumo en mesa), comprobado mediante consulta de solo lectura. Mesa es obligatoria; nombre/teléfono/dirección y productos se conservan al cambiar de tipo. Para llevar sigue siendo la opción inicial.
