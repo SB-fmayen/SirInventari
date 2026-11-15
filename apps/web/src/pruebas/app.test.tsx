@@ -379,7 +379,8 @@ describe('Pedidos (Tarea 8)', () => {
     expect(cantidad).toHaveValue(2)
     expect(screen.getByText('Total de los productos nuevos: Q 90.00')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Agregar Plato del día por Q 45.00' }))
-    expect(screen.getByLabelText('Cantidad 2')).toHaveValue(1)
+    expect(screen.getByLabelText('Cantidad 1')).toHaveValue(3)
+    expect(screen.queryByLabelText('Cantidad 2')).not.toBeInTheDocument()
     expect(screen.getByText('Total de los productos nuevos: Q 135.00')).toBeInTheDocument()
   })
 

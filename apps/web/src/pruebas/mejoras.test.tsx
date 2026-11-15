@@ -110,9 +110,8 @@ describe('Mejoras de operación aprobadas', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Aumentar cantidad 1' }),
     )
-    await userEvent.selectOptions(
-      screen.getByLabelText('Nota frecuente 1'),
-      'Sin cebolla',
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Nota Sin cebolla 1' }),
     )
     expect(
       screen.getByText('Total de los productos nuevos: Q 40.50'),

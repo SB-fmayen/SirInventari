@@ -50,7 +50,8 @@ describe('Venta de mostrador en una sola pantalla', () => {
     await nuevo()
     fireEvent.change(screen.getByLabelText('Nombre del cliente (opcional)'), { target: { value: 'Ana' } })
     fireEvent.change(screen.getByRole('textbox', { name: /Teléfono del cliente/ }), { target: { value: '55551234' } })
-    await userEvent.selectOptions(screen.getByLabelText('Tipo de venta'), '1')
+    await userEvent.click(screen.getByRole('radio', { name: /Comer en mesa/ }))
+    expect(screen.getByRole('radio', { name: /Comer en mesa/ })).toBeChecked()
     expect(screen.queryByLabelText('Mesa')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Nombre del cliente (opcional)')).toHaveValue('Ana')
     expect(screen.getByLabelText('Cantidad 1')).toHaveValue(1)
@@ -169,7 +170,7 @@ describe('Venta de mostrador en una sola pantalla', () => {
 
   it('filtra por categoría y busca sin tildes sin perder cantidades ni notas', async () => {
     await nuevo()
-    expect(screen.getByRole('option', { name: 'Comer en mesa' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Comer en mesa/ })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Cantidad 1'), { target: { value: '2' } })
     await userEvent.type(screen.getByLabelText('Notas 1'), 'Sin cebolla')
     await userEvent.click(within(screen.getByLabelText('Categorías')).getByRole('button', { name: /Bebidas/ }))

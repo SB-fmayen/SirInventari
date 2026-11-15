@@ -44,3 +44,14 @@ Validación actual: 69 pruebas web, 14 unitarias API y 86 de integración en bas
 ## Configuración general de impresión · 2026-11-08
 
 En el comprobante, elegir Formato del recibo: Automático, 58 mm, 80 mm, Carta o A4. La preferencia se guarda por navegador cuando el almacenamiento está disponible. Automático conserva el recibo compacto y se limita al ancho disponible; Carta/A4 conservan el recibo de 80 mm sobre una hoja. Para rollos, seleccionar también el tamaño correcto en el controlador. El navegador no instala ni configura automáticamente la impresora. Usar escala 100 % y desactivar encabezados/pies. Vista previa y copia impresa usan el mismo ancho. La impresión sigue siendo opcional desde el diálogo del navegador.
+
+## Pantalla de Ventas simplificada · 2026-11-15
+
+Pensada para vendedores nuevos, en 4 pasos numerados:
+
+1. **¿Cómo se lleva el pedido?** Botones grandes con dibujo: Comer en mesa, Para llevar, A domicilio, App de entregas.
+2. **Datos del cliente** (se puede cerrar). Se abre sola para domicilio o cuando ya hay datos.
+3. **Toca los productos.** Cada toque suma 1 unidad; la tarjeta muestra «× 2» si ya está en el pedido. Tocar otra vez el mismo producto (sin notas) aumenta la cantidad en vez de repetir la línea.
+4. **Revisa el pedido.** Botones − y + grandes, notas rápidas con un toque (Sin cebolla, Sin picante, Bien cocido, Para compartir; se quitan con otro toque) y total en una barra destacada.
+
+En teléfono y tablet aparece abajo una barra «🛒 Ver pedido · Q total» que lleva al resumen. La lista de pedidos guardados marca en color «✓ Pagado», «✕ Anulado» o «Falta cobrar Q …».
