@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client.js';
+import { PoolConContexto } from './contexto-bd.js';
 
 /**
  * Conexión a PostgreSQL con Prisma.
@@ -16,11 +17,12 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
     }
     super({
       adapter: new PrismaPg(
-        {
+        // Tarea 16: el pool aplica el rol limitado y los centros de la petición actual.
+        new PoolConContexto({
           connectionString: url,
           options: '-c search_path=ventas -c timezone=America/Guatemala',
-        },
-        { schema: 'ventas' },
+        }),
+        { schema: 'ventas', disposeExternalPool: true },
       ),
     });
   }

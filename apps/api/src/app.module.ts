@@ -1,7 +1,8 @@
 import { resolve } from 'node:path';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { ContextoBdInterceptor } from './prisma/contexto-bd.interceptor.js';
 import { AutenticacionModule } from './autenticacion/autenticacion.module.js';
 import { FiltroErrores } from './comun/filtro-errores.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -12,6 +13,7 @@ import { TurnosModule } from './turnos/turnos.module.js';
 import { PedidosModule } from './pedidos/pedidos.module.js';
 import { CajaModule } from './caja/caja.module.js';
 import { ReportesModule } from './reportes/reportes.module.js';
+import { AuditoriaModule } from './auditoria/auditoria.module.js';
 import { ClientesModule } from './clientes/clientes.module.js';
 import { PapeleraModule } from './clientes/papelera.module.js';
 import { ControlModule } from './control/control.module.js';
@@ -32,10 +34,11 @@ import { ControlModule } from './control/control.module.js';
     PedidosModule,
     CajaModule,
     ReportesModule,
+    AuditoriaModule,
     ControlModule,
     ClientesModule,
     PapeleraModule,
   ],
-  providers: [{ provide: APP_FILTER, useClass: FiltroErrores }],
+  providers: [{ provide: APP_FILTER, useClass: FiltroErrores }, { provide: APP_INTERCEPTOR, useClass: ContextoBdInterceptor }],
 })
 export class AppModule {}
