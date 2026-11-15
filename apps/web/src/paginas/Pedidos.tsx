@@ -9,6 +9,7 @@ import { nombresCocina, type EstadoCocina } from '@/lib/cocina'
 import { useCambiosSinGuardar } from '@/hooks/useCambiosSinGuardar'
 import { leerBorrador } from '@/lib/borrador'
 import { Caja } from '@/paginas/Caja'
+import { AccionControl } from '@/componentes/AccionControl'
 
 interface Producto { id: number; nombre: string; sku: string; precio: string; categoria: { id: number; nombre: string }; grupo_variantes?:string|null; es_complemento?:boolean; foto_datos?:string|null }
 interface TipoVenta { id: number; codigo: string; nombre: string }
@@ -66,7 +67,8 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   const [fechaPedidos, setFechaPedidos] = useState('')
   const [buscandoCliente, setBuscandoCliente] = useState(false)
   const [eliminarPedido, setEliminarPedido] = useState<Pedido | null>(null)
-  const puedeEliminar = !!usuario && ['ADMIN','GERENTE'].includes(usuario.rol) && permisoClientes(usuario,'pedidos','anular') && permisoClientes(usuario,'papelera','anular')
+  const esGerente = !usuario || ['ADMIN', 'GERENTE'].includes(usuario.rol)
+  const puedeEliminar =!!usuario && ['ADMIN','GERENTE'].includes(usuario.rol) && permisoClientes(usuario,'pedidos','anular') && permisoClientes(usuario,'papelera','anular')
   const [filtroPedido, setFiltroPedido] = useState('TODOS')
   const [verAnteriores, setVerAnteriores] = useState(false)
   const inicioRapido=useRef(false)
@@ -208,14 +210,16 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
     {seleccionado && !borrador && !cobro && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-2xl font-bold">Pedido {seleccionado.folio}</h2><p>{seleccionado.tipo_venta.nombre} · {seleccionado.mesa_referencia || seleccionado.cliente_nombre} · {estados[seleccionado.estado]}</p><p>{seleccionado.cliente_telefono && `Teléfono: ${seleccionado.cliente_telefono}`}</p><p>{seleccionado.cliente_direccion && `Dirección: ${seleccionado.cliente_direccion}`}</p><p>Tomado por {seleccionado.usuario.nombre} a las {hora(seleccionado.creado_en)}</p></div>{editable && <button className={boton} disabled={guardando} onClick={() => comenzar(true)}>Agregar productos</button>}</div>
       <ul className="space-y-3">{seleccionado.pedido_detalle.map((l) => <li className="rounded-xl bg-slate-50 p-3" key={l.id}>
-        <div className="flex flex-wrap items-center justify-between gap-2"><strong>{l.cantidad} × {l.producto.nombre} · {dinero(l.importe)}</strong>{l.estado === 'ACTIVA' && editable && <button className={secundario} disabled={guardando} aria-label={`Anular ${l.producto.nombre}`} onClick={() => { setAnulando(l.id); setMotivo('') }}>Quitar producto</button>}</div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><strong>{l.cantidad} × {l.producto.nombre} · {dinero(l.importe)}</strong>{l.estado === 'ACTIVA' && editable && esGerente && <button className={secundario} disabled={guardando} aria-label={`Anular ${l.producto.nombre}`} onClick={() => { setAnulando(l.id); setMotivo('') }}>Quitar producto</button>}</div>
+        {l.estado === 'ACTIVA' && editable && !esGerente && <AccionControl tipo="ANULAR_LINEA" pedidoId={seleccionado.id} referencia={l.id} etiqueta={`Pedir quitar ${l.producto.nombre}`} alGuardar={actualizar} />}
         {l.notas && <p>Notas: {l.notas}</p>}<p className="text-sm text-slate-600">Agregado por {l.usuario_pedido_detalle_agregado_porTousuario.nombre} a las {hora(l.agregado_en)}</p>{l.estado === 'ANULADA' && <p className="text-red-700">Anulado: {l.motivo_anulacion}</p>}
       </li>)}</ul>
       {anulando && <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); void anular() }}><label>Motivo de la anulación<input className={campo} required maxLength={200} disabled={guardando} value={motivo} onChange={(e) => setMotivo(e.target.value)} /></label><button className={boton} disabled={guardando}>Confirmar anulación</button><button type="button" className={secundario} disabled={guardando} onClick={() => setAnulando(null)}>Cancelar anulación</button></form>}
       {seleccionado.estado_cocina && <p className="font-semibold text-teal-800">Cocina: {nombresCocina[seleccionado.estado_cocina]}</p>}
       <p className="text-xl font-bold">Total: {dinero(seleccionado.total)} · Pagado: {dinero(seleccionado.pagado)} · Saldo: {dinero(seleccionado.saldo)}</p>
-      <div className="flex flex-wrap gap-3">{puedeEliminar && <button className={secundario} disabled={guardando || !!anulando} onClick={() => setEliminarPedido(seleccionado)}>Eliminar pedido</button>}{puedeCobrar && <button className={boton} disabled={guardando || !!anulando} onClick={() => setCobro({ id: seleccionado.id })}>{editable ? 'Cobrar este pedido' : 'Ver comprobante'}</button>}{editable && <button className="min-h-12 rounded-xl border border-red-200 bg-red-50 px-4 font-semibold text-red-800 disabled:opacity-50" disabled={guardando || !!anulando || Number(seleccionado.pagado) > 0} onClick={() => { setAnulando('PEDIDO'); setMotivo('') }}>Anular pedido</button>}</div>
-      {editable && Number(seleccionado.pagado) > 0 && <p>Primero deben anularse los pagos antes de cancelar el pedido.</p>}
+      <div className="flex flex-wrap gap-3">{puedeEliminar && <button className={secundario} disabled={guardando || !!anulando} onClick={() => setEliminarPedido(seleccionado)}>Eliminar pedido</button>}{puedeCobrar && <button className={boton} disabled={guardando || !!anulando} onClick={() => setCobro({ id: seleccionado.id })}>{editable ? 'Cobrar este pedido' : 'Ver comprobante'}</button>}{editable && esGerente && <button className="min-h-12 rounded-xl border border-red-200 bg-red-50 px-4 font-semibold text-red-800 disabled:opacity-50" disabled={guardando || !!anulando || Number(seleccionado.pagado) > 0} onClick={() => { setAnulando('PEDIDO'); setMotivo('') }}>Anular pedido</button>}</div>
+      {editable && esGerente && Number(seleccionado.pagado) > 0 && <p>Primero deben anularse los pagos antes de cancelar el pedido.</p>}
+      {editable && !esGerente && <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-700">Para quitar un producto toca «Pedir quitar…» y escribe el motivo: un gerente lo autoriza. Para anular el pedido completo, pide a un gerente que lo haga desde su usuario.</p>}
     </section>}
     {cobro && puedeCobrar && <section className="space-y-4" aria-label="Cobro en mostrador">
       {puedeTomarPedidos && <button className={secundario} disabled={cobroBloqueado} onClick={() => { setCobro(null); void actualizar() }}>{cobro.id ? 'Volver al pedido' : 'Ver pedidos guardados'}</button>}

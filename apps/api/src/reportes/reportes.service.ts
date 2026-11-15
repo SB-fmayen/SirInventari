@@ -47,6 +47,66 @@ export class ReportesService {
     private readonly pedidos: PedidosService,
   ) {}
 
+  // Tarea 15: quién anuló (o pidió anular) y quién autorizó, con motivo y hora.
+  async anulaciones(centroId: number, desde?: unknown, hasta?: unknown) {
+    const [hoy] = await this.prisma.$queryRaw<{ fecha: string }[]>`SELECT ventas.fecha_guatemala()::text AS fecha`;
+    const inicio = fecha(desde ?? hoy.fecha), fin = fecha(hasta ?? hoy.fecha);
+    if (inicio > fin || fin.getTime() - inicio.getTime() > 365 * 86400000)
+      throw new BadRequestException('Elige un rango válido de hasta 366 días.');
+    const filas = await this.prisma.$queryRaw<{ tipo: string; folio: number; fecha_operacion: string; detalle: string; importe: string | null; motivo: string | null; hecho_por: string | null; autorizado_por: string | null; estado: string; en: Date }[]>`
+      WITH s AS (
+        SELECT s.pedido_id, s.tipo, s.referencia, s.estado, s.motivo, s.solicitado_en,
+               us.nombre AS solicitante, ur.nombre AS resolvio
+        FROM ventas.solicitud_autorizacion s
+        JOIN ventas.usuario us ON us.id = s.solicitado_por
+        LEFT JOIN ventas.usuario ur ON ur.id = s.resuelto_por
+        WHERE s.centro_venta_id = ${centroId} AND s.tipo IN ('ANULAR_LINEA','ANULAR_PAGO')
+      )
+      SELECT 'Producto' AS tipo, p.folio, p.fecha_operacion::text AS fecha_operacion, pr.nombre::text AS detalle, d.importe::text AS importe,
+             d.motivo_anulacion::text AS motivo, COALESCE(s.solicitante, u.nombre)::text AS hecho_por,
+             COALESCE(s.resolvio, u.nombre)::text AS autorizado_por, 'Aplicada' AS estado, d.anulado_en AS en
+      FROM ventas.pedido_detalle d JOIN ventas.pedido p ON p.id = d.pedido_id JOIN ventas.producto pr ON pr.id = d.producto_id
+      LEFT JOIN ventas.usuario u ON u.id = d.anulado_por
+      LEFT JOIN s ON s.tipo = 'ANULAR_LINEA' AND s.referencia = d.id::text AND s.estado = 'APROBADA'
+      WHERE p.centro_venta_id = ${centroId} AND d.estado = 'ANULADA'
+        AND (d.anulado_en AT TIME ZONE 'America/Guatemala')::date BETWEEN ${inicio}::date AND ${fin}::date
+      UNION ALL
+      SELECT 'Pago', p.folio, p.fecha_operacion::text, 'Pago de Q ' || pg.monto::text, pg.monto::text, pg.motivo_anulacion::text,
+             COALESCE(s.solicitante, u.nombre)::text, COALESCE(s.resolvio, u.nombre)::text, 'Aplicada', pg.anulado_en
+      FROM ventas.pago pg JOIN ventas.pedido p ON p.id = pg.pedido_id
+      LEFT JOIN ventas.usuario u ON u.id = pg.anulado_por
+      LEFT JOIN s ON s.tipo = 'ANULAR_PAGO' AND s.referencia = pg.id::text AND s.estado = 'APROBADA'
+      WHERE p.centro_venta_id = ${centroId} AND pg.estado = 'ANULADO'
+        AND (pg.anulado_en AT TIME ZONE 'America/Guatemala')::date BETWEEN ${inicio}::date AND ${fin}::date
+      UNION ALL
+      SELECT 'Pedido completo', p.folio, p.fecha_operacion::text, 'Pedido ' || p.folio::text, p.total::text,
+             a.despues->>'motivo_anulacion', u.nombre::text, u.nombre::text, 'Aplicada', a.fecha
+      FROM ventas.auditoria a JOIN ventas.pedido p ON p.id::text = a.registro_id
+      LEFT JOIN ventas.usuario u ON u.id = a.usuario_id
+      WHERE a.tabla = 'pedido' AND a.despues ? 'motivo_anulacion' AND a.despues->>'estado' = 'ANULADO'
+        AND p.centro_venta_id = ${centroId}
+        AND (a.fecha AT TIME ZONE 'America/Guatemala')::date BETWEEN ${inicio}::date AND ${fin}::date
+      UNION ALL
+      SELECT CASE s.tipo WHEN 'ANULAR_LINEA' THEN 'Producto' ELSE 'Pago' END, p.folio, p.fecha_operacion::text,
+             'Solicitud', NULL, s.motivo::text, s.solicitante::text, s.resolvio::text,
+             CASE s.estado WHEN 'PENDIENTE' THEN 'Pendiente' ELSE 'Rechazada' END, s.solicitado_en
+      FROM s JOIN ventas.pedido p ON p.id = s.pedido_id
+      WHERE s.estado <> 'APROBADA'
+        AND (s.solicitado_en AT TIME ZONE 'America/Guatemala')::date BETWEEN ${inicio}::date AND ${fin}::date
+      ORDER BY en DESC LIMIT 500`;
+    const porUsuario = new Map<string, { usuario: string; anulaciones: number; solicitudes: number; autorizadas: number }>();
+    const de = (n: string) => { const f = porUsuario.get(n) ?? { usuario: n, anulaciones: 0, solicitudes: 0, autorizadas: 0 }; porUsuario.set(n, f); return f; };
+    for (const f of filas) {
+      if (f.hecho_por) { const x = de(f.hecho_por); x.solicitudes++; if (f.estado === 'Aplicada') x.anulaciones++; }
+      if (f.autorizado_por && f.estado === 'Aplicada') de(f.autorizado_por).autorizadas++;
+    }
+    return {
+      desde: inicio.toISOString().slice(0, 10), hasta: fin.toISOString().slice(0, 10),
+      filas: filas.map(f => ({ ...f, en: f.en.toISOString() })),
+      por_usuario: [...porUsuario.values()].sort((a, b) => b.solicitudes - a.solicitudes),
+    };
+  }
+
   async ventas(centroId: number, desde?: unknown, hasta?: unknown) {
     const [hoy] = await this.prisma.$queryRaw<
       { fecha: string }[]

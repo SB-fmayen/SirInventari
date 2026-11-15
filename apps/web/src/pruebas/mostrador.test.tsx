@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { Pedidos } from '@/paginas/Pedidos'
 import { ErrorApi } from '@/lib/api'
 
@@ -105,7 +105,16 @@ describe('Venta de mostrador en una sola pantalla', () => {
     fireEvent.change(screen.getByLabelText('Fecha de pedidos'), { target: { value: '2026-11-07' } })
     await waitFor(() => expect(sesion.api).toHaveBeenCalledWith('/pedidos?fecha=2026-11-07'))
   })
+  it('un cajero no anula directo: pide autorización para quitar productos y no ve Anular pedido (Tarea 15)', async () => {
+    await cobrar()
+    expect(screen.queryByRole('button', { name: 'Quitar Shuko - Americano - Grande' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Anular pedido' })).not.toBeInTheDocument()
+    expect(screen.getByText('Pedir quitar Shuko - Americano - Grande')).toBeInTheDocument()
+    expect(screen.getByText(/pide a un gerente/)).toBeInTheDocument()
+  })
   it('permite quitar productos en revisión, recalcula y después anula el pedido con motivo', async () => {
+    sesion.rol = 'GERENTE'
+    onTestFinished(() => { sesion.rol = 'CAJERO' })
     await cobrar()
     const anterior = sesion.api.getMockImplementation()!
     let actual = comprobante

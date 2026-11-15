@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi } from '@/lib/api'
 import { convertirCsv } from '@/lib/csv'
+import { ReporteAnulaciones } from '@/componentes/ReporteAnulaciones'
 import { useSesion } from '@/sesion/SesionProvider'
 import { rangoRapido } from '@/lib/fechas'
 import { ControlVentas } from '@/componentes/ControlVentas'
@@ -79,6 +80,7 @@ export function Reportes() {
       <section><h2 className="mb-3 text-2xl font-bold">Pedidos cobrados e historial</h2><ul className="space-y-2">{reporte.pedidos.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"><span>Pedido {p.folio} · {p.fecha_operacion.split('-').reverse().join('/')} · {p.tipo} · {dinero(p.total)}{p.en_papelera && <strong className="ml-2 text-amber-800">En papelera</strong>}</span><button className={boton} disabled={cargando} aria-label={`Ver historial del pedido ${p.folio}`} onClick={() => void verHistorial(p.id)}>Ver historial</button></li>)}</ul>{!reporte.pedidos.length && <p>No hay pedidos pagados en este rango.</p>}</section>
     </>}
     <ControlVentas desde={desde} hasta={hasta}/>
+    <ReporteAnulaciones desde={desde} hasta={hasta} />
     {historial && <section className="rounded-2xl border border-teal-200 bg-white p-5"><h2 className="mb-3 text-2xl font-bold">Historial del pedido {historial.folio}</h2><ol className="space-y-3">{historial.eventos.map((e, i) => <li key={i}><p className="font-semibold">{e.usuario} · {new Date(e.fecha).toLocaleString('es-GT', { timeZone: 'America/Guatemala' })}</p><p>{e.descripcion}</p></li>)}</ol></section>}
   </div>
 }

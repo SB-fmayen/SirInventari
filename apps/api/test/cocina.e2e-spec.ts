@@ -95,7 +95,8 @@ describe('Cocina independiente del cobro (base aislada)', () => {
     await cambiar(p.id, 'PENDIENTE', 'EN_PREPARACION', 201); await cambiar(p.id, 'EN_PREPARACION', 'LISTO', 201);
     await http().post(`/pedidos/${p.id}/lineas`).set(cajero()).send(cuerpo).expect(201);
     expect((await base.prisma.pedido.findUniqueOrThrow({ where: { id: p.id } })).estado_cocina).toBe('LISTO');
-    await http().post(`/pedidos/${p.id}/lineas/${extra.id}/anulacion`).set(cajero()).send({ motivo: 'Ya no lo pidió' }).expect(201);
+    await http().post(`/pedidos/${p.id}/lineas/${extra.id}/anulacion`).set(cajero()).send({ motivo: 'Ya no lo pidió' }).expect(403);
+    await http().post(`/pedidos/${p.id}/lineas/${extra.id}/anulacion`).set(headers('cocina-admin')).send({ motivo: 'Ya no lo pidió' }).expect(201);
     lista = (await http().get('/cocina').set(headers()).expect(200)).body; fila = lista.find((f: { id: string }) => f.id === p.id);
     expect(fila.pedido_detalle).toHaveLength(1);
     await cambiar(p.id, 'LISTO', 'ENTREGADO', 201);

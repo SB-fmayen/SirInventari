@@ -67,4 +67,18 @@ describe('Reportes de ventas e historial (base aislada)', () => {
     await http().get('/reportes/ventas').set(headers(1, 'uid-cajero-01')).expect(403);
     await http().get(`/reportes/pedidos/${pedidoId}/historial`).set(headers(1, 'uid-mesero-01')).expect(403);
   });
+  it('el reporte de anulaciones muestra quién anuló, quién autorizó y el motivo (Tarea 15)', async () => {
+    const p = await http().post('/pedidos').set(headers()).send({ id: randomUUID(), tipo_venta_id: 2, cliente_nombre: 'Cliente anulación', lineas: [{ id: randomUUID(), producto_id: 1, cantidad: 1 }, { id: randomUUID(), producto_id: 2, cantidad: 1 }] });
+    expect(p.body).toMatchObject({ id: expect.any(String) });
+    const linea = p.body.pedido_detalle[1].id;
+    await http().post(`/pedidos/${p.body.id}/lineas/${linea}/anulacion`).set(headers()).send({ motivo: 'Se equivocó de producto' }).expect(201);
+    await http().post(`/pedidos/${p.body.id}/anulacion`).set(headers()).send({ motivo: 'Cliente se fue' }).expect(201);
+    const r = await http().get(`/reportes/anulaciones?desde=${hoy}&hasta=${hoy}`).set(headers()).expect(200);
+    expect(r.body.filas).toEqual(expect.arrayContaining([
+      expect.objectContaining({ tipo: 'Producto', folio: p.body.folio, motivo: 'Se equivocó de producto', hecho_por: 'Admin reportes', estado: 'Aplicada' }),
+      expect.objectContaining({ tipo: 'Pedido completo', folio: p.body.folio, motivo: 'Cliente se fue', autorizado_por: 'Admin reportes' }),
+    ]));
+    expect(r.body.por_usuario.find((u: { usuario: string }) => u.usuario === 'Admin reportes').anulaciones).toBeGreaterThanOrEqual(2);
+    await http().get('/reportes/anulaciones?desde=2026-02-30').set(headers()).expect(400);
+  });
 });

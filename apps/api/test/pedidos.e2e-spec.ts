@@ -22,6 +22,8 @@ describe('Pedidos con folio y líneas (e2e)', () => {
   const lineaInicial = randomUUID();
   const lineaAgregada = randomUUID();
   const http = () => request(app.getHttpServer());
+  const gerenteUid = `gerente-${randomUUID()}`;
+  let gerenteId = 0;
   const headers = (token = uid) => ({ Authorization: `Bearer ${token}`, 'X-Centro-Id': String(centroId) });
   const datos = (id: string, linea = randomUUID()) => ({ id, tipo_venta_id: 1, mesa_referencia: 'Mesa 4', lineas: [{ id: linea, producto_id: productoId, cantidad: 2, notas: 'Sin hielo', precio_unitario: '0.01' }] });
 
@@ -35,6 +37,7 @@ describe('Pedidos con folio y líneas (e2e)', () => {
       const u = await prisma.usuario.create({ data: { firebase_uid: token, email: `${token}@prueba.test`, nombre: token === uid ? 'Mesera inicial' : 'Mesero adicional', rol: 'MESERO', usuario_centro: { create: { centro_venta_id: centroId } } } });
       if (token === uid) usuarioId = u.id; else otroId = u.id;
     }
+    gerenteId = (await prisma.usuario.create({ data: { firebase_uid: gerenteUid, email: `${gerenteUid}@prueba.test`, nombre: 'Gerente pruebas', rol: 'GERENTE', usuario_centro: { create: { centro_venta_id: centroId } } } })).id;
     categoriaId = (await prisma.categoria.create({ data: { nombre: `Cat ${randomUUID()}` } })).id;
     productoId = (await prisma.producto.create({ data: { sku: `P-${randomUUID().slice(0, 12)}`, nombre: 'Limonada prueba', categoria_id: categoriaId, precio_base: 12, producto_centro: { create: { centro_venta_id: centroId, precio: '18.75' } } } })).id;
   });
@@ -72,9 +75,11 @@ describe('Pedidos con folio y líneas (e2e)', () => {
     expect(new Date(linea.agregado_en).getTime()).toBeGreaterThanOrEqual(desde - 1000);
     expect((await http().post(`/pedidos/${ids[0]}/lineas`).set(headers(otroUid)).send(cuerpo).expect(201)).body.pedido_detalle).toHaveLength(2);
     await http().post(`/pedidos/${ids[0]}/lineas/${lineaAgregada}/anulacion`).set(headers()).send({ motivo: '  ' }).expect(400);
-    const anulacion = await http().post(`/pedidos/${ids[0]}/lineas/${lineaAgregada}/anulacion`).set(headers()).send({ motivo: 'Cliente cambió de opinión' }).expect(201);
+    // Tarea 15: el mesero necesita autorización de un gerente.
+    await http().post(`/pedidos/${ids[0]}/lineas/${lineaAgregada}/anulacion`).set(headers()).send({ motivo: 'Cliente cambió de opinión' }).expect(403);
+    const anulacion = await http().post(`/pedidos/${ids[0]}/lineas/${lineaAgregada}/anulacion`).set(headers(gerenteUid)).send({ motivo: 'Cliente cambió de opinión' }).expect(201);
     expect(anulacion.body.total).toBe('37.5');
-    expect(anulacion.body.pedido_detalle.find((l: { id: string }) => l.id === lineaAgregada)).toMatchObject({ estado: 'ANULADA', anulado_por: usuarioId, motivo_anulacion: 'Cliente cambió de opinión' });
+    expect(anulacion.body.pedido_detalle.find((l: { id: string }) => l.id === lineaAgregada)).toMatchObject({ estado: 'ANULADA', anulado_por: gerenteId, motivo_anulacion: 'Cliente cambió de opinión' });
   });
 
   it('guarda consumo en mesa sin número de mesa ni cliente identificado y permite reintentar', async () => {

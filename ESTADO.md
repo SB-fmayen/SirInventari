@@ -4,7 +4,16 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-09 (hora de Guatemala) · Codex
+2026-11-15 (hora de Guatemala) · Claude
+
+## Sesión Claude 2026-11-15 · Fotos, Ventas sencilla y Tarea 15
+
+- **Fotos del catálogo:** 30 imágenes del usuario comprimidas a WebP 480×480 (~25 KB) en `docs/datos/fotos-iguana/`; 152 productos del menú La Iguana con foto de su sección (Tradicionales/Especialidades/Premium) o categoría. Respaldo previo `logs/respaldo-productos-antes-fotos.sql`. Scripts `apps/web/scripts/comprimir-fotos-iguana.mjs` y `apps/api/scripts/cargar-fotos-iguana.mjs` (simula con ROLLBACK; no pisa fotos puestas a mano). Originales (68 MB) ignorados en Git.
+- **Corrección mínima:** 2 pruebas web seguían usando el campo Mesa retirado por Codex; ahora usan el nombre del cliente.
+- **Ventas más sencilla (pedido del usuario):** pasos numerados, tipo de venta con botones grandes, datos del cliente plegables (se abren solos en domicilio), tocar un producto repetido suma cantidad, insignia «× n» en la tarjeta, − / + grandes, notas rápidas de un toque, total destacado, barra «Ver pedido» en móvil, estados de pedidos en color. Detalle en `docs/flujo-mostrador.md`.
+- **Tarea 15 · Terminada sin cambiar la base** (el usuario NO autorizó agregar ANULAR_PEDIDO a `solicitud_autorizacion`): la API rechaza con 403 en español que CAJERO o MESERO anulen productos o pedidos directamente. Quitar un producto pasa por la solicitud ANULAR_LINEA existente que aprueba un gerente; anular un pedido completo solo lo hace ADMIN/GERENTE. Pedido pagado sigue exigiendo anular antes los pagos. Nuevo `GET /reportes/anulaciones` y sección «Anulaciones por usuario» en Reportes con CSV (quién pidió, quién autorizó, motivo y hora).
+- Verificado: 85 web + 95 integración + 14 unitarias API = 194 correctas. Builds y lint correctos (solo avisos previos). API reiniciada con el compilado nuevo.
+- **Tarea 16:** el usuario autorizó activar Row Level Security (script SQL nuevo con respaldo, probado antes en base aislada). Siguiente.
 
 ## Cierre solicitado · Retomar en la siguiente sesión
 
