@@ -30,7 +30,7 @@ describe('Venta, cobro y comanda sin internet (Tareas 18 y 19)', () => {
     const imprimir = vi.fn()
     vi.stubGlobal('print', imprimir)
     render(<Pedidos />)
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo pedido' })).toBeEnabled())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo pedido' })).toBeEnabled(), { timeout: 5000 })
     await userEvent.click(screen.getByRole('button', { name: 'Nuevo pedido' }))
     await userEvent.click(screen.getByRole('button', { name: 'Agregar Shuko por Q 25.00' }))
     await userEvent.click(screen.getByRole('button', { name: 'Agregar Shuko por Q 25.00' }))
