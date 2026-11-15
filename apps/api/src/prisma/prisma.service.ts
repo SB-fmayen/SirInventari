@@ -5,7 +5,7 @@ import { PoolConContexto } from './contexto-bd.js';
 
 /**
  * Conexión a PostgreSQL con Prisma.
- * Cada conexión usa el esquema `ventas` y la hora de Guatemala:
+ * Cada conexión usa el esquema `ventas` y UTC (las fechas de operación usan fecha_guatemala()):
  * los triggers del esquema llaman a sus funciones sin el prefijo `ventas.`.
  */
 @Injectable()
@@ -20,7 +20,9 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
         // Tarea 16: el pool aplica el rol limitado y los centros de la petición actual.
         new PoolConContexto({
           connectionString: url,
-          options: '-c search_path=ventas -c timezone=America/Guatemala',
+          // UTC: el adaptador envía las fechas en UTC sin zona; con otra zona quedaban 6 h corridas.
+          // La fecha de operación la calcula la base con fecha_guatemala() (hora de Guatemala).
+          options: '-c search_path=ventas -c timezone=UTC',
         }),
         { schema: 'ventas', disposeExternalPool: true },
       ),
