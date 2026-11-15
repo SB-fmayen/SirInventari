@@ -55,3 +55,19 @@ Pensada para vendedores nuevos, en 4 pasos numerados:
 4. **Revisa el pedido.** Botones − y + grandes, notas rápidas con un toque (Sin cebolla, Sin picante, Bien cocido, Para compartir; se quitan con otro toque) y total en una barra destacada.
 
 En teléfono y tablet aparece abajo una barra «🛒 Ver pedido · Q total» que lleva al resumen. La lista de pedidos guardados marca en color «✓ Pagado», «✕ Anulado» o «Falta cobrar Q …».
+
+## Vender sin internet · 2026-11-15 (Tareas 17 y 18)
+
+Antes (con internet, una sola vez por equipo): en **Inicio → Este dispositivo** elegir qué equipo es (CAJA1, TAB01…) y abrir Ventas para que se guarden menú, precios, tipos de venta y formas de pago.
+
+Si se cae el internet:
+
+1. Arriba sale **Sin internet**. La sesión abierta sigue funcionando.
+2. Se toma el pedido igual que siempre. Al guardar, queda en el equipo con **folio provisional** (CAJA1-0001, CAJA1-0002…) y la hora real del equipo.
+3. «Guardar y cobrar» abre el **cobro sin internet** (modo mostrador): efectivo con vuelto, o tarjeta si el POS tiene su propia conexión (terminal y autorización obligatorias).
+4. Se imprime la **comanda** para cocina (la pantalla de Cocina no recibe nada sin internet) y, si se quiere, el comprobante. Ver `docs/impresoras.md`.
+5. En «Ventas sin internet en este equipo» se ve cada venta: *Pendiente de enviar*, *Enviado · folio definitivo N* o *En revisión del gerente* con el motivo.
+
+Al volver el internet todo se envía solo, en el orden en que se hizo (el pedido antes que su cobro), cada 20 segundos o al tocar «Enviar ahora». Reenviar es seguro: no se duplica nada. Lo que choque con una regla (voucher repetido, producto agregado a un pedido ya cobrado, cobro de un pedido que no llegó, tablet desactivada, cobro hecho antes de abrir el turno) va a la **Bandeja de conflictos** del gerente en Inicio, con el motivo en palabras claras. El gerente también ve un aviso si un equipo no sincroniza hace más de 15 minutos.
+
+Los pedidos guardados se buscan por folio definitivo o provisional.

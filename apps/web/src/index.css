@@ -242,3 +242,17 @@
 @media (prefers-reduced-motion: reduce) {
   .aplicacion *, .aplicacion *::before, .aplicacion *::after { transition-duration: 0s !important; }
 }
+/* Tarea 19 · Comanda térmica */
+.comanda { font-size: 12px; }
+.comanda-titulo { text-align: center; font-weight: 800; letter-spacing: .05em; border-bottom: 1px dashed #111; padding-bottom: .3rem; }
+.comanda-centro { text-align: center; font-size: 10px; }
+.comanda-folio { margin: .5rem 0; text-align: center; font-size: 10px; font-weight: 700; }
+.comanda-folio strong { display: block; font-size: 26px; line-height: 1.1; letter-spacing: .02em; }
+.comanda-aviso { text-align: center; font-size: 10px; border: 1px solid #111; padding: .2rem; }
+.comanda-lineas { margin: .5rem 0; padding: .4rem 0; border-block: 1px dashed #111; list-style: none; }
+.comanda-lineas li { display: flex; gap: .35rem; padding: .2rem 0; font-size: 13px; font-weight: 600; }
+.comanda-lineas small { display: block; font-size: 11px; font-weight: 700; }
+.comanda-cantidad { min-width: 2.2rem; font-size: 15px; font-weight: 800; }
+.comanda-importe { margin-left: auto; white-space: nowrap; }
+.comanda-total { display: flex; justify-content: space-between; font-size: 15px; }
+@media print { .impresion-ticket .comanda { font-size: 10pt; } }

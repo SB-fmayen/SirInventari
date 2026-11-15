@@ -415,7 +415,7 @@ describe('Pedidos (Tarea 8)', () => {
     await userEvent.click(screen.getByRole('button', { name: /Agregar Limonada por Q 18.75/ }))
     await userEvent.type(screen.getByLabelText('Notas 1'), 'Sin hielo')
     await userEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con la API.')
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Sin internet. Para vender sin conexión, primero elige en Inicio qué equipo es este/)
     await userEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }))
     expect(await screen.findByText('Pedido 1 guardado.')).toBeInTheDocument()
     const envios = fetchFalso.mock.calls.filter(([url, opciones]) => url.endsWith('/pedidos') && opciones?.method === 'POST')

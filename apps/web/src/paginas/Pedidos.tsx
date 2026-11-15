@@ -10,6 +10,15 @@ import { useCambiosSinGuardar } from '@/hooks/useCambiosSinGuardar'
 import { leerBorrador } from '@/lib/borrador'
 import { Caja } from '@/paginas/Caja'
 import { AccionControl } from '@/componentes/AccionControl'
+import { CobroSinInternet, ColaEnEquipo, type VentaLocal } from '@/componentes/VentasSinInternet'
+import { useColaSinInternet } from '@/hooks/useColaSinInternet'
+import { encolar, siguienteFolioProvisional } from '@/lib/cola'
+import { dispositivoActual } from '@/lib/sinConexion'
+import { BotonImprimir, type DatosComanda } from '@/componentes/Comanda'
+
+/** Datos de la última venta sin internet (para el aviso y la comanda impresa, Tarea 19). */
+export interface VentaSinInternetResumen { id: string; folio: string | null; total: string; tipo: string; cliente: string; hora: string; lineas: { nombre: string; cantidad: string; notas: string; importe?: string }[]; pago?: { metodo: string; monto: string; vuelto?: number; referencia?: string } }
+const comandaDe = (v: VentaSinInternetResumen): DatosComanda => ({ folio: v.folio ?? 'Agregado', provisional: true, tipo: v.tipo, cliente: v.cliente, hora: v.hora, lineas: v.lineas, total: v.total, pago: v.pago })
 
 interface Producto { id: number; nombre: string; sku: string; precio: string; categoria: { id: number; nombre: string }; grupo_variantes?:string|null; es_complemento?:boolean; foto_datos?:string|null }
 interface TipoVenta { id: number; codigo: string; nombre: string }
@@ -24,6 +33,7 @@ interface Pedido {
   estado: string; estado_cocina: EstadoCocina; total: string; pagado: string; saldo: string; creado_en: string
   tipo_venta: { nombre: string }; usuario: { nombre: string }; pedido_detalle: Linea[]
   fecha_operacion?: string
+  folio_offline?: string | null
 }
 interface BorradorLinea { id: string; producto_id: number; cantidad: string; notas: string }
 interface Borrador { id: string; tipo_venta_id: string; mesa_referencia: string; cliente_nombre: string; cliente_telefono?: string; cliente_direccion?: string; cliente_id?: string | null; cliente_version?: number | null; actualizar_cliente?: boolean; lineas: BorradorLinea[] }
@@ -67,6 +77,9 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   const [fechaPedidos, setFechaPedidos] = useState('')
   const [buscandoCliente, setBuscandoCliente] = useState(false)
   const [eliminarPedido, setEliminarPedido] = useState<Pedido | null>(null)
+  const [ventaLocal, setVentaLocal] = useState<VentaLocal | null>(null)
+  const [ultimaSinInternet, setUltimaSinInternet] = useState<VentaSinInternetResumen | null>(null)
+  useColaSinInternet({ automatico: true })
   const esGerente = !usuario || ['ADMIN', 'GERENTE'].includes(usuario.rol)
   const puedeEliminar =!!usuario && ['ADMIN','GERENTE'].includes(usuario.rol) && permisoClientes(usuario,'pedidos','anular') && permisoClientes(usuario,'papelera','anular')
   const [filtroPedido, setFiltroPedido] = useState('TODOS')
@@ -141,8 +154,31 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
       setPedidos((lista) => [p, ...lista.filter((actual) => actual.id !== p.id)])
       setAviso(`Pedido ${p.folio} guardado.`)
       if (cobrarDespues && puedeCobrar) setCobro({ id: p.id })
-    } catch (e) { setError(mensaje(e)) }
+    } catch (e) {
+      // Tarea 18: sin internet el pedido queda en la cola del equipo con folio provisional.
+      if (e instanceof ErrorApi && e.status === 0) await guardarSinInternet(cobrarDespues)
+      else setError(mensaje(e))
+    }
     finally { setGuardando(false) }
+  }
+  async function guardarSinInternet(cobrarDespues: boolean) {
+    if (!borrador || !centro || !usuario) return
+    const equipo = await dispositivoActual(centro.id)
+    if (!equipo) { setError('Sin internet. Para vender sin conexión, primero elige en Inicio qué equipo es este (por ejemplo CAJA1).'); return }
+    const ahora = new Date().toISOString()
+    const folio = agregando ? (seleccionado?.folio_offline ?? null) : await siguienteFolioProvisional(equipo.codigo)
+    const total = totalLineas(borrador.lineas.map((l) => ({ cantidad: l.cantidad, precio: productos.find((p) => p.id === l.producto_id)?.precio ?? '0' })))
+    await encolar({ id: crypto.randomUUID(), centro_id: centro.id, usuario_id: usuario.id, tipo: 'PEDIDO', datos: {
+      id: borrador.id, tipo_venta_id: Number(borrador.tipo_venta_id) || seleccionado?.tipo_venta_id, cliente_nombre: borrador.cliente_nombre.trim() || seleccionado?.cliente_nombre || 'Cliente de mostrador',
+      creado_en: ahora, folio_offline: folio, total,
+      lineas: borrador.lineas.map((l) => ({ id: l.id, producto_id: l.producto_id, cantidad: l.cantidad, notas: l.notas, agregado_en: ahora })),
+    } })
+    const nuevaVenta = { id: borrador.id, folio, total, lineas: borrador.lineas.map(l => ({ nombre: productos.find(p => p.id === l.producto_id)?.nombre ?? 'Producto', cantidad: l.cantidad, notas: l.notas, importe: totalLineas([{ cantidad: l.cantidad, precio: productos.find(p => p.id === l.producto_id)?.precio ?? '0' }]) })), tipo: tipos.find(t => String(t.id) === borrador.tipo_venta_id)?.nombre ?? '', cliente: borrador.cliente_nombre.trim() || 'Cliente de mostrador', hora: ahora }
+    if (!agregando) { localStorage.removeItem(claveBorrador); setRecuperable(null) }
+    setBorrador(null); setSeleccionado(null)
+    setUltimaSinInternet(nuevaVenta)
+    setAviso(agregando ? 'Sin internet: los productos se guardaron en este equipo y se enviarán solos al volver la conexión.' : `Sin internet: pedido guardado en este equipo con folio provisional ${folio}. Se enviará solo al volver la conexión.`)
+    if (cobrarDespues && puedeCobrar && !agregando) setVentaLocal({ id: borrador.id, folio, total })
   }
   async function anular() {
     if (!seleccionado || !anulando) return
@@ -159,7 +195,7 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   const normalizar = (texto: string) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim()
   const coincideProducto = (p:Producto) => (!filtro || p.categoria.id===Number(filtro)) && normalizar(`${p.nombre} ${p.sku}`).includes(normalizar(buscarProducto))
   const corresponde = (p: Pedido, filtro: string) => filtro === 'TODOS' || filtro === 'PENDIENTES' && !['PAGADO','ANULADO'].includes(p.estado) || filtro === p.estado || filtro === p.estado_cocina
-  const visible = pedidos.filter((p) => corresponde(p, filtroPedido) && `${p.folio} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''} ${p.cliente_telefono ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')))
+  const visible = pedidos.filter((p) => corresponde(p, filtroPedido) && `${p.folio} ${p.folio_offline ?? ''} ${p.mesa_referencia ?? ''} ${p.cliente_nombre ?? ''} ${p.cliente_telefono ?? ''}`.toLocaleLowerCase('es').includes(buscar.toLocaleLowerCase('es')))
   const editable = seleccionado && !['PAGADO', 'ANULADO'].includes(seleccionado.estado)
   const esDomicilio = !!borrador && tipos.find(t => String(t.id) === borrador.tipo_venta_id)?.codigo === 'DOMICILIO'
   const unidades = borrador?.lineas.reduce((s, l) => s + (Number(l.cantidad) || 0), 0) ?? 0
@@ -180,6 +216,8 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
     <p className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${conectado ? 'bg-teal-50 text-teal-800' : 'bg-amber-50 text-amber-800'}`}><span aria-hidden className={`h-2.5 w-2.5 rounded-full ${conectado ? 'bg-teal-600' : 'bg-amber-500'}`} />{conectado ? 'Conectado con Cocina y Caja' : 'Reconectando con Cocina… toca Actualizar si no ves cambios'}</p>
     {error && !cobro && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}
     {aviso && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-emerald-800">{aviso}</p>}
+    {ultimaSinInternet && !borrador && <section aria-label="Imprimir venta sin internet" className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4"><p className="grow"><strong>{ultimaSinInternet.folio ?? "Productos agregados"}</strong> · imprime la comanda para cocina (sin internet la pantalla de Cocina no la recibe).</p><BotonImprimir modo="comanda" datos={comandaDe(ultimaSinInternet)} />{ultimaSinInternet.pago && <BotonImprimir modo="comprobante" datos={comandaDe(ultimaSinInternet)} />}<button type="button" className={secundario} onClick={() => setUltimaSinInternet(null)}>Listo</button></section>}
+    {ventaLocal && <CobroSinInternet venta={ventaLocal} alTerminar={r => { setUltimaSinInternet(u => u && u.id === ventaLocal.id ? { ...u, pago: r } : u); setAviso(`Cobro guardado sin internet para ${ventaLocal.folio}.${r.vuelto ? ` Vuelto: ${dinero(r.vuelto)}.` : ""} Se enviará solo al volver la conexión.`); setVentaLocal(null) }} />}
     {!borrador && !cobro && recuperable && <div className="rounded-xl border border-amber-300 bg-amber-50 p-4"><p>Hay un borrador local sin enviar a Cocina.</p><button className={secundario} onClick={() => { setBorrador(recuperable); setAgregando(false); setSeleccionado(null); setAviso('Borrador recuperado. Revisa disponibilidad y precios antes de guardar.') }}>Recuperar borrador</button></div>}
     {borrador && <form aria-label={agregando ? 'Agregar productos' : 'Nuevo pedido'} className="space-y-4 rounded-2xl border border-teal-200 bg-white p-5" onSubmit={(e) => { e.preventDefault(); void guardar((e.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'cobrar') }}>
       <h2 className="text-2xl font-bold">{agregando ? `Agregar al pedido ${seleccionado?.folio}` : 'Nuevo pedido'}</h2>
@@ -208,7 +246,7 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
       {borrador.lineas.length > 0 && <a href="#resumen-pedido" className="barra-pedido-movil"><span>🛒 {unidades} {unidades === 1 ? 'producto' : 'productos'}</span><strong>Ver pedido · Q {totalLineas(borrador.lineas.map((l) => ({ cantidad: l.cantidad, precio: productos.find((p) => p.id === l.producto_id)?.precio ?? '0' })))}</strong></a>}
     </form>}
     {seleccionado && !borrador && !cobro && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
-      <div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-2xl font-bold">Pedido {seleccionado.folio}</h2><p>{seleccionado.tipo_venta.nombre} · {seleccionado.mesa_referencia || seleccionado.cliente_nombre} · {estados[seleccionado.estado]}</p><p>{seleccionado.cliente_telefono && `Teléfono: ${seleccionado.cliente_telefono}`}</p><p>{seleccionado.cliente_direccion && `Dirección: ${seleccionado.cliente_direccion}`}</p><p>Tomado por {seleccionado.usuario.nombre} a las {hora(seleccionado.creado_en)}</p></div>{editable && <button className={boton} disabled={guardando} onClick={() => comenzar(true)}>Agregar productos</button>}</div>
+      <div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-2xl font-bold">Pedido {seleccionado.folio}</h2><p>{seleccionado.tipo_venta.nombre} · {seleccionado.mesa_referencia || seleccionado.cliente_nombre} · {estados[seleccionado.estado]}</p><p>{seleccionado.cliente_telefono && `Teléfono: ${seleccionado.cliente_telefono}`}</p><p>{seleccionado.cliente_direccion && `Dirección: ${seleccionado.cliente_direccion}`}</p><p>Tomado por {seleccionado.usuario.nombre} a las {hora(seleccionado.creado_en)}</p>{seleccionado.folio_offline && <p>Folio provisional: {seleccionado.folio_offline}</p>}<div className="mt-2"><BotonImprimir modo="comanda" datos={{ folio: String(seleccionado.folio), provisional: false, tipo: seleccionado.tipo_venta.nombre, cliente: seleccionado.cliente_nombre ?? "Cliente de mostrador", hora: seleccionado.creado_en, lineas: seleccionado.pedido_detalle.filter(l => l.estado === "ACTIVA").map(l => ({ nombre: l.producto.nombre, cantidad: l.cantidad, notas: l.notas })), centro: centro?.nombre }} /></div></div>{editable && <button className={boton} disabled={guardando} onClick={() => comenzar(true)}>Agregar productos</button>}</div>
       <ul className="space-y-3">{seleccionado.pedido_detalle.map((l) => <li className="rounded-xl bg-slate-50 p-3" key={l.id}>
         <div className="flex flex-wrap items-center justify-between gap-2"><strong>{l.cantidad} × {l.producto.nombre} · {dinero(l.importe)}</strong>{l.estado === 'ACTIVA' && editable && esGerente && <button className={secundario} disabled={guardando} aria-label={`Anular ${l.producto.nombre}`} onClick={() => { setAnulando(l.id); setMotivo('') }}>Quitar producto</button>}</div>
         {l.estado === 'ACTIVA' && editable && !esGerente && <AccionControl tipo="ANULAR_LINEA" pedidoId={seleccionado.id} referencia={l.id} etiqueta={`Pedir quitar ${l.producto.nombre}`} alGuardar={actualizar} />}
@@ -228,11 +266,11 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
         setSeleccionado(actual => actual?.id === p.id ? { ...actual, estado: p.estado, total: p.total, pagado: p.pagado, saldo: p.saldo } : actual)
       }} />
     </section>}
-    {!borrador && !cobro && <section className="space-y-4" aria-label="Pedidos guardados"><h2 className="text-xl font-bold">Pedidos guardados</h2>
+    {!borrador && !cobro && <section className="space-y-4" aria-label="Pedidos guardados"><ColaEnEquipo alCobrar={puedeCobrar ? v => { setVentaLocal(v); setAviso("") } : undefined} /><h2 className="text-xl font-bold">Pedidos guardados</h2>
     <div className="flex flex-wrap gap-2">{[['TODOS','Todos'],['PENDIENTES','Pendientes de cobro'],['PAGADO','Pagados'],['ANULADO','Anulados']].map(([codigo,nombre]) => <button type="button" key={codigo} className={filtroPedido === codigo ? boton : secundario} aria-pressed={filtroPedido === codigo} onClick={() => setFiltroPedido(codigo)}>{nombre} ({pedidos.filter(p => corresponde(p,codigo)).length})</button>)}</div>
     <label className="block">Fecha de pedidos<input type="date" className={campo} value={fechaPedidos} onChange={e => { setFechaPedidos(e.target.value); setVerAnteriores(false); setSeleccionado(null) }} /></label><label className="inline-flex min-h-12 items-center gap-2"><input type="checkbox" disabled={!!fechaPedidos} checked={verAnteriores} onChange={e => setVerAnteriores(e.target.checked)} />Incluir abiertos de días anteriores</label>
     <label className="block">Buscar por folio, mesa, cliente o teléfono<input className={campo} value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
-    {cargando ? <p>Cargando pedidos…</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visible.map((p) => <button disabled={guardando || !!borrador} className="min-h-32 rounded-2xl border border-slate-200 bg-white p-4 text-left disabled:opacity-50" key={p.id} onClick={() => { setSeleccionado(p); setAnulando(null); setError('') }} aria-label={`Ver pedido ${p.folio}`}><span className="block text-2xl font-bold">Pedido {p.folio} · {dinero(p.total)}</span><span className={`my-1 inline-block rounded-lg px-2 py-1 text-sm font-bold ${p.estado === 'PAGADO' ? 'bg-emerald-100 text-emerald-800' : p.estado === 'ANULADO' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-900'}`}>{p.estado === 'PAGADO' ? '✓ Pagado' : p.estado === 'ANULADO' ? '✕ Anulado' : `Falta cobrar ${dinero(p.saldo)}`}</span><span className="block">{p.fecha_operacion && `${p.fecha_operacion.split('-').reverse().join('/')} · `}{estados[p.estado]} · {hora(p.creado_en)}</span><span className="block">{p.mesa_referencia || p.cliente_nombre}</span>{p.estado_cocina && <span className="mt-2 inline-block rounded-lg bg-teal-50 px-2 py-1 font-semibold text-teal-800">Cocina: {nombresCocina[p.estado_cocina]}</span>}</button>)}</div>}
+    {cargando ? <p>Cargando pedidos…</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visible.map((p) => <button disabled={guardando || !!borrador} className="min-h-32 rounded-2xl border border-slate-200 bg-white p-4 text-left disabled:opacity-50" key={p.id} onClick={() => { setSeleccionado(p); setAnulando(null); setError('') }} aria-label={`Ver pedido ${p.folio}`}><span className="block text-2xl font-bold">Pedido {p.folio} · {dinero(p.total)}</span>{p.folio_offline && <span className="block text-sm text-slate-600">Provisional {p.folio_offline}</span>}<span className={`my-1 inline-block rounded-lg px-2 py-1 text-sm font-bold ${p.estado === 'PAGADO' ? 'bg-emerald-100 text-emerald-800' : p.estado === 'ANULADO' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-900'}`}>{p.estado === 'PAGADO' ? '✓ Pagado' : p.estado === 'ANULADO' ? '✕ Anulado' : `Falta cobrar ${dinero(p.saldo)}`}</span><span className="block">{p.fecha_operacion && `${p.fecha_operacion.split('-').reverse().join('/')} · `}{estados[p.estado]} · {hora(p.creado_en)}</span><span className="block">{p.mesa_referencia || p.cliente_nombre}</span>{p.estado_cocina && <span className="mt-2 inline-block rounded-lg bg-teal-50 px-2 py-1 font-semibold text-teal-800">Cocina: {nombresCocina[p.estado_cocina]}</span>}</button>)}</div>}
     {!cargando && !visible.length && <p>No hay pedidos con esos filtros para la fecha elegida.</p>}
     </section>}
     {buscandoCliente && borrador && <BuscarCliente inicial={borrador.cliente_telefono ?? ''} cerrar={() => setBuscandoCliente(false)} elegir={c => { setBorrador({ ...borrador, cliente_id: c.id, cliente_version: c.version, cliente_nombre: c.nombre, cliente_telefono: c.telefono, cliente_direccion: c.direccion ?? '', actualizar_cliente: false }); setBuscandoCliente(false) }} />}
