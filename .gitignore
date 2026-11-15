@@ -52,3 +52,6 @@ desktop.ini
 
 # ---------- Notas locales con configuración (pasar a .env) ----------
 PROYECTO PARA QUE TE CONECTES A FIREBASE*.txt
+
+# ---------- Imágenes originales del catálogo (pesadas; se usan las comprimidas de docs/datos/fotos-iguana) ----------
+Catalogo_La_Iguana_30_imagenes/

@@ -21,3 +21,18 @@ node scripts/cargar-menu-iguana.mjs --aplicar
 ```
 
 El primer comando del script simula con ROLLBACK; `--aplicar` guarda. Lee la conexión del `.env` de la raíz y solo permite una base en localhost. Usa una transacción y SKU estable por producto/tamaño; comprueba una segunda inserción sin duplicados y valida todos los precios guardados. Si un producto importado ya fue editado y no coincide, revierte la carga para permitir revisar la diferencia. No borra productos existentes ni cambia precios por centro. Sin precio o disponibilidad propios del centro, se usa el precio base y la disponibilidad predeterminada del sistema.
+
+## Fotos del menú
+
+`fotos-iguana/` guarda las 30 imágenes del menú comprimidas a WebP de 480×480 (unos 25 KB cada una). Cada producto recibe la foto de su sección (Tradicionales, Especialidades o Premium) o, si no tiene sección, la de su categoría; los panes extra usan la foto de porción de pan.
+
+Para repetirlo con las imágenes originales (desde `apps/web` y luego `apps/api`):
+
+```powershell
+node scripts/comprimir-fotos-iguana.mjs "<carpeta Catalogo_La_Iguana>"
+npm.cmd run build
+node scripts/cargar-fotos-iguana.mjs            # simula con ROLLBACK
+node scripts/cargar-fotos-iguana.mjs --aplicar  # guarda
+```
+
+Solo llena productos sin foto; no reemplaza las fotos puestas a mano (salvo con `--reemplazar`). Cada foto se puede cambiar después desde Catálogo.
