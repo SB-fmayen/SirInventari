@@ -9,7 +9,7 @@ const TEXTOS: Record<EstadoConexion, { texto: string; detalle: string; clases: s
     clases: 'bg-slate-100 text-slate-700 border-slate-300',
   },
   conectada: {
-    texto: 'API conectada',
+    texto: 'Conectado',
     detalle: 'La API y la base de datos funcionan',
     clases: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   },
@@ -19,8 +19,8 @@ const TEXTOS: Record<EstadoConexion, { texto: string; detalle: string; clases: s
     clases: 'bg-amber-100 text-amber-900 border-amber-300',
   },
   'sin-api': {
-    texto: 'Sin conexión con la API',
-    detalle: 'Revisa el internet o que la API esté encendida',
+    texto: 'Sin internet',
+    detalle: 'Puedes seguir con el menú y los datos guardados en este dispositivo',
     clases: 'bg-red-100 text-red-800 border-red-300',
   },
 }

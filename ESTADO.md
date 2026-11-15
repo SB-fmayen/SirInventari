@@ -19,7 +19,16 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
   - Auditoría: `GET /auditoria` (folio, fecha, usuario o pedido) y `GET /auditoria/usuarios`, solo ADMIN/GERENTE, con explicación en palabras («Creó el pedido…», «Agregó 2 × …», «Cobró Q … con Efectivo», «Quitó … Motivo…»). Pantalla nueva **Auditoría** en el menú.
   - Verificado: 99 integración (incluye `seguridad-centros.e2e-spec.ts`: la base oculta y no deja cambiar pedidos de otro centro; sin centros no ve nada; auditoría muestra quién creó, agregó y cobró) + 14 unitarias + 86 web.
   - **Para R3 (Codex):** Prisma agrupa en el mismo instante las consultas `findUnique` de forma idéntica; si dos peticiones de centros distintos coinciden en ese instante, el lote corre con el contexto de la primera. La API sigue filtrando por centro en cada consulta (protección principal); el efecto posible es un 404 falso, no una fuga. Revisar si conviene cambiar esos `findUnique` críticos a `findFirst`. El canal de tiempo real (Socket.IO) consulta sin rol limitado, como antes. En Cloud SQL el usuario de la API no será superusuario: el script ya hace `GRANT ventas_api TO CURRENT_USER`.
-- **Siguiente:** Tarea 17 (sin internet, parte 1).
+- **R3 pendiente para Codex.** El usuario pidió expresamente en esta sesión que Claude siguiera con las Tareas 17, 18 y 19, así que se continuó sin esperar R3. Codex debe hacer R3 (Tareas 13 a 16) cuando le toque.
+- **Tarea 17 · Terminada:**
+  - Dexie 4.4.7 (y fake-indexeddb 6.2.6 solo para pruebas). `apps/web/src/lib/sinConexion.ts`: base local `sirinventari` con `datos` (copias) y `cola` (para la Tarea 18).
+  - `SesionProvider`: guarda la última respuesta de `/sesion` por usuario de Firebase. Sin internet (error de red), la sesión abierta sigue con esa copia (`sinConexion: true`) y vuelve a confirmar el acceso al regresar la conexión (evento online y cada 30 s). Si Firebase no puede renovar el token sin red, se sigue sin token.
+  - El `api()` de la sesión guarda y, sin red, devuelve las copias de `/pedidos/catalogo`, `/pedidos/tipos`, `/caja/metodos` y `/dispositivos` del centro. La lista `/pedidos` sin red queda vacía.
+  - Dispositivos: `GET/POST /dispositivos` (registrar solo ADMIN/GERENTE, código único de 2 a 10 caracteres). En Inicio, «Este dispositivo» permite elegir o registrar CAJA1, TAB01…; queda guardado en el equipo por centro.
+  - Indicador: «Conectado» / «Sin internet».
+  - El Service Worker (Workbox) ya guardaba la app; ahora, con la app compilada, abre sin red. En desarrollo (`vite`) el Service Worker se retira a propósito: la prueba real sin red se hace con `npm run build` y `npm run preview`.
+  - Verificado: 88 web (incluye abrir sin red con menú y precios) + 100 integración + 14 unitarias.
+- **Siguiente:** Tarea 18 (sin internet, parte 2).
 
 ## Cierre solicitado · Retomar en la siguiente sesión
 

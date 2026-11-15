@@ -67,4 +67,15 @@ describe('Seguridad por centro y auditoría (base aislada)', () => {
     const usuarios = (await http().get('/auditoria/usuarios').set(headers('seg-gerente')).expect(200)).body;
     expect(usuarios.some((u: { nombre: string }) => u.nombre === 'Luis Cajero')).toBe(true);
   });
+  it('registra dispositivos del centro sin repetir códigos (Tarea 17)', async () => {
+    const lista = (await http().get('/dispositivos').set(headers('uid-mesero-01')).expect(200)).body;
+    expect(lista.map((d: { codigo: string }) => d.codigo)).toEqual(['CAJA1', 'TAB01']);
+    await http().post('/dispositivos').set(headers('uid-cajero-01')).send({ codigo: 'CAJA9', nombre: 'Caja', tipo: 'CAJA' }).expect(403);
+    await http().post('/dispositivos').set(headers('seg-gerente')).send({ codigo: 'caja 2', nombre: 'Caja', tipo: 'CAJA' }).expect(400);
+    const nuevo = (await http().post('/dispositivos').set(headers('seg-gerente')).send({ codigo: 'caja2', nombre: 'Caja terraza', tipo: 'CAJA' }).expect(201)).body;
+    expect(nuevo).toMatchObject({ codigo: 'CAJA2', nombre: 'Caja terraza', tipo: 'CAJA' });
+    const repetido = await http().post('/dispositivos').set(headers('seg-gerente')).send({ codigo: 'CAJA2', nombre: 'Otra', tipo: 'CAJA' }).expect(409);
+    expect(repetido.body.mensaje).toMatch(/ya está registrado/);
+    expect((await http().get('/dispositivos').set(headers('seg-admin', 2)).expect(200)).body).toHaveLength(0);
+  });
 });

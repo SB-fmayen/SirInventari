@@ -20,7 +20,7 @@ export type EstadoSesion =
   | { tipo: 'cargando' }
   | { tipo: 'sin-sesion' }
   | { tipo: 'sin-acceso'; mensaje: string }
-  | { tipo: 'activa'; usuario: UsuarioSistema }
+  | { tipo: 'activa'; usuario: UsuarioSistema; sinConexion?: boolean }
 
 export const NOMBRE_ROL: Record<Rol, string> = {
   ADMIN: 'Administrador',

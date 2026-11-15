@@ -14,6 +14,7 @@ import { PedidosModule } from './pedidos/pedidos.module.js';
 import { CajaModule } from './caja/caja.module.js';
 import { ReportesModule } from './reportes/reportes.module.js';
 import { AuditoriaModule } from './auditoria/auditoria.module.js';
+import { SincronizacionModule } from './sincronizacion/sincronizacion.module.js';
 import { ClientesModule } from './clientes/clientes.module.js';
 import { PapeleraModule } from './clientes/papelera.module.js';
 import { ControlModule } from './control/control.module.js';
@@ -35,6 +36,7 @@ import { ControlModule } from './control/control.module.js';
     CajaModule,
     ReportesModule,
     AuditoriaModule,
+    SincronizacionModule,
     ControlModule,
     ClientesModule,
     PapeleraModule,

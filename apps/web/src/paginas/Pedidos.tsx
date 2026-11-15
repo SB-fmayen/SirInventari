@@ -88,7 +88,7 @@ export function Pedidos({ iniciarCobros = false }: { iniciarCobros?: boolean } =
   }, [borrador, agregando, claveBorrador])
   const cargar = useCallback(async () => {
     if (!puedeTomarPedidos) return { ps: [], menu: [], ts: [] }
-    const [ps, menu, ts] = await Promise.all([api<Pedido[]>(fechaPedidos ? `/pedidos?fecha=${fechaPedidos}` : verAnteriores ? '/pedidos?anteriores=1' : '/pedidos'), api<Producto[]>('/pedidos/catalogo'), api<TipoVenta[]>('/pedidos/tipos')])
+    const [ps, menu, ts] = await Promise.all([api<Pedido[]>(fechaPedidos ? `/pedidos?fecha=${fechaPedidos}` : verAnteriores ? '/pedidos?anteriores=1' : '/pedidos').catch((e: unknown) => { if (e instanceof ErrorApi && e.status === 0) return [] as Pedido[]; throw e }), api<Producto[]>('/pedidos/catalogo'), api<TipoVenta[]>('/pedidos/tipos')])
     return { ps, menu, ts }
   }, [api, verAnteriores, puedeTomarPedidos, fechaPedidos])
   useEffect(() => {

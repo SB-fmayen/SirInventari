@@ -3,6 +3,12 @@ import { ErrorApi, pedirApi } from '@/lib/api'
 import { confirmarSalida } from '@/hooks/useCambiosSinGuardar'
 import { cerrarSesion, escucharSesion, iniciarSesion, obtenerToken } from '@/lib/firebase'
 import type { CentroVenta, EstadoSesion, UsuarioSistema } from './tipos'
+import { claveRuta, claveSesion, guardarDato, leerDato, RUTAS_GUARDADAS } from '@/lib/sinConexion'
+
+/** Sin internet, Firebase no puede renovar el token: se sigue sin él y la API no contesta. */
+async function tokenSeguro(): Promise<string | null> {
+  try { return await obtenerToken() } catch { return null }
+}
 
 interface ContextoSesion {
   estado: EstadoSesion
@@ -37,14 +43,25 @@ export function SesionProvider({ children }: { children: ReactNode }) {
   const [centro, setCentro] = useState<CentroVenta | null>(null)
   const [intento, setIntento] = useState(0)
 
-  const cargarUsuario = useCallback(async (vigente: () => boolean) => {
+  const cargarUsuario = useCallback(async (vigente: () => boolean, uid: string) => {
     try {
-      const usuario = await pedirApi<UsuarioSistema>('/sesion', await obtenerToken())
+      const usuario = await pedirApi<UsuarioSistema>('/sesion', await tokenSeguro())
       if (!vigente()) return
+      void guardarDato(claveSesion(uid), usuario)
       setCentro(centroInicial(usuario))
       setEstado({ tipo: 'activa', usuario })
     } catch (error) {
       if (!vigente()) return
+      // Tarea 17: sin internet, la sesión abierta sigue con la última copia guardada.
+      if (error instanceof ErrorApi && error.status === 0) {
+        const copia = await leerDato<UsuarioSistema>(claveSesion(uid))
+        if (!vigente()) return
+        if (copia) {
+          setCentro(centroInicial(copia.valor))
+          setEstado({ tipo: 'activa', usuario: copia.valor, sinConexion: true })
+          return
+        }
+      }
       if (error instanceof ErrorApi && error.status === 401) {
         // Token vencido o inválido: hay que entrar de nuevo
         await cerrarSesion()
@@ -67,13 +84,23 @@ export function SesionProvider({ children }: { children: ReactNode }) {
         return
       }
       setEstado({ tipo: 'cargando' })
-      void cargarUsuario(() => activo && actual === revision)
+      void cargarUsuario(() => activo && actual === revision, usuarioFirebase.uid)
     })
     return () => {
       activo = false
       dejarDeEscuchar()
     }
   }, [cargarUsuario, intento])
+
+  // Al volver el internet, se confirma otra vez el acceso con la API.
+  const sinConexion = estado.tipo === 'activa' && !!estado.sinConexion
+  useEffect(() => {
+    if (!sinConexion) return
+    const volver = () => setIntento((n) => n + 1)
+    window.addEventListener('online', volver)
+    const revision = window.setInterval(() => { if (navigator.onLine) volver() }, 30000)
+    return () => { window.removeEventListener('online', volver); window.clearInterval(revision) }
+  }, [sinConexion])
 
   const elegirCentro = useCallback(
     (id: number) => {
@@ -93,11 +120,24 @@ export function SesionProvider({ children }: { children: ReactNode }) {
   }, [estado])
 
   const api = useCallback(
-    async <T,>(ruta: string, opciones: RequestInit = {}): Promise<T> =>
-      pedirApi<T>(ruta, await obtenerToken(), {
-        ...opciones,
-        headers: { ...(centro ? { 'X-Centro-Id': String(centro.id) } : {}), ...opciones.headers },
-      }),
+    async <T,>(ruta: string, opciones: RequestInit = {}): Promise<T> => {
+      const guardable = (!opciones.method || opciones.method === 'GET') && RUTAS_GUARDADAS.includes(ruta)
+      try {
+        const r = await pedirApi<T>(ruta, await tokenSeguro(), {
+          ...opciones,
+          headers: { ...(centro ? { 'X-Centro-Id': String(centro.id) } : {}), ...opciones.headers },
+        })
+        if (guardable) void guardarDato(claveRuta(centro?.id, ruta), r)
+        return r
+      } catch (error) {
+        // Tarea 17: sin internet se usa la copia del menú, precios y tipos de venta.
+        if (guardable && error instanceof ErrorApi && error.status === 0) {
+          const copia = await leerDato<T>(claveRuta(centro?.id, ruta))
+          if (copia) return copia.valor
+        }
+        throw error
+      }
+    },
     [centro],
   )
 

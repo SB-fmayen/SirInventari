@@ -221,7 +221,7 @@ describe('App con sesión (Tarea 3)', () => {
   it('dice que la API está conectada cuando /salud responde bien', async () => {
     simularApi({ salud: { status: 200, cuerpo: SALUD_OK } })
     abrir()
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('API conectada'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Conectado'))
     expect(screen.getByText(/Día de operación 31\/10\/2026/)).toBeInTheDocument()
   })
 
@@ -234,7 +234,7 @@ describe('App con sesión (Tarea 3)', () => {
   it('avisa cuando no hay conexión con la API', async () => {
     simularApi({ salud: 'sin-red' })
     abrir()
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Sin conexión con la API'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Sin internet'))
   })
 
   it('cada sección muestra su pantalla', async () => {
@@ -664,5 +664,35 @@ describe('Permisos por rol y centro (Tarea 5)', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: 'Centro de venta 1' }))
     await userEvent.click(screen.getByRole('button', { name: 'Crear usuario' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Ya existe un usuario con ese correo.')
+  })
+})
+
+describe('Sin internet, parte 1 (Tarea 17)', () => {
+  const menu = [{ id: 1, nombre: 'Limonada', sku: 'BEB-1', precio: '18.75', categoria: { id: 1, nombre: 'Bebidas' } }]
+  const tipos = [{ id: 2, codigo: 'LLEVAR', nombre: 'Para llevar' }]
+  beforeEach(async () => { const { baseLocal } = await import('@/lib/sinConexion'); await baseLocal.datos.clear() })
+
+  it('con el internet apagado la sesión sigue y el menú se ve con precios', async () => {
+    simularApi({ salud: { status: 200, cuerpo: SALUD_OK }, sesion: conRol('MESERO'), otras: { '/pedidos': { status: 200, cuerpo: [] }, '/pedidos/catalogo': { status: 200, cuerpo: menu }, '/pedidos/tipos': { status: 200, cuerpo: tipos }, '/dispositivos': { status: 200, cuerpo: [] } } })
+    const conInternet = abrir('/pedidos')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo pedido' })).toBeEnabled())
+    const { baseLocal } = await import('@/lib/sinConexion')
+    await waitFor(async () => expect(await baseLocal.datos.count()).toBeGreaterThanOrEqual(3))
+    conInternet.unmount()
+
+    const sinRed = vi.fn(() => Promise.reject(new TypeError('Failed to fetch')))
+    vi.stubGlobal('fetch', sinRed)
+    abrir('/pedidos')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo pedido' })).toBeEnabled())
+    expect(screen.queryByText(/No se pudo revisar tu acceso/)).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Nuevo pedido' }))
+    expect(screen.getByRole('button', { name: 'Agregar Limonada por Q 18.75' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByRole('status').some(s => s.textContent?.includes('Sin internet'))).toBe(true))
+  })
+
+  it('sin internet y sin copia guardada explica que no hay acceso', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))))
+    abrir('/pedidos')
+    expect(await screen.findByText(/No se pudo conectar con la API/)).toBeInTheDocument()
   })
 })

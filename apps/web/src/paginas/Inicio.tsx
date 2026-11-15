@@ -2,6 +2,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSesion } from '@/sesion/SesionProvider'
 import { Autorizaciones } from '@/componentes/AccionControl'
+import { EsteDispositivo } from '@/componentes/EsteDispositivo'
 import { Link } from 'react-router'
 import type { Seccion } from '@/secciones'
 
@@ -18,6 +19,7 @@ export function Inicio({ secciones }: { secciones: Seccion[] }) {
       <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-teal-800">Tu espacio de trabajo</p>
       <h1 className="mb-6 text-3xl font-bold text-slate-900">¿Qué quieres hacer?</h1>
       <p className="mb-4 text-slate-600">Resumen de {centro?.nombre}</p>
+      <EsteDispositivo />
       {secciones.some(s => s.ruta === rapida) && <Link className="mb-5 inline-flex min-h-12 items-center rounded-xl bg-teal-700 px-5 font-semibold text-white" to={rapida === '/pedidos' ? '/pedidos?nuevo=1' : rapida}>{rol === 'COCINA' ? 'Ver pendientes de cocina' : 'Nueva venta de mostrador'}</Link>}
       {resumen && <dl className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[['Pedidos abiertos',resumen.pendientes],['Listos para entregar',resumen.listos],['Turno de caja',resumen.turno === undefined ? undefined : resumen.turno ? 'Abierto' : 'Cerrado'],['Saldo por cobrar',resumen.saldo === undefined ? undefined : `Q ${resumen.saldo}`]].filter(([,v]) => v !== undefined).map(([t,v]) => <div className="rounded-xl border bg-white p-4" key={t}><dt className="text-sm text-slate-600">{t}</dt><dd className="text-2xl font-bold">{v}</dd></div>)}</dl>}
       {error && <p className="mb-4 text-sm text-slate-600">{error}</p>}
