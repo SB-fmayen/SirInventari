@@ -38,6 +38,13 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 - Verificado al cierre: 91 web + 107 integración + 14 unitarias = 212 correctas; builds y lint correctos (solo avisos previos).
 - **Siguiente:** R3 (revisión de Codex de las Tareas 13 a 16) y revisión de las Tareas 17 a 19. Pendientes de usuario: impresora (T19), plan y costo de nube (T13), archivo del POS (T14).
 
+## Ventas como terminal de mostrador · 2026-11-15
+
+- El usuario pidió una pantalla más interactiva: menú a la izquierda y pedido a la derecha.
+- Hecho en `apps/web/src/paginas/Pedidos.tsx` e `index.css` (solo diseño, sin cambios en API ni base): categorías en columna, rejilla de productos con contador, pedido fijo a la derecha con tipo de venta, cliente, líneas (− / +, nota plegable), total y botones siempre visibles. El pedido se desplaza solo al producto recién tocado. En teléfono se apila y queda la barra «Ver pedido».
+- Se quitó la franja de pasos numerados. 91 pruebas web pasan; revisado en el navegador en una pantalla de 1568×745.
+- **Siguiente:** sin cambios (R3 de Codex).
+
 ## Cierre solicitado · Retomar en la siguiente sesión
 
 - Apagados API compilada (PID 5240), Vite de SirInventari (38560), contenedor existente sirinventari-db y Docker Desktop. Comprobado: procesos detenidos y puertos 3000, 5173, 5555 y 5432 cerrados. No se borraron contenedores, volúmenes, ventas, clientes, catálogo, usuarios, borradores ni respaldos; no se tocó PostgreSQL nativo ajeno en 5433.

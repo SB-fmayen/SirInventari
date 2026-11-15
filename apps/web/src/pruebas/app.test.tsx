@@ -357,7 +357,7 @@ describe('Pedidos (Tarea 8)', () => {
     expect(screen.queryByRole('button', { name: /Agregar Limonada/ })).not.toBeInTheDocument()
     expect(screen.getByLabelText('Cantidad 1')).toHaveValue(2)
     expect(screen.getByLabelText('Notas 1')).toHaveValue('Sin hielo')
-    expect(screen.getByText('Total de los productos nuevos: Q 37.50')).toBeInTheDocument()
+    expect(screen.getByText('Total: Q 37.50')).toBeInTheDocument()
     await userEvent.clear(screen.getByLabelText('Buscar producto'))
     await userEvent.type(screen.getByLabelText('Buscar producto'), 'LIMONADA')
     expect(screen.getByRole('button', { name: /Agregar Limonada/ })).toBeInTheDocument()
@@ -377,11 +377,11 @@ describe('Pedidos (Tarea 8)', () => {
     cantidad.stepUp()
     fireEvent.change(cantidad, { target: { value: cantidad.value } })
     expect(cantidad).toHaveValue(2)
-    expect(screen.getByText('Total de los productos nuevos: Q 90.00')).toBeInTheDocument()
+    expect(screen.getByText('Total: Q 90.00')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Agregar Plato del día por Q 45.00' }))
     expect(screen.getByLabelText('Cantidad 1')).toHaveValue(3)
     expect(screen.queryByLabelText('Cantidad 2')).not.toBeInTheDocument()
-    expect(screen.getByText('Total de los productos nuevos: Q 135.00')).toBeInTheDocument()
+    expect(screen.getByText('Total: Q 135.00')).toBeInTheDocument()
   })
 
   it('no envía cantidades fraccionarias al guardar desde la pantalla de unidades', async () => {

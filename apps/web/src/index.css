@@ -256,3 +256,49 @@
 .comanda-importe { margin-left: auto; white-space: nowrap; }
 .comanda-total { display: flex; justify-content: space-between; font-size: 15px; }
 @media print { .impresion-ticket .comanda { font-size: 10pt; } }
+
+/* Ventas · terminal de mostrador: menú a la izquierda, pedido a la derecha */
+.terminal-venta { display: grid; gap: 1rem; }
+.terminal-menu { display: grid; gap: .75rem; align-content: start; min-width: 0; padding: .75rem; border: 1px solid #e2e8e8; border-radius: 1.25rem; background: white; }
+.terminal-categorias { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .25rem; }
+.terminal-categorias button { display: flex; flex: none; align-items: center; justify-content: space-between; gap: .6rem; min-height: 3rem; padding: .5rem .75rem; font-size: .85rem; line-height: 1.2; border: 1px solid #dbe5e5; border-radius: .9rem; background: #f4f7f7; color: #334155; font-weight: 700; text-align: left; }
+.terminal-categorias button span { padding: 0 .45rem; border-radius: 999px; background: #ffffffb3; font-size: .75rem; font-weight: 600; color: #52646b; }
+.terminal-categorias button:hover { border-color: #0f766e; }
+.terminal-categorias .categoria-activa { border-color: #0f766e; background: #0f766e; color: white; }
+.rejilla-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.75rem, 1fr)); gap: .6rem; }
+.terminal-venta .producto-menu { position: relative; display: flex; min-height: 0; flex-direction: column; justify-content: flex-start; gap: .3rem; padding: .45rem; border: 2px solid #e2e8e8; border-radius: 1rem; background: white; text-align: left; transition: transform .08s, border-color .12s; }
+.terminal-venta .producto-menu:active:not(:disabled) { transform: scale(.96); }
+.terminal-venta .producto-menu img, .producto-sin-foto { width: 100%; height: 5.5rem; border-radius: .7rem; object-fit: cover; }
+.producto-sin-foto { display: flex; align-items: center; justify-content: center; background: #f1f5f5; font-size: 1.75rem; }
+.producto-nombre { font-size: .9rem; font-weight: 600; line-height: 1.15; color: #1e293b; }
+.producto-precio { margin-top: auto; font-size: 1.05rem; font-weight: 800; color: #115e59; }
+.producto-cuenta { position: absolute; top: -.4rem; right: -.4rem; z-index: 1; display: grid; min-width: 2rem; height: 2rem; place-items: center; padding: 0 .4rem; border: 2px solid white; border-radius: 999px; background: #0f766e; color: white; font-weight: 800; box-shadow: 0 2px 8px #12313933; }
+.terminal-ticket { display: flex; flex-direction: column; gap: .75rem; padding: 1rem; border: 1px solid #cfe3e0; border-radius: 1.25rem; background: #f8fafb; scroll-margin-top: 7rem; }
+.ticket-cuerpo { position: relative; display: grid; gap: .75rem; align-content: start; }
+.terminal-ticket .tipos-venta { grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr)); gap: .4rem; }
+.terminal-ticket .tipo-venta { min-height: 4rem; padding: .4rem; border-radius: .8rem; }
+.terminal-ticket .datos-cliente { padding: .6rem .8rem; border: 1px solid #e2e8e8; border-radius: .8rem; background: white; }
+.terminal-ticket .datos-cliente summary, .nota-linea summary { cursor: pointer; font-weight: 600; }
+.ticket-vacio { padding: 1.5rem 1rem; border: 2px dashed #cbd5e1; border-radius: 1rem; color: #52646b; text-align: center; }
+.ticket-lineas { display: grid; gap: .5rem; }
+.linea-ticket { display: grid; gap: .5rem; padding: .7rem; border: 1px solid #e2e8e8; border-radius: .9rem; background: white; }
+.linea-reciente { animation: linea-nueva .7s ease-out; }
+@keyframes linea-nueva { from { background: #ccfbf1; border-color: #0f766e; } to { background: white; } }
+.linea-ticket .cantidad-venta { gap: .35rem; }
+.linea-ticket .cantidad-venta input { width: 3.5rem; min-height: 2.75rem; border: 1px solid #cbd5e1; border-radius: .7rem; background: white; text-align: center; font-size: 1.1rem; font-weight: 800; }
+.linea-ticket .boton-cantidad { min-width: 2.75rem; min-height: 2.75rem; border-radius: .7rem; background: #e6f4f2; color: #115e59; font-weight: 800; }
+.linea-ticket .boton-cantidad:disabled { opacity: .4; }
+.nota-linea summary { font-size: .85rem; color: #52646b; }
+.nota-linea summary em { color: #92400e; font-style: normal; }
+.ticket-pie { display: grid; gap: .5rem; }
+.total-venta { display: flex; align-items: baseline; justify-content: space-between; }
+.total-unidades { font-size: .85rem; font-weight: 600; opacity: .85; }
+@media (min-width: 1024px) {
+  .terminal-venta { grid-template-columns: minmax(0, 1fr) minmax(21rem, 27rem); height: calc(100svh - 14.5rem); min-height: 30rem; }
+  .terminal-menu { grid-template-columns: 12.5rem minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+  .terminal-buscar { grid-column: 1 / -1; }
+  .terminal-categorias { flex-direction: column; overflow: hidden auto; padding: 0 .25rem 0 0; }
+  .terminal-productos { min-height: 0; overflow-y: auto; padding: .5rem .5rem .5rem .25rem; }
+  .terminal-ticket { min-height: 0; }
+  .ticket-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding-right: .25rem; }
+}

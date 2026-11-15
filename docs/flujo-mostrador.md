@@ -45,6 +45,10 @@ Validación actual: 69 pruebas web, 14 unitarias API y 86 de integración en bas
 
 En el comprobante, elegir Formato del recibo: Automático, 58 mm, 80 mm, Carta o A4. La preferencia se guarda por navegador cuando el almacenamiento está disponible. Automático conserva el recibo compacto y se limita al ancho disponible; Carta/A4 conservan el recibo de 80 mm sobre una hoja. Para rollos, seleccionar también el tamaño correcto en el controlador. El navegador no instala ni configura automáticamente la impresora. Usar escala 100 % y desactivar encabezados/pies. Vista previa y copia impresa usan el mismo ancho. La impresión sigue siendo opcional desde el diálogo del navegador.
 
+## Ventas como terminal · 2026-11-15
+
+Al tocar «Nuevo pedido» la pantalla se divide en dos: a la **izquierda** el buscador, las categorías y las fotos de los productos; a la **derecha** el pedido en curso (tipo de venta, cliente, productos con − / +, nota para cocina, total y «Guardar y cobrar»). Cada toque a un producto suma 1 y el pedido se mueve solo hasta ese producto. Esta distribución reemplaza los pasos numerados descritos abajo.
+
 ## Pantalla de Ventas simplificada · 2026-11-15
 
 Pensada para vendedores nuevos, en 4 pasos numerados:

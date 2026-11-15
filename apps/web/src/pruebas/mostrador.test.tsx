@@ -190,7 +190,7 @@ describe('Venta de mostrador en una sola pantalla', () => {
     expect(screen.queryByRole('button', { name: /Agregar Limonada/ })).not.toBeInTheDocument()
     expect(screen.getByLabelText('Cantidad 1')).toHaveValue(2)
     expect(screen.getByLabelText('Notas 1')).toHaveValue('Sin cebolla')
-    expect(screen.getByText('Total de los productos nuevos: Q 80.00')).toBeInTheDocument()
+    expect(screen.getByText('Total: Q 80.00')).toBeInTheDocument()
   })
 
   it('bloquea cambiar de pedido ante un pago incierto y reintenta el mismo UUID', async () => {

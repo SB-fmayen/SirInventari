@@ -114,7 +114,7 @@ describe('Mejoras de operación aprobadas', () => {
       screen.getByRole('button', { name: 'Nota Sin cebolla 1' }),
     )
     expect(
-      screen.getByText('Total de los productos nuevos: Q 40.50'),
+      screen.getByText('Total: Q 40.50'),
     ).toBeInTheDocument()
     vista.unmount()
     render(<Pedidos />)
