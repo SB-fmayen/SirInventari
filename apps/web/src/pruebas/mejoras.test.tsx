@@ -103,7 +103,7 @@ describe('Mejoras de operación aprobadas', () => {
       ).toBeEnabled(),
     )
     await userEvent.click(screen.getByRole('button', { name: 'Nuevo pedido' }))
-    await userEvent.type(screen.getByLabelText('Mesa'), 'Mesa 3')
+    await userEvent.type(screen.getByLabelText('Nombre del cliente (opcional)'), 'Ana')
     await userEvent.click(
       screen.getByRole('button', { name: 'Agregar Shuko por Q 20.25' }),
     )
@@ -124,7 +124,7 @@ describe('Mejoras de operación aprobadas', () => {
     )
     expect(screen.getByLabelText('Cantidad 1')).toHaveValue(2)
     expect(screen.getByLabelText('Notas 1')).toHaveValue('Sin cebolla')
-    expect(screen.getByLabelText('Mesa')).toHaveValue('Mesa 3')
+    expect(screen.getByLabelText('Nombre del cliente (opcional)')).toHaveValue('Ana')
     expect(sesion.api.mock.calls.some(([, o]) => o?.method === 'POST')).toBe(
       false,
     )

@@ -410,7 +410,7 @@ describe('Pedidos (Tarea 8)', () => {
     abrir('/pedidos')
     await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo pedido' })).toBeEnabled())
     await userEvent.click(screen.getByRole('button', { name: 'Nuevo pedido' }))
-    await userEvent.type(screen.getByLabelText('Mesa'), 'Mesa 4')
+    await userEvent.type(screen.getByLabelText('Nombre del cliente (opcional)'), 'Ana')
     await userEvent.click(screen.getByRole('button', { name: /Agregar Limonada por Q 18.75/ }))
     await userEvent.type(screen.getByLabelText('Notas 1'), 'Sin hielo')
     await userEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }))
