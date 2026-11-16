@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSesion } from '@/sesion/SesionProvider'
 import { ErrorApi } from '@/lib/api'
+import { TriangleAlert } from 'lucide-react'
 
 interface Conflicto { id: string; tipo: string; dispositivo: string; motivo: string; recibido_en: string; datos: Record<string, unknown> }
 interface Bandeja { conflictos: Conflicto[]; atrasados: { codigo: string; nombre: string; ultima_sincronizacion: string | null }[] }
@@ -23,7 +24,7 @@ export function BandejaConflictos() {
     catch (e) { setMensaje(e instanceof ErrorApi ? e.message : 'No se pudo guardar.') }
   }
   return <section aria-label="Bandeja de conflictos" className="mb-6 space-y-3 rounded-2xl border border-red-200 bg-white p-4">
-    {bandeja.atrasados.map(d => <p key={d.codigo} role="alert" className="rounded-xl bg-amber-50 p-3 text-amber-900">⚠ {d.codigo} ({d.nombre}) no sincroniza desde {d.ultima_sincronizacion ? hora(d.ultima_sincronizacion) : 'hace rato'}. Revisa su internet.</p>)}
+    {bandeja.atrasados.map(d => <p key={d.codigo} role="alert" className="flex items-center gap-2 rounded-xl bg-amber-50 p-3 text-amber-900"><TriangleAlert aria-hidden className="h-5 w-5 shrink-0" /><span>{d.codigo} ({d.nombre}) no sincroniza desde {d.ultima_sincronizacion ? hora(d.ultima_sincronizacion) : 'hace rato'}. Revisa su internet.</span></p>)}
     {bandeja.conflictos.length > 0 && <>
       <h2 className="text-xl font-bold">Bandeja de conflictos ({bandeja.conflictos.length})</h2>
       <p className="text-sm text-slate-600">Ventas o cobros hechos sin internet que la nube no pudo aplicar. Revisa cada uno, haz la corrección en el sistema si hace falta y anota qué hiciste.</p>

@@ -44,7 +44,7 @@ describe('Venta, cobro y comanda sin internet (Tareas 18 y 19)', () => {
     await userEvent.click(within(cobro).getByRole('button', { name: 'Guardar cobro sin internet' }))
     expect(await screen.findByText(/Cobro guardado sin internet para CAJA1-0001. Vuelto: Q 50.00/)).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: '🖨 Imprimir comanda' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Imprimir comanda' }))
     await waitFor(() => expect(imprimir).toHaveBeenCalled())
     const hoja = document.querySelector('.impresion-ticket')!
     expect(hoja.textContent).toContain('FOLIO PROVISIONAL')

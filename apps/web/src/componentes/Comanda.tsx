@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Printer } from 'lucide-react'
 
 /**
  * Tarea 19 · Comanda y comprobante para impresora térmica (58 u 80 mm).
@@ -47,7 +48,7 @@ export function BotonImprimir({ datos, modo, etiqueta }: { datos: DatosComanda; 
     return () => { window.removeEventListener('afterprint', terminar); window.clearTimeout(t); window.clearTimeout(respaldo) }
   }, [imprimiendo])
   return <>
-    <button type="button" className="min-h-12 rounded-xl bg-slate-800 px-4 font-semibold text-white" onClick={() => setImprimiendo(true)}>{etiqueta ?? (modo === 'comanda' ? '🖨 Imprimir comanda' : '🖨 Imprimir comprobante')}</button>
+    <button type="button" className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50" onClick={() => setImprimiendo(true)}><Printer aria-hidden className="h-4 w-4" />{etiqueta ?? (modo === 'comanda' ? 'Imprimir comanda' : 'Imprimir comprobante')}</button>
     {imprimiendo && createPortal(<div className="impresion-ticket"><HojaComanda datos={datos} modo={modo} /></div>, document.body)}
   </>
 }
