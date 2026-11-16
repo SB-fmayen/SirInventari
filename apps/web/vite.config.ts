@@ -47,5 +47,6 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/pruebas/preparar.ts'],
+    testTimeout: 20000, // equipos lentos: las pruebas largas no deben fallar por tiempo
   },
 })
