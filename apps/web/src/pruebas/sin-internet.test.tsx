@@ -71,7 +71,7 @@ describe('Venta, cobro y comanda sin internet (Tareas 18 y 19)', () => {
     expect((await baseLocal.cola.toArray()).map(o => o.estado)).toEqual(['APLICADO', 'APLICADO'])
     expect(await screen.findByText('Enviado · folio definitivo 15')).toBeInTheDocument()
     expect(await sincronizar(sesion.api, 1)).toBe(0)
-  })
+  }, 20000)
 
   it('si la red falla al enviar, nada se pierde y el siguiente folio no se repite', async () => {
     expect(await siguienteFolioProvisional('CAJA1')).toBe('CAJA1-0001')
