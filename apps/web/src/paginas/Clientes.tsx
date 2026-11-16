@@ -315,23 +315,26 @@ export function Clientes() {
                       <button
                         className={secundario}
                         onClick={() => setFicha(c)}
+                        aria-label={`Ver detalles de ${c.nombre}`}
                       >
-                        Ver detalles de {c.nombre}
+                        Ver detalles
                       </button>
                       {permisoClientes(u, "clientes", "editar") && (
                         <button
                           className={secundario}
                           onClick={() => setEditor(c)}
+                          aria-label={`Editar ${c.nombre}`}
                         >
-                          Editar {c.nombre}
+                          Editar
                         </button>
                       )}
                       {puedeEliminar && (
                         <button
                           className={secundario}
                           onClick={() => setEliminar(c)}
+                          aria-label={`Eliminar ${c.nombre}`}
                         >
-                          Eliminar {c.nombre}
+                          Eliminar
                         </button>
                       )}
                     </td>

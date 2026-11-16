@@ -361,8 +361,8 @@ export function BuscarCliente({
                   <br />
                   {c.direccion}
                 </span>
-                <button className={botonCliente} onClick={() => elegir(c)}>
-                  Seleccionar {c.nombre}
+                <button className={botonCliente} aria-label={`Seleccionar ${c.nombre}`} onClick={() => elegir(c)}>
+                  Seleccionar
                 </button>
               </li>
             ))}
