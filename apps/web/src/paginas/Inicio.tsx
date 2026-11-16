@@ -17,9 +17,8 @@ export function Inicio({ secciones }: { secciones: Seccion[] }) {
   const rapida = rol === 'COCINA' ? '/cocina' : '/pedidos'
   return (
     <div className="inicio-modulos mx-auto max-w-6xl">
-      <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-teal-800">Tu espacio de trabajo</p>
-      <h1 className="mb-6 text-3xl font-bold text-slate-900">¿Qué quieres hacer?</h1>
-      <p className="mb-4 text-slate-600">Resumen de {centro?.nombre}</p>
+      <h1 className="mb-1 text-3xl font-bold text-slate-900">Inicio</h1>
+      <p className="mb-5 text-slate-600">{centro?.nombre}</p>
       <EsteDispositivo />
       <BandejaConflictos />
       {secciones.some(s => s.ruta === rapida) && <Link className="mb-5 inline-flex min-h-12 items-center rounded-xl bg-teal-700 px-5 font-semibold text-white" to={rapida === '/pedidos' ? '/pedidos?nuevo=1' : rapida}>{rol === 'COCINA' ? 'Ver pendientes de cocina' : 'Nueva venta de mostrador'}</Link>}
