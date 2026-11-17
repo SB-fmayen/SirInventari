@@ -20,6 +20,11 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 - Navegador interno abre la app pero pide iniciar sesión: queda pendiente validación visual de Reportes con cuenta real. Pruebas automáticas de pantalla, filtros, CSV, errores y descarte de importes antiguos sí verificadas.
 - Guía de uso, límites y lista completa de archivos: `docs/simulador-comisiones.md`. Primer bloque guardado en `83e961a`; pantalla y cierre en el siguiente commit. Se conservan sin seguimiento `REVISION.md` y el PDF de relevo que ya existían. R3 y demás pendientes siguen abiertos.
 
+## Validación de acceso · 2026-11-16
+
+- El usuario muestra «El correo no tiene un formato válido» con `admin` en el campo Correo. Se confirmó que el acceso usa correo completo y contraseña de Firebase, no alias de usuario.
+- Consulta de solo lectura: ADMIN id 18 activo, con correo y vínculo Firebase registrados; API/base saludables y sin errores en el log. Se indica al usuario el correo registrado para reintentar. No se consultan ni cambian contraseñas, permisos o credenciales. Inicio de sesión real pendiente del reintento del usuario.
+
 ## Sesión Claude 2026-11-15 · Fotos, Ventas sencilla y Tarea 15
 
 - **Fotos del catálogo:** 30 imágenes del usuario comprimidas a WebP 480×480 (~25 KB) en `docs/datos/fotos-iguana/`; 152 productos del menú La Iguana con foto de su sección (Tradicionales/Especialidades/Premium) o categoría. Respaldo previo `logs/respaldo-productos-antes-fotos.sql`. Scripts `apps/web/scripts/comprimir-fotos-iguana.mjs` y `apps/api/scripts/cargar-fotos-iguana.mjs` (simula con ROLLBACK; no pisa fotos puestas a mano). Originales (68 MB) ignorados en Git.
