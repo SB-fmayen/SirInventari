@@ -6,6 +6,12 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-16 (hora de Guatemala) · Codex
 
+## Documento de tecnologías y almacenamiento · 2026-11-16
+
+- A solicitud del usuario, creado docs/tecnologia-y-almacenamiento.md con resumen de React/TypeScript, NestJS/Node.js, PostgreSQL 16, Prisma, Firebase Authentication, Socket.IO y almacenamiento local IndexedDB/Dexie, localStorage y caché PWA. Distingue base local en Docker de publicación prevista en Google Cloud/Firebase Hosting.
+- Comprobado contra package.json de web/API, docker-compose.yml y código de Firebase, borradores y sinConexion. Sin consultar ni exponer secretos, modificar datos, reiniciar servicios o cambiar código. Solo documentación; verificación con git diff --check, sin repetir pruebas de aplicaciones.
+- Archivos cambiados: docs/tecnologia-y-almacenamiento.md y ESTADO.md.
+
 ## Reportes por fichas · 2026-11-16 · Terminado
 
 - El usuario pidió ordenar Reportes como fichas de Salesforce para evitar que cada sección nueva alargue toda la página. Se conservó el diseño de los reportes individuales y se añadieron cinco fichas con iconos, borde de selección y navegación por teclado: Ventas, Pedidos e historial, Comisiones Cubo, Control de ventas y Anulaciones.
