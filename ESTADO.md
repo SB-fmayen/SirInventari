@@ -4,7 +4,15 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-16 (hora de Guatemala) · Codex
+2026-11-17 (hora de Guatemala) · Codex
+
+## Publicación bloqueada explícitamente · 2026-11-17
+
+- El usuario reafirma que no se necesita publicar la aplicación por el momento. Se mantiene el envío de código a GitHub y las comprobaciones automáticas.
+- El flujo ahora se muestra como **Verificar SirInventari**. La etapa de despliegue se muestra **Publicación desactivada** y usa `if: ${{ false }}`: ni `PUBLICAR_APROBADO=true` la puede habilitar mientras exista ese bloqueo. Reactivarla requiere nueva autorización expresa del usuario. No se crearon ni modificaron servicios en la nube.
+- Consultada la ejecución `44028347876` (segundo intento, commit `47ea1e2`): web terminó correctamente (95 pruebas); `publicar` fue omitido; API falló al inicializar PostgreSQL por falta de `POSTGRES_PASSWORD`, que se toma del secreto `CI_DB_PASSWORD` pendiente. Este error afecta la comprobación en GitHub, no demuestra un fallo de la API local. No se cambiaron credenciales ni el flujo de pruebas en esta tarea.
+- Verificación local: comparación exacta del workflow contra HEAD confirma solo los nombres y el bloqueo de despliegue; `git diff --check` correcto. No se repiten pruebas de la app, ya que no cambia su código.
+- Archivos: `.github/workflows/verificar-y-publicar.yml`, `AGENTS.md`, `docs/plan.md`, `docs/publicacion.md` y `ESTADO.md`. Guardar y enviar este cambio a `main`, comprobando el commit remoto conforme a la instrucción de envíos directos.
 
 ## Primer envío a GitHub y regla de envío continuo · Terminado
 

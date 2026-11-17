@@ -2,6 +2,8 @@
 
 Estado: archivos preparados, sin servicios creados, sin imágenes subidas y sin publicar. Antes de ejecutar pasos en Google Cloud se necesita la aprobación del usuario y su facturación activa. También falta terminar Cocina y resolver los pendientes de seguridad de R2 en ESTADO.md.
 
+Actualización del 2026-11-17: el usuario reafirma que no se publique todavía. Se conserva esta propuesta para el futuro. GitHub recibe el código y ejecuta verificaciones; el despliegue está bloqueado explícitamente.
+
 ## 1. Plan y costo propuesto
 
 Propuesta para **un centro piloto**, región `us-central1`, precios en USD consultados el 31 de octubre de 2026, sin impuestos ni conversión de moneda. Esta es una estimación propia con los supuestos siguientes, no una cotización ni un límite de cobro:
@@ -80,11 +82,11 @@ Firebase CLI usa credenciales predeterminadas en CI; no hace falta un token de u
 
 ## 6. GitHub Actions: pruebas primero, publicación desactivada
 
-El archivo `.github/workflows/verificar-y-publicar.yml` prueba API y app en push a `main` y pull requests. Usa PostgreSQL 16 temporal y bases de prueba aisladas. El contenedor se construye, pero no se sube durante las comprobaciones.
+El archivo `.github/workflows/verificar-y-publicar.yml`, mostrado como **Verificar SirInventari**, prueba API y app en push a `main` y pull requests. Usa PostgreSQL 16 temporal y bases de prueba aisladas. El contenedor se construye, pero no se sube durante las comprobaciones.
 
 Configurar `CI_DB_PASSWORD` como secreto del repositorio, con una contraseña aleatoria hexadecimal exclusiva para el contenedor efímero de CI. No es la contraseña de producción. Los pull requests de forks no reciben secretos: su prueba de API requiere una ejecución autorizada del mantenedor.
 
-La publicación solo se habilita cuando el usuario configure `PUBLICAR_APROBADO=true` como variable del repositorio, después de cerrar Cocina y los pendientes de seguridad. Crear el entorno `produccion` con revisores requeridos y acceso solo desde `main`. Mantener la variable ausente o `false` hasta entonces.
+La etapa **Publicación desactivada** está bloqueada con `if: ${{ false }}`; configurar `PUBLICAR_APROBADO=true` no la activa. Solo después de una nueva autorización expresa del usuario se podrá restaurar la condición `github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.PUBLICAR_APROBADO == 'true'`, resolver los pendientes del plan y configurar el entorno `produccion` con revisores requeridos y acceso solo desde `main`. Mantener la variable ausente o `false` mientras el despliegue esté pospuesto.
 
 Variables de ese entorno:
 

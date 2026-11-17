@@ -1,4 +1,4 @@
-name: Verificar y publicar SirInventari
+name: Verificar SirInventari
 
 on:
   push:
@@ -74,8 +74,11 @@ jobs:
       - run: npm run lint
 
   publicar:
+    name: Publicación desactivada
     needs: [api, web]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.PUBLICAR_APROBADO == 'true'
+    # El usuario mantiene el despliegue pospuesto. Requiere autorización expresa para reactivarlo.
+    # PUBLICAR_APROBADO no habilita esta etapa mientras este bloqueo esté presente.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: produccion

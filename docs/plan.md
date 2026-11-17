@@ -5,6 +5,8 @@ Las tareas marcadas con ★ requieren explicar el plan en pocas líneas antes de
 
 Actualización del usuario (2026-11-07): primero validar y corregir localmente; despliegue pospuesto. La operación será desde una PC de mostrador. Pedidos y Caja se presentan juntos en Ventas; flujo y validación en `docs/flujo-mostrador.md`. Esta decisión actualiza la interfaz de las tareas 8/10 sin cambiar sus controles de cobro ni declarar terminadas las fases futuras.
 
+Reconfirmación (2026-11-17): continuar enviando el código a GitHub y ejecutando comprobaciones, sin publicar la aplicación. El flujo se llama **Verificar SirInventari** y la etapa **Publicación desactivada** tiene bloqueo explícito `if: ${{ false }}`. Reactivarla requiere una nueva autorización del usuario.
+
 Tarea 0 · Preparación: carpetas apps/web, apps/api, db y docs; db/01_esquema_v0.2.sql y db/02_datos_iniciales.sql copiados de Notion sin cambios; docs/especificacion.md con el resumen de la página; AGENTS.md con el proyecto, el stack y las reglas; CLAUDE.md con la línea @AGENTS.md. Listo cuando: existen esos archivos y carpetas.
 
 Actualización solicitada y aprobada (2026-11-08): Clientes, datos de entrega en Ventas y Papelera. Alcance, permisos, cambios de base y guía en docs/clientes-y-papelera.md. Implementación local terminada, 190 pruebas correctas y servicios iniciados; queda validación visual/operativa con el usuario. Detalle en ESTADO.md. Se intercala por solicitud expresa del usuario antes de continuar el plan general; no cierra R2 ni las fases futuras.
