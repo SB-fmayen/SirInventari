@@ -6,6 +6,14 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-16 (hora de Guatemala) · Codex
 
+## Reportes por fichas · 2026-11-16 · Terminado
+
+- El usuario pidió ordenar Reportes como fichas de Salesforce para evitar que cada sección nueva alargue toda la página. Se conservó el diseño de los reportes individuales y se añadieron cinco fichas con iconos, borde de selección y navegación por teclado: Ventas, Pedidos e historial, Comisiones Cubo, Control de ventas y Anulaciones.
+- Solo un panel visible. Fechas compartidas arriba; botones de consulta/CSV según la ficha. Los paneles se mantienen montados para conservar resultados, terminal, búsqueda y selección de pedidos al cambiar de ficha. Cambiar fechas o centro reinicia comisiones/control/anulaciones; Ventas e historial conservan visible el rango consultado. En pantallas pequeñas la barra de fichas admite desplazamiento horizontal.
+- Solo presentación y pruebas existentes adaptadas; sin cambios en cálculos, dependencias, API, SQL, credenciales ni datos comerciales. API/Vite de la sesión anterior siguen disponibles; no se necesita reiniciar la API.
+- Verificado: **46 pruebas web relacionadas correctas** (app y comisiones), build web correcto y lint sin errores (los 6 avisos previos). Persiste aviso previo de tamaño de paquete (~802 kB). Navegador interno abre el login; validación visual con cuenta real pendiente, sin tocar la autenticación.
+- Archivos: `apps/web/src/paginas/Reportes.tsx`, `apps/web/src/pruebas/app.test.tsx`, `apps/web/src/pruebas/comisiones.test.tsx`, `docs/simulador-comisiones.md`, `docs/plan.md` y `ESTADO.md`. R3 y demás pendientes siguen abiertos.
+
 ## Reportes · Simulador de comisiones Cubo · Terminado localmente
 
 - Solicitud expresa del usuario: levantar el proyecto, leer los cambios de Claude del 15/11 y enfocarse en Reportes. Se intercala esta ampliación de Tarea 11; R3 y las revisiones pendientes conservan su lugar para otro turno.

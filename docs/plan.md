@@ -13,6 +13,8 @@ Actualización solicitada y aprobada (2026-11-08): Clientes, datos de entrega en
 
 Actualización solicitada (2026-11-16): se amplía Tarea 11 con el **Simulador de comisiones Cubo**: tarifa indicada por el usuario de 5.50% más IVA del 12% sobre la comisión, total diario cobrado por POS y depósito estimado, filtros por fecha/terminal/pedidos y CSV. Terminado localmente, sin cambios de esquema, con 225 pruebas correctas. Guía en `docs/simulador-comisiones.md`; validación visual con sesión real pendiente. Se atiende antes de R3 por instrucción expresa del usuario; las revisiones pendientes no se dan por terminadas.
 
+Organización solicitada (2026-11-16): Reportes se divide en fichas **Ventas**, **Pedidos e historial**, **Comisiones Cubo**, **Control de ventas** y **Anulaciones**. Fechas compartidas, un apartado visible a la vez y conservación de consultas/selecciones al cambiar de ficha. Cambio solo de pantalla, sin modificar cálculos, API ni base. 46 pruebas web relacionadas, compilación y lint verificados.
+
 Tarea 1 · Base de datos local: PostgreSQL 16 con Docker Compose, zona horaria America/Guatemala; al iniciar ejecuta los scripts de db/; credenciales en .env y .env.example sin contraseña; pruebas de los 7 casos de la especificación en db/pruebas/casos.sql. Necesita del usuario: Docker Desktop instalado. Listo cuando: los 7 casos dan el resultado esperado.
 
 Tarea 2 ★ · API: NestJS + TypeScript en apps/api; Prisma con prisma db pull, sin migraciones que cambien la base; ruta /salud; los errores de los triggers llegan como mensajes claros en español. Listo cuando: /salud responde que la API y la base funcionan.

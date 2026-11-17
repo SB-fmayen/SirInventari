@@ -81,14 +81,27 @@ describe('Simulador de comisiones en Reportes', () => {
     expect(screen.getByRole('button', { name: 'Descargar CSV de comisiones' })).toBeDisabled()
   })
 
-  it('cambiar las fechas de Reportes descarta la simulación anterior', async () => {
+  it('conserva la simulación entre fichas y la descarta al cambiar fechas', async () => {
     sesion.api.mockImplementation(async (ruta: string) => ruta.startsWith('/reportes/comisiones') ? reporte : {
       desde: '2026-11-16', hasta: '2026-11-16', resumen: { total_pedidos: 0, total_vendido: '0', ticket_promedio: '0', descuentos: '0' },
       por_tipo: [], por_hora: [], por_producto: [], por_pago: [], pedidos: [],
     })
     render(<Reportes />)
     await waitFor(() => expect(screen.getByLabelText('Desde')).toHaveValue('2026-11-16'))
+    expect(screen.getAllByRole('tabpanel')).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: 'Calcular comisiones' })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('tab', { name: 'Comisiones Cubo' }))
     await calcular()
+    await userEvent.click(screen.getByText(/Filtrar por pedidos/))
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Incluir pedido 8 del 16/11/2026' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Ventas' }))
+    expect(screen.getByText('Ticket promedio')).toBeVisible()
+    await userEvent.click(screen.getByRole('tab', { name: 'Comisiones Cubo' }))
+    expect(screen.getByRole('checkbox', { name: 'Incluir pedido 8 del 16/11/2026' })).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Descargar CSV de comisiones' })).toBeDisabled()
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Incluir pedido 8 del 16/11/2026' }))
+    expect(screen.getAllByText('Q 938.40')[0]).toBeVisible()
+    expect(sesion.api.mock.calls.filter(([ruta]) => ruta.startsWith('/reportes/comisiones'))).toHaveLength(1)
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-11-15' } })
     const simulador = screen.getByRole('region', { name: 'Simulador de comisiones' })
     expect(within(simulador).queryByText('Q 938.40')).not.toBeInTheDocument()

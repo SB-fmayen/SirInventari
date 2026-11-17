@@ -532,6 +532,7 @@ describe('Reportes (Tarea 11)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Consultar ventas' }))
     expect(await screen.findByText('Mostrando del 01/10/2026 al 31/10/2026.')).toBeInTheDocument()
     expect(fetchFalso.mock.calls.find(([url]) => url.includes('desde=2026-10-01'))?.[1]).toMatchObject({ headers: { 'X-Centro-Id': '1' } })
+    await userEvent.click(screen.getByRole('tab', { name: 'Pedidos e historial' }))
     await userEvent.click(screen.getByRole('button', { name: 'Ver historial del pedido 1' }))
     expect(await screen.findByRole('heading', { name: 'Historial del pedido 1' })).toBeInTheDocument()
     expect(screen.getByText('Agregó 1 de Plato del día.')).toBeInTheDocument()

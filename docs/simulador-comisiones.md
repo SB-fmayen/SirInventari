@@ -5,12 +5,24 @@ Ampliación de Reportes solicitada el 16 de noviembre de 2026. Disponible para A
 ## Uso
 
 1. En **Reportes**, elige Desde y Hasta (o Hoy, Ayer, Esta semana, Este mes). Para un día, usa la misma fecha en ambos campos.
-2. En **Simulador de comisiones**, deja Terminal POS vacía para incluir todas las terminales de tarjeta, o escribe la terminal que usaste al cobrar en Caja.
+2. Abre la ficha **Comisiones Cubo**. En **Simulador de comisiones**, deja Terminal POS vacía para incluir todas las terminales de tarjeta, o escribe la terminal que usaste al cobrar en Caja.
 3. Pulsa **Calcular comisiones**. Verás lo cobrado, comisión, IVA de la comisión, descuento total y depósito estimado, con detalle diario.
 4. Para incluir pedidos específicos, abre **Filtrar por pedidos**. Busca por folio, cliente o fecha, marca pedidos y pulsa **Calcular selección**. **Seleccionar solo resultados** reemplaza la selección por los pedidos de la búsqueda; **Seleccionar todos** recupera todos los pedidos del rango y terminal. Se admiten hasta 100 pedidos individuales o todos.
 5. **Descargar CSV de comisiones** exporta exactamente el cálculo vigente, su desglose diario y los cobros con fecha, folio, terminal y autorización.
 
 Cambiar fechas, centro o terminal descarta la simulación anterior. Cambiar la selección oculta los importes y deshabilita la descarga hasta recalcular. Buscar en la lista solo localiza pedidos: hay que seleccionarlos para cambiar el cálculo.
+
+## Fichas de Reportes
+
+Reportes está separado en cinco fichas para mostrar un apartado a la vez:
+
+- **Ventas:** indicadores y desglose por tipo, hora, producto y forma de pago.
+- **Pedidos e historial:** pedidos cobrados y movimientos de cada pedido.
+- **Comisiones Cubo:** simulador, selección de pedidos y CSV de comisiones.
+- **Control de ventas:** comparación de períodos, centros y excepciones.
+- **Anulaciones:** productos, pagos y pedidos anulados, responsables y motivos.
+
+Las fechas se comparten entre fichas. Cada reporte mantiene su botón de consulta y descarga. Cambiar de ficha conserva las consultas y selecciones; cambiar el período reinicia comisiones, control y anulaciones para volver a consultarlos. Ventas e historial muestran el rango que se consultó. Con teclado, las flechas izquierda/derecha cambian de ficha; Inicio y Fin llevan a la primera y última. En pantallas pequeñas la barra de fichas se puede desplazar horizontalmente.
 
 ## Cálculo solicitado
 

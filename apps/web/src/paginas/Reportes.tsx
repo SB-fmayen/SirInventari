@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Calculator, ChartColumn, ClipboardList, ShieldCheck, Trash2 } from 'lucide-react'
 import { ErrorApi } from '@/lib/api'
 import { convertirCsv } from '@/lib/csv'
 import { ReporteAnulaciones } from '@/componentes/ReporteAnulaciones'
@@ -19,6 +20,14 @@ const dinero = (valor: string) => `Q ${Number(valor).toFixed(2)}`
 const boton = 'min-h-12 rounded-xl bg-teal-700 px-4 font-semibold text-white disabled:opacity-50'
 const campo = 'min-h-12 rounded-xl border border-slate-300 bg-white px-3 text-base'
 const mensaje = (e: unknown) => e instanceof ErrorApi ? e.message : 'No se pudo consultar el reporte. Intenta de nuevo.'
+const fichas = [
+  { id: 'ventas', nombre: 'Ventas', icono: ChartColumn },
+  { id: 'pedidos', nombre: 'Pedidos e historial', icono: ClipboardList },
+  { id: 'comisiones', nombre: 'Comisiones Cubo', icono: Calculator },
+  { id: 'control', nombre: 'Control de ventas', icono: ShieldCheck },
+  { id: 'anulaciones', nombre: 'Anulaciones', icono: Trash2 },
+] as const
+type FichaReporte = typeof fichas[number]['id']
 
 export function Reportes() {
   const { api, centro } = useSesion()
@@ -28,6 +37,10 @@ export function Reportes() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [historial, setHistorial] = useState<Historial | null>(null)
+  const [ficha, setFicha] = useState<FichaReporte>('ventas')
+  const botonesFicha = useRef<(HTMLButtonElement | null)[]>([])
+  const esVentas = ficha === 'ventas' || ficha === 'pedidos'
+  const clavePeriodo = `${centro?.id}-${desde}-${hasta}`
   useEffect(() => {
     let vigente = true
     api<Reporte>('/reportes/ventas').then((r) => { if (vigente) { setReporte(r); setDesde(r.desde); setHasta(r.hasta) } })
@@ -64,26 +77,58 @@ export function Reportes() {
   }
   return <div className="mx-auto max-w-6xl space-y-5">
     <div><h1 className="text-3xl font-bold">Reportes de ventas</h1><p>{centro?.nombre} · Horas de Guatemala</p></div>
-    <p className="text-slate-600">Incluye pedidos pagados del centro y su fecha de operación. Los pedidos con saldo pendiente y los anulados se excluyen. Los descuentos ya están distribuidos en las ventas por producto.</p>
-    <div className="flex flex-wrap gap-2">{[['hoy','Hoy'],['ayer','Ayer'],['semana','Esta semana'],['mes','Este mes']].map(([tipo,nombre])=><button type="button" className="min-h-12 rounded-xl border bg-white px-4" disabled={cargando} key={tipo} onClick={()=>{const r=rangoRapido(tipo);setDesde(r.desde);setHasta(r.hasta)}}>{nombre}</button>)}</div>
-    <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); void consultar() }}>
-      <label>Desde<input className={`${campo} block`} type="date" required disabled={cargando} value={desde} onChange={(e) => setDesde(e.target.value)} /></label>
-      <label>Hasta<input className={`${campo} block`} type="date" required min={desde} disabled={cargando} value={hasta} onChange={(e) => setHasta(e.target.value)} /></label>
-      <button className={boton} disabled={cargando}>Consultar ventas</button>
-      <button type="button" className={boton} disabled={cargando || !reporte} onClick={descargar}>Descargar CSV</button>
+    <div role="tablist" aria-label="Secciones de reportes" className="flex overflow-x-auto rounded-t-xl border border-slate-200 bg-white">
+      {fichas.map(({ id, nombre, icono: Icono }, indice) => <button
+        key={id} ref={el => { botonesFicha.current[indice] = el }}
+        type="button" role="tab" id={`reportes-ficha-${id}`} aria-controls={`reportes-panel-${id}`}
+        aria-selected={ficha === id} tabIndex={ficha === id ? 0 : -1}
+        className={`flex min-h-14 shrink-0 items-center gap-2 border-b-3 px-4 text-sm whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-teal-700 ${ficha === id ? 'border-teal-700 bg-teal-50 text-teal-800' : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+        onClick={() => setFicha(id)}
+        onKeyDown={e => {
+          const siguiente = e.key === 'ArrowRight' ? (indice + 1) % fichas.length
+            : e.key === 'ArrowLeft' ? (indice + fichas.length - 1) % fichas.length
+              : e.key === 'Home' ? 0 : e.key === 'End' ? fichas.length - 1 : null
+          if (siguiente === null) return
+          e.preventDefault(); setFicha(fichas[siguiente].id); botonesFicha.current[siguiente]?.focus()
+        }}
+      ><Icono className="size-4" aria-hidden />{nombre}</button>)}
+    </div>
+    <form aria-label="Período de reportes" className="space-y-3 rounded-xl border border-slate-200 bg-white p-4" onSubmit={(e) => { e.preventDefault(); if (esVentas) void consultar() }}>
+      <div className="flex flex-wrap gap-2">{[['hoy','Hoy'],['ayer','Ayer'],['semana','Esta semana'],['mes','Este mes']].map(([tipo,nombre])=><button type="button" className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm hover:bg-slate-50" disabled={cargando} key={tipo} onClick={()=>{const r=rangoRapido(tipo);setDesde(r.desde);setHasta(r.hasta)}}>{nombre}</button>)}</div>
+      <div className="flex flex-wrap items-end gap-3">
+        <label>Desde<input className={`${campo} block`} type="date" required disabled={cargando} value={desde} onChange={(e) => setDesde(e.target.value)} /></label>
+        <label>Hasta<input className={`${campo} block`} type="date" required min={desde} disabled={cargando} value={hasta} onChange={(e) => setHasta(e.target.value)} /></label>
+        {esVentas && <>
+          <button className={boton} disabled={cargando}>Consultar ventas</button>
+          <button type="button" className={boton} disabled={cargando || !reporte} onClick={descargar}>Descargar CSV</button>
+        </>}
+      </div>
+      <p className="text-sm text-slate-500">Las fechas se comparten entre fichas. Usa el botón de consulta de cada reporte para actualizar sus resultados.</p>
     </form>
-    <SimuladorComisiones key={`${centro?.id}-${desde}-${hasta}`} desde={desde} hasta={hasta} />
-    {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}
-    {cargando && <p role="status">Consultando…</p>}
-    {reporte && <>
-      <p>Mostrando del {reporte.desde.split('-').reverse().join('/')} al {reporte.hasta.split('-').reverse().join('/')}.</p>
-      <dl className="grid gap-3 sm:grid-cols-4">{[['Pedidos cobrados', String(reporte.resumen.total_pedidos)], ['Total vendido', dinero(reporte.resumen.total_vendido)], ['Ticket promedio', dinero(reporte.resumen.ticket_promedio)], ['Descuentos incluidos', dinero(reporte.resumen.descuentos)]].map(([nombre, valor]) => <div className="rounded-2xl border border-slate-200 bg-white p-4" key={nombre}><dt>{nombre}</dt><dd className="text-2xl font-bold">{valor}</dd></div>)}</dl>
-      <div className="grid gap-5 lg:grid-cols-2"><Tabla titulo="Ventas por tipo" filas={reporte.por_tipo} cantidad="Pedidos" /><Tabla titulo="Ventas por hora" filas={reporte.por_hora} cantidad="Pedidos" /><Tabla titulo="Ventas por producto" filas={reporte.por_producto} cantidad="Unidades" /><Tabla titulo="Formas de pago" filas={reporte.por_pago} cantidad="Pagos" /></div>
-      <section><h2 className="mb-3 text-2xl font-bold">Pedidos cobrados e historial</h2><ul className="space-y-2">{reporte.pedidos.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"><span>Pedido {p.folio} · {p.fecha_operacion.split('-').reverse().join('/')} · {p.tipo} · {dinero(p.total)}{p.en_papelera && <strong className="ml-2 text-amber-800">En papelera</strong>}</span><button className={boton} disabled={cargando} aria-label={`Ver historial del pedido ${p.folio}`} onClick={() => void verHistorial(p.id)}>Ver historial</button></li>)}</ul>{!reporte.pedidos.length && <p>No hay pedidos pagados en este rango.</p>}</section>
-    </>}
-    <ControlVentas desde={desde} hasta={hasta}/>
-    <ReporteAnulaciones desde={desde} hasta={hasta} />
-    {historial && <section className="rounded-2xl border border-teal-200 bg-white p-5"><h2 className="mb-3 text-2xl font-bold">Historial del pedido {historial.folio}</h2><ol className="space-y-3">{historial.eventos.map((e, i) => <li key={i}><p className="font-semibold">{e.usuario} · {new Date(e.fecha).toLocaleString('es-GT', { timeZone: 'America/Guatemala' })}</p><p>{e.descripcion}</p></li>)}</ol></section>}
+    {error && (esVentas || !reporte) && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}
+    {cargando && esVentas && <p role="status">Consultando…</p>}
+    {reporte && esVentas && <p>Mostrando del {reporte.desde.split('-').reverse().join('/')} al {reporte.hasta.split('-').reverse().join('/')}.</p>}
+    <div role="tabpanel" id="reportes-panel-ventas" aria-labelledby="reportes-ficha-ventas" tabIndex={0} hidden={ficha !== 'ventas'} className={ficha === 'ventas' ? 'space-y-5' : 'hidden'}>
+      <p className="text-slate-600">Incluye pedidos pagados del centro y su fecha de operación. Los pedidos con saldo pendiente y los anulados se excluyen. Los descuentos ya están distribuidos en las ventas por producto.</p>
+      {reporte && <>
+        <dl className="grid gap-3 sm:grid-cols-4">{[['Pedidos cobrados', String(reporte.resumen.total_pedidos)], ['Total vendido', dinero(reporte.resumen.total_vendido)], ['Ticket promedio', dinero(reporte.resumen.ticket_promedio)], ['Descuentos incluidos', dinero(reporte.resumen.descuentos)]].map(([nombre, valor]) => <div className="rounded-2xl border border-slate-200 bg-white p-4" key={nombre}><dt>{nombre}</dt><dd className="text-2xl font-bold">{valor}</dd></div>)}</dl>
+        <div className="grid gap-5 lg:grid-cols-2"><Tabla titulo="Ventas por tipo" filas={reporte.por_tipo} cantidad="Pedidos" /><Tabla titulo="Ventas por hora" filas={reporte.por_hora} cantidad="Pedidos" /><Tabla titulo="Ventas por producto" filas={reporte.por_producto} cantidad="Unidades" /><Tabla titulo="Formas de pago" filas={reporte.por_pago} cantidad="Pagos" /></div>
+      </>}
+    </div>
+    <div role="tabpanel" id="reportes-panel-pedidos" aria-labelledby="reportes-ficha-pedidos" tabIndex={0} hidden={ficha !== 'pedidos'} className={ficha === 'pedidos' ? 'space-y-5' : 'hidden'}>
+      {reporte && <section><h2 className="mb-3 text-2xl font-bold">Pedidos cobrados e historial</h2><ul className="space-y-2">{reporte.pedidos.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"><span>Pedido {p.folio} · {p.fecha_operacion.split('-').reverse().join('/')} · {p.tipo} · {dinero(p.total)}{p.en_papelera && <strong className="ml-2 text-amber-800">En papelera</strong>}</span><button className={boton} disabled={cargando} aria-label={`Ver historial del pedido ${p.folio}`} onClick={() => void verHistorial(p.id)}>Ver historial</button></li>)}</ul>{!reporte.pedidos.length && <p>No hay pedidos pagados en este rango.</p>}</section>}
+      {historial && <section className="rounded-2xl border border-teal-200 bg-white p-5"><h2 className="mb-3 text-2xl font-bold">Historial del pedido {historial.folio}</h2><ol className="space-y-3">{historial.eventos.map((e, i) => <li key={i}><p className="font-semibold">{e.usuario} · {new Date(e.fecha).toLocaleString('es-GT', { timeZone: 'America/Guatemala' })}</p><p>{e.descripcion}</p></li>)}</ol></section>}
+    </div>
+    {/* Mantener montadas las fichas conserva sus consultas y selecciones al cambiar entre ellas. */}
+    <div role="tabpanel" id="reportes-panel-comisiones" aria-labelledby="reportes-ficha-comisiones" tabIndex={0} hidden={ficha !== 'comisiones'} className={ficha === 'comisiones' ? '' : 'hidden'}>
+      <SimuladorComisiones key={clavePeriodo} desde={desde} hasta={hasta} />
+    </div>
+    <div role="tabpanel" id="reportes-panel-control" aria-labelledby="reportes-ficha-control" tabIndex={0} hidden={ficha !== 'control'} className={ficha === 'control' ? '' : 'hidden'}>
+      <ControlVentas key={clavePeriodo} desde={desde} hasta={hasta}/>
+    </div>
+    <div role="tabpanel" id="reportes-panel-anulaciones" aria-labelledby="reportes-ficha-anulaciones" tabIndex={0} hidden={ficha !== 'anulaciones'} className={ficha === 'anulaciones' ? '' : 'hidden'}>
+      <ReporteAnulaciones key={clavePeriodo} desde={desde} hasta={hasta} />
+    </div>
   </div>
 }
 
