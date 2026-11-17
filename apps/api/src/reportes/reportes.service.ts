@@ -2,6 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PedidosService } from '../pedidos/pedidos.service.js';
+import { texto, uuid } from '../pedidos/validacion-pedido.js';
+import { calcularComisiones } from './comisiones.js';
 
 function fecha(valor: unknown): Date {
   if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor))
@@ -46,6 +48,62 @@ export class ReportesService {
     private readonly prisma: PrismaService,
     private readonly pedidos: PedidosService,
   ) {}
+
+  async comisiones(centroId: number, desde?: unknown, hasta?: unknown, terminal?: unknown, pedidos?: unknown) {
+    const [hoy] = await this.prisma.$queryRaw<{ fecha: string }[]>`SELECT ventas.fecha_guatemala()::text AS fecha`;
+    const inicio = fecha(desde ?? hoy.fecha), fin = fecha(hasta ?? hoy.fecha);
+    if (inicio > fin || fin.getTime() - inicio.getTime() > 365 * 86400000)
+      throw new BadRequestException('Elige un rango válido de hasta 366 días.');
+    const terminalPos = texto(terminal, 30)?.replace(/\s/g, '').toUpperCase() ?? null;
+    let seleccion: Set<string> | null = null;
+    if (pedidos !== undefined) {
+      if (typeof pedidos !== 'string' || !pedidos || pedidos.split(',').length > 100)
+        throw new BadRequestException('Selecciona entre 1 y 100 pedidos, o consulta todos.');
+      seleccion = new Set(pedidos.split(',').map(uuid));
+    }
+    // Fecha del cobro, no del pedido. Incluye abonos por tarjeta aunque quede saldo pendiente.
+    const pagos = await this.prisma.pago.findMany({
+      where: {
+        estado: 'APLICADO', metodo_pago: { codigo: 'TARJETA' },
+        pedido: { centro_venta_id: centroId },
+        fecha_operacion: { gte: inicio, lte: fin },
+        ...(terminalPos ? { terminal_pos: terminalPos } : {}),
+      },
+      select: {
+        id: true, monto: true, fecha_operacion: true, terminal_pos: true, referencia_pos: true,
+        pedido: { select: { id: true, folio: true, fecha_operacion: true, cliente_nombre: true, eliminado_en: true } },
+      },
+      orderBy: [{ fecha_operacion: 'asc' }, { registrado_en: 'asc' }, { id: 'asc' }],
+    });
+    const disponibles = new Map<string, {
+      id: string; folio: number; fecha_operacion: string; cliente: string | null; en_papelera: boolean;
+      cobros: number; monto: Prisma.Decimal;
+    }>();
+    for (const pago of pagos) {
+      const pedido = pago.pedido;
+      const fila = disponibles.get(pedido.id) ?? {
+        id: pedido.id, folio: pedido.folio, fecha_operacion: pedido.fecha_operacion.toISOString().slice(0, 10),
+        cliente: pedido.cliente_nombre, en_papelera: pedido.eliminado_en !== null,
+        cobros: 0, monto: new Prisma.Decimal(0),
+      };
+      fila.cobros++; fila.monto = fila.monto.plus(pago.monto);
+      disponibles.set(pedido.id, fila);
+    }
+    const incluidos = pagos.filter(p => !seleccion || seleccion.has(p.pedido.id));
+    return {
+      desde: inicio.toISOString().slice(0, 10), hasta: fin.toISOString().slice(0, 10), terminal: terminalPos,
+      ...calcularComisiones(incluidos.map(p => ({ fecha: p.fecha_operacion.toISOString().slice(0, 10), monto: p.monto }))),
+      total_pedidos: new Set(incluidos.map(p => p.pedido.id)).size,
+      total_cobros: incluidos.length,
+      pedidos: [...disponibles.values()].map(p => ({ ...p, monto: p.monto.toFixed(2), incluido: !seleccion || seleccion.has(p.id) })),
+      cobros: incluidos.map(p => ({
+        id: p.id, pedido_id: p.pedido.id, folio: p.pedido.folio,
+        fecha_pedido: p.pedido.fecha_operacion.toISOString().slice(0, 10),
+        fecha: p.fecha_operacion.toISOString().slice(0, 10), monto: p.monto.toFixed(2),
+        terminal: p.terminal_pos, autorizacion: p.referencia_pos,
+      })),
+    };
+  }
 
   // Tarea 15: quién anuló (o pidió anular) y quién autorizó, con motivo y hora.
   async anulaciones(centroId: number, desde?: unknown, hasta?: unknown) {

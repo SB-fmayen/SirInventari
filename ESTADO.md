@@ -4,7 +4,17 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 ## Última actualización
 
-2026-11-15 (hora de Guatemala) · Claude
+2026-11-16 (hora de Guatemala) · Codex
+
+## Reportes · Simulador de comisiones Cubo · En curso
+
+- Solicitud expresa del usuario: levantar el proyecto, leer los cambios de Claude del 15/11 y enfocarse en Reportes. Se intercala esta ampliación de Tarea 11; R3 y las revisiones pendientes conservan su lugar para otro turno.
+- Leídos estado, plan y commits de Claude: catálogo con fotos, Ventas, anulaciones, auditoría/RLS, modo sin internet y últimos ajustes de diseño/pruebas. Sin correcciones ajenas al alcance actual.
+- Base local iniciada con el script existente; API y Vite levantados con acceso de red para Firebase. Salud API/base correcta (fecha 2026-11-16, America/Guatemala); app HTTP 200. Sin modificar esquema ni ventas comerciales.
+- API lista: `GET /reportes/comisiones`, solo ADMIN/GERENTE y centro actual. Usa fecha de operación del **pago**, tarjeta APLICADA (incluidos abonos y pedidos en papelera), filtro opcional de terminal y selección de pedidos. Efectivo, transferencias y anulados se excluyen.
+- Comisión 5.50% sobre cobrado diario, IVA 12% sobre comisión, redondeo decimal a centavos por día; el rango suma días. Ejemplo Q1,000 − Q55 − Q6.60 = Q938.40. Es simulación con la tarifa del usuario, no conciliación bancaria.
+- Bloque API verificado: 4 pruebas unitarias nuevas + 9 de integración (5 nuevas y 4 de reportes previas), build y lint API correctos. Integración usa bases temporales, sin tocar datos comerciales. Continúa la verificación de pantalla, selección y CSV.
+- Navegador interno abre la app pero pide iniciar sesión: aún no se afirma validación visual de Reportes con cuenta real.
 
 ## Sesión Claude 2026-11-15 · Fotos, Ventas sencilla y Tarea 15
 
