@@ -6,13 +6,14 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-16 (hora de Guatemala) · Codex
 
-## Primer envío a GitHub y regla de envío continuo · En curso
+## Primer envío a GitHub y regla de envío continuo · Terminado
 
 - El usuario autoriza expresamente `git push` y que los próximos cambios de Claude/Codex se envíen directamente a GitHub al terminar cada tarea. Regla añadida a `AGENTS.md` (también leída por Claude mediante `CLAUDE.md`). No se instala un proceso en segundo plano: cada agente debe verificar, guardar, enviar y comprobar el resultado.
 - Repositorio destino: `https://github.com/SB-fmayen/SirInventari.git`, público y sin ramas remotas antes de este envío. Rama local `main`, 75 commits anteriores.
 - Revisión previa de las 614 versiones de archivos del historial (578 de texto): sin coincidencias con patrones de credenciales ni los valores sensibles del `.env` local. `.env`, claves, respaldos y logs excluidos de Git. Se conservan locales el PDF de relevo y `REVISION.md`, que ya estaban sin seguimiento.
 - Solo se cambian instrucciones y estado; comprobación con `git diff --check`. No se repiten pruebas de código: las últimas verificaciones de Reportes están registradas abajo. El workflow de GitHub requiere `CI_DB_PASSWORD` (pendiente registrado); publicar la app sigue condicionado a `PUBLICAR_APROBADO=true` y a la aprobación de nube, que continúa pospuesta.
-- Siguiente en este turno: guardar estos cambios, ejecutar `git push -u origin main` y comparar el identificador local con el remoto.
+- Ejecutado `git push -u origin main`: GitHub recibió los 76 commits hasta `6ea1c1fa52cb68b891e64590d94f617f9c082c9b`. Verificación con `git ls-remote`: mismo identificador local y remoto; `main` ya sigue a `origin/main`. Este cierre se guarda y se envía también. El envío del código quedó confirmado; no se afirma ejecución correcta de GitHub Actions ni despliegue en nube.
+- De ahora en adelante, cada tarea incluye commit, push y comprobación remota según `AGENTS.md`; no basta con guardar localmente. Archivos de esta tarea: `AGENTS.md` y `ESTADO.md`.
 
 ## Documento de tecnologías y almacenamiento · 2026-11-16
 
