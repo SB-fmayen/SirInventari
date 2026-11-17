@@ -5,6 +5,7 @@ import { ReporteAnulaciones } from '@/componentes/ReporteAnulaciones'
 import { useSesion } from '@/sesion/SesionProvider'
 import { rangoRapido } from '@/lib/fechas'
 import { ControlVentas } from '@/componentes/ControlVentas'
+import { SimuladorComisiones } from '@/componentes/SimuladorComisiones'
 
 interface Fila { nombre: string; cantidad: string; total: string }
 interface Reporte {
@@ -71,6 +72,7 @@ export function Reportes() {
       <button className={boton} disabled={cargando}>Consultar ventas</button>
       <button type="button" className={boton} disabled={cargando || !reporte} onClick={descargar}>Descargar CSV</button>
     </form>
+    <SimuladorComisiones key={`${centro?.id}-${desde}-${hasta}`} desde={desde} hasta={hasta} />
     {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}
     {cargando && <p role="status">Consultando…</p>}
     {reporte && <>

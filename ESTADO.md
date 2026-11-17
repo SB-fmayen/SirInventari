@@ -6,15 +6,19 @@ Libreta compartida entre Claude Code y Codex. Se actualiza al terminar cada tare
 
 2026-11-16 (hora de Guatemala) · Codex
 
-## Reportes · Simulador de comisiones Cubo · En curso
+## Reportes · Simulador de comisiones Cubo · Terminado localmente
 
 - Solicitud expresa del usuario: levantar el proyecto, leer los cambios de Claude del 15/11 y enfocarse en Reportes. Se intercala esta ampliación de Tarea 11; R3 y las revisiones pendientes conservan su lugar para otro turno.
 - Leídos estado, plan y commits de Claude: catálogo con fotos, Ventas, anulaciones, auditoría/RLS, modo sin internet y últimos ajustes de diseño/pruebas. Sin correcciones ajenas al alcance actual.
 - Base local iniciada con el script existente; API y Vite levantados con acceso de red para Firebase. Salud API/base correcta (fecha 2026-11-16, America/Guatemala); app HTTP 200. Sin modificar esquema ni ventas comerciales.
 - API lista: `GET /reportes/comisiones`, solo ADMIN/GERENTE y centro actual. Usa fecha de operación del **pago**, tarjeta APLICADA (incluidos abonos y pedidos en papelera), filtro opcional de terminal y selección de pedidos. Efectivo, transferencias y anulados se excluyen.
 - Comisión 5.50% sobre cobrado diario, IVA 12% sobre comisión, redondeo decimal a centavos por día; el rango suma días. Ejemplo Q1,000 − Q55 − Q6.60 = Q938.40. Es simulación con la tarifa del usuario, no conciliación bancaria.
-- Bloque API verificado: 4 pruebas unitarias nuevas + 9 de integración (5 nuevas y 4 de reportes previas), build y lint API correctos. Integración usa bases temporales, sin tocar datos comerciales. Continúa la verificación de pantalla, selección y CSV.
-- Navegador interno abre la app pero pide iniciar sesión: aún no se afirma validación visual de Reportes con cuenta real.
+- Pantalla integrada cerca del inicio de Reportes, después de las fechas: terminal opcional, desglose diario, cinco importes (cobrado, comisión, IVA, descuento y depósito estimado), selección de pedidos con búsqueda por folio/cliente/fecha y CSV con detalle de vouchers. Selección de hasta 100 pedidos o todos. Cambiar fechas/centro/terminal descarta la simulación; cambiar selección exige recalcular antes de mostrar/exportar importes.
+- Verificación completa: **95 web + 112 integración + 18 unitarias API = 225 correctas**, incluidas 13 nuevas. Builds y lint de API/web correctos; persisten 6 avisos web previos, el aviso de tamaño del paquete (~799 kB) y el aviso previo de pg en integración. Tras el ajuste final del botón Calcular, las 4 pruebas nuevas web, build y lint volvieron a pasar.
+- Integración usa bases temporales. Consulta final de solo lectura conserva 3 usuarios, 154 productos y 10 pedidos comerciales. No se tocaron esquema, datos comerciales ni credenciales.
+- Servicios funcionando al cierre: API compilada PID 31556, Vite PID 20916 y contenedor `sirinventari-db`. `/salud` correcto, app HTTP 200. Logs privados `logs/api-comisiones-final*.log` y `logs/web-comisiones-red*.log`; API sin errores de arranque.
+- Navegador interno abre la app pero pide iniciar sesión: queda pendiente validación visual de Reportes con cuenta real. Pruebas automáticas de pantalla, filtros, CSV, errores y descarte de importes antiguos sí verificadas.
+- Guía de uso, límites y lista completa de archivos: `docs/simulador-comisiones.md`. Primer bloque guardado en `83e961a`; pantalla y cierre en el siguiente commit. Se conservan sin seguimiento `REVISION.md` y el PDF de relevo que ya existían. R3 y demás pendientes siguen abiertos.
 
 ## Sesión Claude 2026-11-15 · Fotos, Ventas sencilla y Tarea 15
 
